@@ -6,7 +6,7 @@ import { BrandHomeLink } from "@/components/BrandHomeLink";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePortalLanguage } from "@/lib/use-portal-language";
-import { createMcpToken, fetchMcpTokens, fetchPlatformProjects, fetchPortalSession, revokeMcpToken } from "@/lib/task-api";
+import { createMcpToken, fetchMcpTokens, fetchPlatformProjects, fetchPortalSession, revokeMcpToken } from "@/lib/platform-api";
 import type { ForgeMcpToken, ForgePortalSession, ForgePortalUser, ForgeProject } from "@/lib/types";
 
 function avatarChar(user?: ForgePortalUser): string {

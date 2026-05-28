@@ -10,7 +10,7 @@ import {
   portalLanguageStorageKey,
   type PortalLanguage,
 } from "@/lib/portal-language";
-import { updatePortalPreferences } from "@/lib/task-api";
+import { updatePortalPreferences } from "@/lib/platform-api";
 import React from "react";
 
 interface PortalLanguageSelectProps {
