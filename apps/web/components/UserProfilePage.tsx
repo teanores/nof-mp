@@ -122,7 +122,7 @@ function mcpConfig(fullToken: string, projectKey: string): string {
 const mcpServerUrl = "http://192.168.1.51:30510/api/mcp";
 const mcpSseUrl = "http://192.168.1.51:30510/api/mcp/sse";
 
-function agentJsonExample(projectKey = "noftt"): string {
+function agentJsonExample(projectKey = "nof-tt"): string {
   return JSON.stringify(
     {
       mcpServers: {
@@ -541,7 +541,7 @@ export function UserProfilePage() {
                       <code> {"${MCP_TOKEN}"}</code> значением из переменной окружения или secret storage.
                     </p>
                     <pre className="mt-3 overflow-x-auto rounded-sm border border-forge-line bg-forge-panel p-3 text-xs text-forge-ink">
-                      {agentJsonExample(newTokenProjectKey || "noftt")}
+                      {agentJsonExample(newTokenProjectKey || "nof-tt")}
                     </pre>
                   </article>
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">

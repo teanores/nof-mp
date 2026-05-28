@@ -39,7 +39,7 @@ describe("portal layout primitives", () => {
       <PortalHeader
         breadcrumbs={[
           { href: "/projects", label: "Проекты" },
-          { href: "/projects/noftt/wiki", label: "Wiki" },
+          { href: "/projects/nof-tt/wiki", label: "Wiki" },
           { label: "contracts" },
         ]}
         title="Contracts"
@@ -50,7 +50,7 @@ describe("portal layout primitives", () => {
       "// DRAGON FORGE // Narag'Othal Forgath//Проекты//Wiki//contracts",
     );
     expect(screen.getByRole("link", { name: "Проекты" })).toHaveAttribute("href", "/projects");
-    expect(screen.getByRole("link", { name: "Wiki" })).toHaveAttribute("href", "/projects/noftt/wiki");
+    expect(screen.getByRole("link", { name: "Wiki" })).toHaveAttribute("href", "/projects/nof-tt/wiki");
   });
 
   it("renders an action bar without page-specific duplicated structure", () => {

@@ -2,7 +2,7 @@ export type PlatformRole = "owner" | "admin" | "moderator" | "user" | "guest";
 
 export type ProductVisibility = "public" | "registered" | "invited" | "owners";
 
-export type ProductKey = "noftt" | "nof-ht" | "nof-cb" | "nof-onw" | (string & {});
+export type ProductKey = "nof-tt" | "nof-ht" | "nof-cb" | "nof-onw" | (string & {});
 
 export interface PlatformProductAccessPolicy {
   productKey: ProductKey;

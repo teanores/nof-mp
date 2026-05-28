@@ -40,7 +40,7 @@ export const portalModules: PortalModule[] = [
     key: "wiki",
     title: "Wiki / Requirements",
     description: "Требования, сценарии, решения и runbooks проекта NOFTT.",
-    href: "/projects/noftt",
+    href: "/projects/nof-tt",
     status: "available",
   },
   {
@@ -82,7 +82,7 @@ export const systemHealthCards: SystemHealthCard[] = [
 
 export const protectedPortalRoutes = [
   "/overview",
-  "/projects/noftt",
+  "/projects/nof-tt",
   "/tasks",
   "/epics",
   "/sprints",

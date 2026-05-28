@@ -31,7 +31,7 @@ describe("product access repository", () => {
     await expect(repository.listForSubject({ role: "guest" })).resolves.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ key: "nof-cb", access: { allowed: true, reason: "public-product" } }),
-        expect.objectContaining({ key: "noftt", access: { allowed: false, reason: "authentication-required" } }),
+        expect.objectContaining({ key: "nof-tt", access: { allowed: false, reason: "authentication-required" } }),
       ]),
     );
   });
@@ -76,17 +76,17 @@ describe("product access repository", () => {
 
     const productSeeds = pool.valuesFor("INSERT INTO nof_platform.products");
     const accessSeeds = pool.valuesFor("INSERT INTO nof_platform.product_access");
-    expect(productSeeds.map((values) => values[0])).toEqual(["noftt", "nof-ht", "nof-cb", "nof-onw"]);
+    expect(productSeeds.map((values) => values[0])).toEqual(["nof-tt", "nof-ht", "nof-cb", "nof-onw"]);
     expect(productSeeds.map((values) => values[4])).toEqual(["registered", "registered", "public", "invited"]);
-    expect(accessSeeds.map((values) => values[0])).toEqual(["noftt", "nof-ht", "nof-cb", "nof-onw"]);
+    expect(accessSeeds.map((values) => values[0])).toEqual(["nof-tt", "nof-ht", "nof-cb", "nof-onw"]);
   });
 
   it("checks database-backed project existence", async () => {
     const pool = new FakePool([{ exists: true }]);
     const repository = ProductAccessRepository.fromDatabase(pool, "nof_platform");
 
-    await expect(repository.exists("noftt")).resolves.toBe(true);
-    expect(pool.queries.at(-1)).toMatchObject({ values: ["noftt"] });
+    await expect(repository.exists("nof-tt")).resolves.toBe(true);
+    expect(pool.queries.at(-1)).toMatchObject({ values: ["nof-tt"] });
   });
 
   it("builds an access subject from an authenticated portal session", () => {

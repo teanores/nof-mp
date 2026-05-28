@@ -18,7 +18,7 @@ export function normalizeMcpProjectKey(projectKey: string): string {
 
 export function mcpTokenPrefixForProject(projectKey: string): string {
   const normalizedProjectKey = normalizeMcpProjectKey(projectKey);
-  if (normalizedProjectKey === "noftt") {
+  if (normalizedProjectKey === "nof-tt") {
     return "nof_tt_mcp_";
   }
   if (normalizedProjectKey.startsWith("nof-")) {

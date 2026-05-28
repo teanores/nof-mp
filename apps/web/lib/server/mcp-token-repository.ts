@@ -6,7 +6,7 @@ import { projectExists } from "@/lib/platform-projects";
 import { mcpTokenPrefixForProject, normalizeMcpProjectKey } from "@/lib/server/mcp-project-scope";
 import type { ForgeMcpToken } from "@/lib/types";
 
-const defaultProjectKey = "noftt";
+const defaultProjectKey = "nof-tt";
 const defaultScopes = ["project:read", "project:write", "wiki:write", "ideas:write"];
 
 interface McpTokenRow extends QueryResultRow {

@@ -17,11 +17,11 @@ describe("platform access contract", () => {
   });
 
   it("requires authentication for registered products", () => {
-    expect(canAccessProduct({ role: "guest" }, { productKey: "noftt", visibility: "registered" })).toEqual({
+    expect(canAccessProduct({ role: "guest" }, { productKey: "nof-tt", visibility: "registered" })).toEqual({
       allowed: false,
       reason: "authentication-required",
     });
-    expect(canAccessProduct({ role: "user", userId: "u-1" }, { productKey: "noftt", visibility: "registered" })).toEqual({
+    expect(canAccessProduct({ role: "user", userId: "u-1" }, { productKey: "nof-tt", visibility: "registered" })).toEqual({
       allowed: true,
       reason: "registered-user",
     });

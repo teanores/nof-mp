@@ -5,7 +5,7 @@ import { listPlatformProjects, platformProjectRecords, projectExists } from "@/l
 describe("platform project registry", () => {
   it("keeps registered products closed to guests but visible with access reasons", () => {
     const projects = listPlatformProjects({ role: "guest" });
-    const taskTracker = projects.find((project) => project.key === "noftt");
+    const taskTracker = projects.find((project) => project.key === "nof-tt");
 
     expect(taskTracker).toMatchObject({
       visibility: "registered",
@@ -15,7 +15,7 @@ describe("platform project registry", () => {
 
   it("allows authenticated users to open registered products", () => {
     const projects = listPlatformProjects({ role: "user", userId: "u-1" });
-    const taskTracker = projects.find((project) => project.key === "noftt");
+    const taskTracker = projects.find((project) => project.key === "nof-tt");
 
     expect(taskTracker).toMatchObject({ access: { allowed: true, reason: "registered-user" } });
   });

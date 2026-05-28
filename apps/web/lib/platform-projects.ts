@@ -21,7 +21,7 @@ const defaultSubject: PlatformAccessSubject = { role: "guest" };
 
 export const platformProjectRecords: PlatformProjectRecord[] = [
   {
-    key: "noftt",
+    key: "nof-tt",
     name: "Narag'Othal Forgath Task Tracker",
     description: "Task tracker, Wiki, ideas, sprints and MCP automation for platform/product delivery.",
     status: "active",

@@ -8,8 +8,8 @@ describe("portal auth gate urls", () => {
   });
 
   it("keeps query params when redirecting back after login", () => {
-    expect(portalLoginUrl("/tasks?status=todo&project=noftt")).toBe(
-      "/login?next=%2Ftasks%3Fstatus%3Dtodo%26project%3Dnoftt",
+    expect(portalLoginUrl("/tasks?status=todo&project=nof-tt")).toBe(
+      "/login?next=%2Ftasks%3Fstatus%3Dtodo%26project%3Dnof-tt",
     );
   });
 
