@@ -11,8 +11,9 @@ interface UserPreferencesRow extends QueryResultRow {
 }
 
 function databaseUrl(): string {
-  if (process.env.FORGE_TASKS_DATABASE_URL) {
-    return process.env.FORGE_TASKS_DATABASE_URL;
+  const configuredUrl = process.env.NOF_PLATFORM_DATABASE_URL ?? process.env.FORGE_TASKS_DATABASE_URL;
+  if (configuredUrl) {
+    return configuredUrl;
   }
 
   const host = process.env.DB_SERVER ?? "postgres";
@@ -22,14 +23,14 @@ function databaseUrl(): string {
   const password = process.env.DB_PASS;
 
   if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for Forge Tasks user preferences");
+    throw new Error("PostgreSQL settings are not configured for NOF Platform user preferences");
   }
 
   return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
-function schemaName(): string {
-  return process.env.FORGE_TASKS_DB_SCHEMA ?? "forge_tasks";
+export function platformPreferencesSchemaName(): string {
+  return process.env.NOF_PLATFORM_DB_SCHEMA ?? "nof_platform";
 }
 
 export class UserPreferencesRepository {
@@ -37,7 +38,7 @@ export class UserPreferencesRepository {
   private readonly pool: Pool;
   private readonly schema: string;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = schemaName()) {
+  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = platformPreferencesSchemaName()) {
     this.pool = pool;
     this.schema = schema;
   }
