@@ -1,0 +1,24 @@
+{
+  "name": "@nof/nof-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NOF Platform portal, authentication, profile and global access management",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @nof/nof-platform-web run dev",
+    "build": "npm --workspace @nof/nof-platform-web run build",
+    "lint": "npm --workspace @nof/nof-platform-web run lint",
+    "typecheck": "npm --workspace @nof/nof-platform-web run typecheck",
+    "test": "npm --workspace @nof/nof-platform-web run test",
+    "check": "npm --workspace @nof/nof-platform-web run check"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.10"
+    },
+    "postcss": "8.5.10"
+  }
+}
