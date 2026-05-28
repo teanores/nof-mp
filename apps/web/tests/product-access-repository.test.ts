@@ -18,6 +18,10 @@ class FakePool {
     }
     return { rows: [] };
   }
+
+  valuesFor(sqlPart: string): unknown[][] {
+    return this.queries.filter((query) => query.sql.includes(sqlPart)).map((query) => query.values ?? []);
+  }
 }
 
 describe("product access repository", () => {
@@ -62,6 +66,19 @@ describe("product access repository", () => {
     ]);
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.products"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.product_access"))).toBe(true);
+  });
+
+  it("seeds the default platform products into database tables", async () => {
+    const pool = new FakePool();
+    const repository = ProductAccessRepository.fromDatabase(pool, "nof_platform");
+
+    await repository.knownProjectKeys();
+
+    const productSeeds = pool.valuesFor("INSERT INTO nof_platform.products");
+    const accessSeeds = pool.valuesFor("INSERT INTO nof_platform.product_access");
+    expect(productSeeds.map((values) => values[0])).toEqual(["noftt", "nof-ht", "nof-cb", "nof-onw"]);
+    expect(productSeeds.map((values) => values[4])).toEqual(["registered", "registered", "public", "invited"]);
+    expect(accessSeeds.map((values) => values[0])).toEqual(["noftt", "nof-ht", "nof-cb", "nof-onw"]);
   });
 
   it("checks database-backed project existence", async () => {

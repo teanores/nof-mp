@@ -176,7 +176,34 @@ export class ProductAccessRepository {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    await this.seedDefaultProducts();
     this.initialized = true;
+  }
+
+  private async seedDefaultProducts(): Promise<void> {
+    for (const product of platformProjectRecords) {
+      await this.pool!.query(
+        `INSERT INTO ${this.schema}.products (key, name, description, status, visibility, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (key)
+         DO UPDATE SET
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           status = EXCLUDED.status,
+           visibility = EXCLUDED.visibility`,
+        [product.key, product.name, product.description, product.status, product.visibility, product.createdAt],
+      );
+      await this.pool!.query(
+        `INSERT INTO ${this.schema}.product_access (product_key, invited_user_ids, owner_user_ids, updated_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (product_key)
+         DO UPDATE SET
+           invited_user_ids = EXCLUDED.invited_user_ids,
+           owner_user_ids = EXCLUDED.owner_user_ids,
+           updated_at = NOW()`,
+        [product.key, product.invitedUserIds ?? [], product.ownerUserIds ?? []],
+      );
+    }
   }
 }
 
