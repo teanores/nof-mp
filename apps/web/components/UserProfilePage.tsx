@@ -9,8 +9,14 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 import { createMcpToken, fetchMcpTokens, fetchPlatformProjects, fetchPortalSession, revokeMcpToken } from "@/lib/platform-api";
 import type { ForgeMcpToken, ForgePortalSession, ForgePortalUser, ForgeProject } from "@/lib/types";
 
-function avatarChar(user?: ForgePortalUser): string {
-  return (user?.username ?? "?").slice(0, 1).toUpperCase();
+function avatarInitials(user?: ForgePortalUser): string {
+  const username = user?.username?.trim();
+  if (!username) {
+    return "?";
+  }
+  const parts = username.split(/[\s._-]+/).filter(Boolean);
+  const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : username.slice(0, 2);
+  return initials.toUpperCase();
 }
 
 function formatDate(value?: string): string {
@@ -349,8 +355,12 @@ export function UserProfilePage() {
             <section className="panel relative p-5">
               <p className="tech-label text-xs text-forge-muted">{copy.profile}</p>
               <div className="mt-4 flex items-start gap-4">
-                <div className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-full border border-forge-accent bg-forge-surface">
-                  <span className="heading-tech text-3xl font-bold text-forge-accent">{avatarChar(user)}</span>
+                <div
+                  aria-label={`Avatar for ${user.username}`}
+                  className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-full border border-forge-accent bg-forge-surface"
+                  title={user.username}
+                >
+                  <span className="heading-tech text-2xl font-bold text-forge-accent">{avatarInitials(user)}</span>
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -360,6 +370,7 @@ export function UserProfilePage() {
                       {user.role?.displayName ?? user.role?.name ?? "USER"}
                     </span>
                   </div>
+                  <p className="tech-label mt-1 truncate text-[10px] text-forge-muted">{user.username}</p>
                   <p className="mt-1 text-xs leading-5 text-forge-muted">{user.aboutMe || copy.aboutFallback}</p>
 
                   <div className="mt-3 space-y-2">
