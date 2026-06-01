@@ -47,6 +47,7 @@ export const systemHealthCards: SystemHealthCard[] = [
 export const protectedPortalRoutes = [
   "/overview",
   "/profile",
+  "/admin/users",
 ];
 
 export function portalModuleStatusLabel(status: PortalModuleStatus): string {
