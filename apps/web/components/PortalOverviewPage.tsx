@@ -9,6 +9,10 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 
 const overviewCopy = {
   en: {
+    adminRequests: "Requests",
+    adminRequestsNote: "Login attempts, rate limits and public scans.",
+    adminUsers: "Users",
+    adminUsersNote: "Accounts, roles and access risks.",
     description: "Portal experiments: habit tracker, task tracker and streamer portal.",
     open: "Open",
     portalState: "Portal state",
@@ -18,6 +22,10 @@ const overviewCopy = {
     modules: "Разделы кузницы",
   },
   ru: {
+    adminRequests: "Запросы",
+    adminRequestsNote: "Входы, rate-limit и публичные сканы.",
+    adminUsers: "Пользователи",
+    adminUsersNote: "Аккаунты, роли и риски доступа.",
     description: "Портал экспериментов Te'An'ore. Трекер привычек, Трекер задач, Портал стримера.",
     open: "Открыть",
     portalState: "Состояние портала",
@@ -27,6 +35,11 @@ const overviewCopy = {
     modules: "Разделы кузницы",
   },
 } as const;
+
+const adminLinks = [
+  { href: "/admin/security", key: "admin-requests" },
+  { href: "/admin/users", key: "admin-users" },
+] as const;
 
 function ModuleCard({ module }: { module: PortalModule }) {
   const copy = overviewCopy[usePortalLanguage()];
@@ -81,6 +94,20 @@ export function PortalOverviewPage() {
                 <p className="mt-1 text-xs text-forge-muted">{note}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {adminLinks.map((link) => {
+              const title = link.key === "admin-requests" ? copy.adminRequests : copy.adminUsers;
+              const note = link.key === "admin-requests" ? copy.adminRequestsNote : copy.adminUsersNote;
+
+              return (
+                <Link key={link.key} className="rounded-sm border border-forge-line bg-forge-surface p-3 transition hover:border-forge-accent" href={link.href}>
+                  <p className="tech-label text-[10px] text-forge-accent">Администрирование</p>
+                  <p className="mt-1 text-sm font-bold text-forge-ink">{title}</p>
+                  <p className="mt-1 text-xs text-forge-muted">{note}</p>
+                </Link>
+              );
+            })}
           </div>
         </article>
       </section>

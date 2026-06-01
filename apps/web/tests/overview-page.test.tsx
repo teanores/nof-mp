@@ -12,5 +12,7 @@ describe("platform overview page", () => {
     expect(screen.getByText("Forge Tasks")).toBeInTheDocument();
     expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
     expect(screen.getByText("Портал стримера")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Запросы/ })).toHaveAttribute("href", "/admin/security");
+    expect(screen.getByRole("link", { name: /Пользователи/ })).toHaveAttribute("href", "/admin/users");
   });
 });
