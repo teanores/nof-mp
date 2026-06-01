@@ -7,7 +7,7 @@ import {
   copyAuthCookies,
   dragonForgeInternalLoginUrl,
 } from "@/lib/server/dragon-forge-login";
-import { decodeDragonForgeAuthToken } from "@/lib/server/dragon-forge-auth";
+import { decodePlatformAuthToken } from "@/lib/server/platform-auth";
 import { normalizePortalLanguage } from "@/lib/portal-language";
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 import { getUserPreferencesRepository } from "@/lib/server/user-preferences-repository";
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const response = buildPortalLoginRedirect(next);
   copyAuthCookies(upstream, response);
   const authCookieValue = authCookieValueFromResponse(upstream);
-  const userId = authCookieValue ? decodeDragonForgeAuthToken(authCookieValue)?.sub : undefined;
+  const userId = authCookieValue ? decodePlatformAuthToken(authCookieValue)?.sub : undefined;
   if (userId) {
     await getUserPreferencesRepository().upsert(userId, { language });
   }

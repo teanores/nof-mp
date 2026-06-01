@@ -6,7 +6,8 @@ import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 
 const cookieName = "auth_token";
 const algorithm = "HS256";
-const loginUrl = process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL ?? "http://192.168.1.51:30500/login";
+const loginUrl =
+  process.env.NEXT_PUBLIC_NOF_PLATFORM_LOGIN_URL ?? process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL ?? "http://192.168.1.51:30500/login";
 
 interface JwtPayload {
   exp?: number;
@@ -20,6 +21,7 @@ interface PortalUserRow extends QueryResultRow {
   email: string | null;
   experience: number | null;
   id: string;
+  is_blocked: boolean;
   last_seen: Date | string | null;
   level_id: number | null;
   level_name: string | null;
@@ -51,7 +53,7 @@ function databaseUrl(): string {
   const password = process.env.DB_PASS;
 
   if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for Dragon Forge portal users");
+    throw new Error("PostgreSQL settings are not configured for NOF platform users");
   }
 
   return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
@@ -69,7 +71,7 @@ function safeEqual(left: string, right: string): boolean {
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function decodeDragonForgeAuthToken(token: string, secret = process.env.SECRET_KEY): JwtPayload | undefined {
+export function decodePlatformAuthToken(token: string, secret = process.env.SECRET_KEY): JwtPayload | undefined {
   if (!secret) {
     return undefined;
   }
@@ -166,7 +168,7 @@ function toPortalUser(row: PortalUserRow): ForgePortalUser {
   };
 }
 
-export class DragonForgeAuthRepository {
+export class NofPlatformAuthRepository {
   private readonly pool: Pool;
 
   constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 })) {
@@ -182,7 +184,7 @@ export class DragonForgeAuthRepository {
       return { authenticated: false, loginUrl };
     }
 
-    const payload = decodeDragonForgeAuthToken(token);
+    const payload = decodePlatformAuthToken(token);
     if (!payload?.sub) {
       return { authenticated: false, loginUrl };
     }
@@ -194,6 +196,7 @@ export class DragonForgeAuthRepository {
          u.email,
          u.about_me,
          u.experience,
+         COALESCE(u.is_blocked, false) AS is_blocked,
          u.telegram_id,
          u.telegram_username,
          u.telegram_firstname,
@@ -220,16 +223,21 @@ export class DragonForgeAuthRepository {
       [payload.sub],
     );
 
-    const user = result.rows[0] ? toPortalUser(result.rows[0]) : undefined;
+    const row = result.rows[0];
+    if (row?.is_blocked) {
+      return { authenticated: false, loginUrl };
+    }
+
+    const user = row ? toPortalUser(row) : undefined;
     return user ? { authenticated: true, loginUrl, user } : { authenticated: false, loginUrl };
   }
 }
 
-let repository: DragonForgeAuthRepository | undefined;
+let repository: NofPlatformAuthRepository | undefined;
 
-export function getDragonForgeAuthRepository(): DragonForgeAuthRepository {
-  repository ??= new DragonForgeAuthRepository();
+export function getNofPlatformAuthRepository(): NofPlatformAuthRepository {
+  repository ??= new NofPlatformAuthRepository();
   return repository;
 }
 
-export { cookieName as dragonForgeAuthCookieName, loginUrl as dragonForgeLoginUrl };
+export { cookieName as nofPlatformAuthCookieName, loginUrl as nofPlatformLoginUrl };

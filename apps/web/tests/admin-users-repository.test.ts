@@ -25,6 +25,7 @@ describe("admin users repository", () => {
         email: "251740038@telegram.forgath.ru",
         has_password: false,
         id: "u-1",
+        is_blocked: true,
         last_seen: "2026-06-01T11:00:00.000Z",
         registration_source: "telegram",
         role_display_name: "Администратор",
@@ -38,11 +39,12 @@ describe("admin users repository", () => {
 
     await expect(repository.listUsers()).resolves.toEqual([
       {
-        accountState: "telegram-only",
+        accountState: "blocked",
         createdAt: "2026-06-01T10:00:00.000Z",
         email: "251740038@telegram.forgath.ru",
         hasPassword: false,
         id: "u-1",
+        isBlocked: true,
         lastSeen: "2026-06-01T11:00:00.000Z",
         registrationSource: "telegram",
         risks: ["missing-password", "telegram-placeholder-email"],

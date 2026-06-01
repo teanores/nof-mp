@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { dragonForgeAuthCookieName, getDragonForgeAuthRepository } from "@/lib/server/dragon-forge-auth";
+import { getNofPlatformAuthRepository, nofPlatformAuthCookieName } from "@/lib/server/platform-auth";
 import { getUserPreferencesRepository } from "@/lib/server/user-preferences-repository";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get(dragonForgeAuthCookieName)?.value;
-    const session = await getDragonForgeAuthRepository().sessionFromCookie(token);
+    const token = request.cookies.get(nofPlatformAuthCookieName)?.value;
+    const session = await getNofPlatformAuthRepository().sessionFromCookie(token);
     if (!session.user) {
       return NextResponse.json(session);
     }

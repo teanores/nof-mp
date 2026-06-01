@@ -40,7 +40,16 @@ function UserRiskBadges({ risks }: { risks: AdminUserRisk[] }) {
   );
 }
 
-function AccountState({ hasPassword }: { hasPassword: boolean }) {
+function AccountState({ user }: { user: AdminUserListItem }) {
+  if (user.isBlocked) {
+    return (
+      <span className="tech-label rounded-sm border border-red-400/60 px-2 py-1 text-[10px] text-red-200">
+        заблокирован
+      </span>
+    );
+  }
+
+  const hasPassword = user.hasPassword;
   return hasPassword ? (
     <span className="tech-label rounded-sm border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-300">
       вход по паролю
@@ -62,7 +71,7 @@ function AdminActionState() {
 
 export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
   const riskyUsers = users.filter((user) => user.risks.length > 0).length;
-  const passwordLoginUsers = users.filter((user) => user.hasPassword).length;
+  const blockedUsers = users.filter((user) => user.isBlocked).length;
 
   return (
     <PortalPageShell>
@@ -90,8 +99,8 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           <p className="heading-tech mt-2 text-3xl font-bold text-amber-200">{riskyUsers}</p>
         </article>
         <article className="panel p-4">
-          <p className="tech-label text-xs text-forge-muted">Вход по паролю</p>
-          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{passwordLoginUsers}</p>
+          <p className="tech-label text-xs text-forge-muted">Заблокированы</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-red-200">{blockedUsers}</p>
         </article>
       </section>
 
@@ -100,11 +109,11 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
       <section className="panel grid gap-3 p-4 text-sm text-forge-muted md:grid-cols-2">
         <div>
           <p className="tech-label text-xs text-forge-ink">Что уже можно контролировать</p>
-          <p className="mt-2">Видны роли, доменная почта, Telegram-связки, наличие пароля и последняя активность.</p>
+          <p className="mt-2">Видны роли, доменная почта, Telegram-связки, наличие пароля, блокировка и последняя активность.</p>
         </div>
         <div>
-          <p className="tech-label text-xs text-forge-ink">Что нельзя имитировать</p>
-          <p className="mt-2">Блокировка аккаунта появится только после серверной проверки запрета входа.</p>
+          <p className="tech-label text-xs text-forge-ink">Следующий безопасный шаг</p>
+          <p className="mt-2">Кнопки блокировки появятся после отдельного admin action endpoint с аудитом изменений.</p>
         </div>
       </section>
 
@@ -144,7 +153,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   </td>
                   <td className="px-4 py-4 text-forge-muted">{formatDate(user.lastSeen)}</td>
                   <td className="px-4 py-4">
-                    <AccountState hasPassword={user.hasPassword} />
+                    <AccountState user={user} />
                   </td>
                   <td className="px-4 py-4">
                     <UserRiskBadges risks={user.risks} />

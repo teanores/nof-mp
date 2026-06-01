@@ -3,11 +3,12 @@ import { Pool, type QueryResultRow } from "pg";
 export type AdminUserRisk = "missing-password" | "external-email" | "telegram-placeholder-email";
 
 export interface AdminUserListItem {
-  accountState: "password-login" | "telegram-only";
+  accountState: "blocked" | "password-login" | "telegram-only";
   createdAt?: string;
   email?: string;
   hasPassword: boolean;
   id: string;
+  isBlocked: boolean;
   lastSeen?: string;
   registrationSource?: string;
   risks: AdminUserRisk[];
@@ -27,6 +28,7 @@ interface AdminUserRow extends QueryResultRow {
   email: string | null;
   has_password: boolean;
   id: string;
+  is_blocked: boolean;
   last_seen: Date | string | null;
   registration_source: string | null;
   role_display_name: string | null;
@@ -89,12 +91,15 @@ export function userRisks(row: Pick<AdminUserRow, "email" | "has_password">): Ad
 function toAdminUser(row: AdminUserRow): AdminUserListItem {
   const telegramId = toOptionalNumber(row.telegram_id);
 
+  const isBlocked = row.is_blocked === true;
+
   return {
     id: row.id,
     username: row.username,
-    accountState: row.has_password ? "password-login" : "telegram-only",
+    accountState: isBlocked ? "blocked" : row.has_password ? "password-login" : "telegram-only",
     ...(row.email ? { email: row.email } : {}),
     hasPassword: row.has_password,
+    isBlocked,
     risks: userRisks(row),
     ...(row.role_name
       ? {
@@ -132,6 +137,7 @@ export class AdminUsersRepository {
          u.username,
          u.email,
          COALESCE(length(u.password_hash) > 0, false) AS has_password,
+         COALESCE(u.is_blocked, false) AS is_blocked,
          u.telegram_id,
          u.telegram_username,
          u.registration_source,

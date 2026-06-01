@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { dragonForgeAuthCookieName } from "@/lib/server/dragon-forge-auth";
+import { nofPlatformAuthCookieName } from "@/lib/server/platform-auth";
 
 export function buildPortalLogoutResponse(redirectTo = "/login"): NextResponse {
   const response = new NextResponse(null, {
@@ -8,7 +8,7 @@ export function buildPortalLogoutResponse(redirectTo = "/login"): NextResponse {
     status: 303,
   });
 
-  response.cookies.set(dragonForgeAuthCookieName, "", {
+  response.cookies.set(nofPlatformAuthCookieName, "", {
     expires: new Date(0),
     httpOnly: true,
     maxAge: 0,

@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { type NextRequest, NextResponse } from "next/server";
 
 import {
-  dragonForgeAuthCookieName,
-  getDragonForgeAuthRepository,
-} from "@/lib/server/dragon-forge-auth";
+  getNofPlatformAuthRepository,
+  nofPlatformAuthCookieName,
+} from "@/lib/server/platform-auth";
 import type { ForgePortalSession } from "@/lib/types";
 
 const portalOrigin = "http://portal.local";
@@ -43,12 +43,12 @@ export function portalLoginUrl(returnTo: string): string {
 }
 
 export async function portalSessionFromRequest(request: NextRequest): Promise<ForgePortalSession> {
-  const cookieValue = request.cookies.get(dragonForgeAuthCookieName)?.value;
+  const cookieValue = request.cookies.get(nofPlatformAuthCookieName)?.value;
   if (!cookieValue) {
     return { authenticated: false, loginUrl: portalLoginUrl(`${request.nextUrl.pathname}${request.nextUrl.search}`) };
   }
 
-  return getDragonForgeAuthRepository().sessionFromCookie(cookieValue);
+  return getNofPlatformAuthRepository().sessionFromCookie(cookieValue);
 }
 
 export async function requirePortalApiSession(request: NextRequest): Promise<NextResponse | undefined> {
@@ -69,7 +69,7 @@ export async function requirePortalApiSession(request: NextRequest): Promise<Nex
 
 export async function requirePortalPageSession(returnTo: string): Promise<ForgePortalSession> {
   const cookieStore = await cookies();
-  const session = await getDragonForgeAuthRepository().sessionFromCookie(cookieStore.get(dragonForgeAuthCookieName)?.value);
+  const session = await getNofPlatformAuthRepository().sessionFromCookie(cookieStore.get(nofPlatformAuthCookieName)?.value);
   if (!session.authenticated) {
     redirect(portalLoginUrl(returnTo));
   }
