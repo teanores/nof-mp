@@ -112,9 +112,8 @@ function ProfileAction() {
   return (
     <Link
       aria-label={`Профиль ${user.username}`}
-      className="grid h-12 w-12 place-items-center border border-forge-accent bg-forge-surface text-sm font-bold text-forge-accent transition hover:bg-forge-accent hover:text-black"
+      className="grid h-12 w-12 place-items-center rounded-full border border-forge-accent bg-forge-surface text-sm font-bold text-forge-accent transition hover:bg-forge-accent hover:text-black"
       href="/profile"
-      style={{ clipPath: "polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)" }}
       title={user.username}
     >
       {avatarInitials(user)}
