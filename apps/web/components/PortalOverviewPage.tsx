@@ -8,24 +8,28 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 
 const overviewCopy = {
   en: {
-    description: "Single entry point for account, profile, product discovery, access and platform administration.",
+    description: "Portal experiments: habit tracker, task tracker and streamer portal.",
+    open: "Open",
     portalState: "Portal state",
-    portalStateNote: "The platform owns identity and access. Products integrate through session and access contracts instead of copying account code.",
+    portalStateNote: "The platform is the entry point for account, profile, product discovery and access.",
     portalTitle: "NOF Platform",
-    profile: "PROFILE",
-    modules: "Platform modules",
+    profile: "Profile",
+    modules: "Разделы кузницы",
   },
   ru: {
-    description: "Единая точка входа для учётной записи, профиля, продуктов, доступа и администрирования платформы.",
+    description: "Портал экспериментов Te'An'ore. Трекер привычек, Трекер задач, Портал стримера.",
+    open: "Открыть",
     portalState: "Состояние портала",
-    portalStateNote: "Платформа хранит идентификацию и доступ. Продукты интегрируются через контракты сессии и прав, а не копируют код учётных записей.",
+    portalStateNote: "Платформа является точкой входа для аккаунта, профиля, обзора сервисов и доступа.",
     portalTitle: "NOF Platform",
-    profile: "ПРОФИЛЬ",
-    modules: "Разделы платформы",
+    profile: "Профиль",
+    modules: "Разделы кузницы",
   },
 } as const;
 
 function ModuleCard({ module }: { module: PortalModule }) {
+  const copy = overviewCopy[usePortalLanguage()];
+
   return (
     <Link className="panel block min-h-[190px] p-4 transition hover:border-forge-accent" href={module.href}>
       <div className="flex items-start justify-between gap-3">
@@ -36,7 +40,7 @@ function ModuleCard({ module }: { module: PortalModule }) {
       </div>
       <h3 className="heading-tech mt-3 text-xl font-bold text-forge-ink">{module.title}</h3>
       <p className="mt-3 text-sm leading-6 text-forge-muted">{module.description}</p>
-      <span className="tech-label mt-5 inline-flex text-xs text-forge-accent">Открыть {">"}</span>
+      <span className="tech-label mt-5 inline-flex text-xs text-forge-accent">{copy.open} {">"}</span>
     </Link>
   );
 }

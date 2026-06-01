@@ -3,17 +3,8 @@ import { describe, expect, it } from "vitest";
 import { portalModules, portalModuleStatusLabel, protectedPortalRoutes, systemHealthCards } from "@/lib/portal-shell";
 
 describe("platform shell manifest", () => {
-  it("keeps the canonical platform modules visible", () => {
-    expect(portalModules.map((module) => module.key)).toEqual([
-      "tracker",
-      "habits",
-      "ideas",
-      "wiki",
-      "references",
-      "bots",
-      "legacy",
-      "profile",
-    ]);
+  it("keeps only platform-level service cards visible", () => {
+    expect(portalModules.map((module) => module.key)).toEqual(["tracker", "habits", "streamer"]);
   });
 
   it("keeps platform-owned routes behind the auth gate during preview", () => {
@@ -21,12 +12,16 @@ describe("platform shell manifest", () => {
     expect(protectedPortalRoutes).toContain("/profile");
   });
 
-  it("launches standalone products through platform handoff routes instead of embedding product boards", () => {
-    expect(portalModules.find((module) => module.key === "tracker")?.href).toBe("/products/nof-tt/launch?next=/projects/nof-tt");
-    expect(portalModules.find((module) => module.key === "habits")?.href).toBe("/projects/nof-ht");
+  it("opens service preview pages instead of product internals", () => {
+    expect(portalModules.find((module) => module.key === "tracker")?.href).toBe("/services/forge-tasks");
+    expect(portalModules.find((module) => module.key === "habits")?.href).toBe("/services/habit-tracker");
+    expect(portalModules.find((module) => module.key === "streamer")?.href).toBe("/services/streamer");
+    expect(portalModules.map((module) => module.href)).not.toContain("/ideas");
+    expect(portalModules.map((module) => module.href)).not.toContain("/projects/nof-ht");
+    expect(portalModules.map((module) => module.href)).not.toContain("/products/nof-tt/launch?next=/projects/nof-tt");
   });
 
-  it("documents canonical and preview addresses for the cutover path", () => {
+  it("documents canonical address for the cutover path", () => {
     expect(systemHealthCards).toContainEqual({
       label: "Canonical",
       note: "gateway target",
