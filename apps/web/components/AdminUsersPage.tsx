@@ -40,9 +40,29 @@ function UserRiskBadges({ risks }: { risks: AdminUserRisk[] }) {
   );
 }
 
+function AccountState({ hasPassword }: { hasPassword: boolean }) {
+  return hasPassword ? (
+    <span className="tech-label rounded-sm border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-300">
+      вход по паролю
+    </span>
+  ) : (
+    <span className="tech-label rounded-sm border border-amber-400/50 px-2 py-1 text-[10px] text-amber-200">
+      пароль не задан
+    </span>
+  );
+}
+
+function AdminActionState() {
+  return (
+    <span className="tech-label rounded-sm border border-forge-line px-2 py-1 text-[10px] text-forge-muted">
+      блокировка готовится
+    </span>
+  );
+}
+
 export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
   const riskyUsers = users.filter((user) => user.risks.length > 0).length;
-  const telegramUsers = users.filter((user) => user.telegram?.id).length;
+  const passwordLoginUsers = users.filter((user) => user.hasPassword).length;
 
   return (
     <PortalPageShell>
@@ -70,12 +90,23 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           <p className="heading-tech mt-2 text-3xl font-bold text-amber-200">{riskyUsers}</p>
         </article>
         <article className="panel p-4">
-          <p className="tech-label text-xs text-forge-muted">Telegram связки</p>
-          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{telegramUsers}</p>
+          <p className="tech-label text-xs text-forge-muted">Вход по паролю</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{passwordLoginUsers}</p>
         </article>
       </section>
 
-      <PortalActionBar eyebrow="Admin directory" title="Аккаунты платформы" />
+      <PortalActionBar eyebrow="Администрирование" title="Аккаунты платформы" />
+
+      <section className="panel grid gap-3 p-4 text-sm text-forge-muted md:grid-cols-2">
+        <div>
+          <p className="tech-label text-xs text-forge-ink">Что уже можно контролировать</p>
+          <p className="mt-2">Видны роли, доменная почта, Telegram-связки, наличие пароля и последняя активность.</p>
+        </div>
+        <div>
+          <p className="tech-label text-xs text-forge-ink">Что нельзя имитировать</p>
+          <p className="mt-2">Блокировка аккаунта появится только после серверной проверки запрета входа.</p>
+        </div>
+      </section>
 
       <section className="panel overflow-hidden">
         <div className="overflow-x-auto">
@@ -87,7 +118,9 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                 <th className="px-4 py-3">Роль</th>
                 <th className="px-4 py-3">Telegram</th>
                 <th className="px-4 py-3">Последняя активность</th>
+                <th className="px-4 py-3">Доступ</th>
                 <th className="px-4 py-3">Статус</th>
+                <th className="px-4 py-3">Действия</th>
               </tr>
             </thead>
             <tbody>
@@ -111,7 +144,13 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   </td>
                   <td className="px-4 py-4 text-forge-muted">{formatDate(user.lastSeen)}</td>
                   <td className="px-4 py-4">
+                    <AccountState hasPassword={user.hasPassword} />
+                  </td>
+                  <td className="px-4 py-4">
                     <UserRiskBadges risks={user.risks} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <AdminActionState />
                   </td>
                 </tr>
               ))}

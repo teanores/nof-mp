@@ -38,6 +38,7 @@ describe("admin users repository", () => {
 
     await expect(repository.listUsers()).resolves.toEqual([
       {
+        accountState: "telegram-only",
         createdAt: "2026-06-01T10:00:00.000Z",
         email: "251740038@telegram.forgath.ru",
         hasPassword: false,

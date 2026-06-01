@@ -3,6 +3,7 @@ import { Pool, type QueryResultRow } from "pg";
 export type AdminUserRisk = "missing-password" | "external-email" | "telegram-placeholder-email";
 
 export interface AdminUserListItem {
+  accountState: "password-login" | "telegram-only";
   createdAt?: string;
   email?: string;
   hasPassword: boolean;
@@ -91,6 +92,7 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
   return {
     id: row.id,
     username: row.username,
+    accountState: row.has_password ? "password-login" : "telegram-only",
     ...(row.email ? { email: row.email } : {}),
     hasPassword: row.has_password,
     risks: userRisks(row),
