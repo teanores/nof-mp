@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import { portalModules, portalModuleStatusLabel, systemHealthCards, type PortalModule } from "@/lib/portal-shell";
+import { fetchPortalSession } from "@/lib/platform-api";
+import type { ForgePortalUser } from "@/lib/types";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
 const overviewCopy = {
@@ -59,20 +61,74 @@ function ModuleCard({ module }: { module: PortalModule }) {
   );
 }
 
+function avatarInitials(user?: ForgePortalUser): string {
+  const username = user?.username?.trim();
+  if (!username) {
+    return "?";
+  }
+  const parts = username.split(/[\s._-]+/).filter(Boolean);
+  const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : username.slice(0, 2);
+  return initials.toUpperCase();
+}
+
+function ProfileAction() {
+  const copy = overviewCopy[usePortalLanguage()];
+  const [user, setUser] = useState<ForgePortalUser | undefined>();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadUser() {
+      try {
+        const session = await fetchPortalSession();
+        if (isMounted) {
+          setUser(session.user);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(undefined);
+        }
+      }
+    }
+
+    void loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (!user) {
+    return (
+      <Link
+        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-xs font-bold text-black transition"
+        href="/profile"
+      >
+        {copy.profile}
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      aria-label={`Профиль ${user.username}`}
+      className="grid h-12 w-12 place-items-center border border-forge-accent bg-forge-surface text-sm font-bold text-forge-accent transition hover:bg-forge-accent hover:text-black"
+      href="/profile"
+      style={{ clipPath: "polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)" }}
+      title={user.username}
+    >
+      {avatarInitials(user)}
+    </Link>
+  );
+}
+
 export function PortalOverviewPage() {
   const copy = overviewCopy[usePortalLanguage()];
 
   return (
     <PortalPageShell>
       <PortalHeader
-        actions={
-          <Link
-            className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-xs font-bold text-black transition"
-            href="/profile"
-          >
-            {copy.profile}
-          </Link>
-        }
+        actions={<ProfileAction />}
         description={copy.description}
         title="Narag'Othal Forgath"
       />
