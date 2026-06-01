@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import { PortalOverviewPage } from "@/components/PortalOverviewPage";
+import React from "react";
 
 export default function OverviewPage() {
-  redirect("/");
+  return <PortalOverviewPage />;
 }
