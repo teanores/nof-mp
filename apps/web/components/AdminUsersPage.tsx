@@ -9,6 +9,7 @@ const riskLabels: Record<AdminUserRisk, string> = {
   "missing-password": "нет пароля",
   "telegram-placeholder-email": "telegram email",
 };
+const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
 
 function formatDate(value?: string): string {
   if (!value) {
@@ -26,13 +27,13 @@ function initials(username: string): string {
 
 function UserRiskBadges({ risks }: { risks: AdminUserRisk[] }) {
   if (risks.length === 0) {
-    return <span className="tech-label rounded-sm border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-300">ок</span>;
+    return <span className={`${badgeBaseClass} border-emerald-500/40 text-emerald-300`}>ок</span>;
   }
 
   return (
     <div className="flex flex-wrap gap-1">
       {risks.map((risk) => (
-        <span key={risk} className="tech-label rounded-sm border border-amber-400/50 px-2 py-1 text-[10px] text-amber-200">
+        <span key={risk} className={`${badgeBaseClass} border-amber-400/50 text-amber-200`}>
           {riskLabels[risk]}
         </span>
       ))}
@@ -42,11 +43,11 @@ function UserRiskBadges({ risks }: { risks: AdminUserRisk[] }) {
 
 function AccountState({ hasPassword }: { hasPassword: boolean }) {
   return hasPassword ? (
-    <span className="tech-label rounded-sm border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-300">
+    <span className={`${badgeBaseClass} border-emerald-500/40 text-emerald-300`}>
       вход по паролю
     </span>
   ) : (
-    <span className="tech-label rounded-sm border border-amber-400/50 px-2 py-1 text-[10px] text-amber-200">
+    <span className={`${badgeBaseClass} border-amber-400/50 text-amber-200`}>
       пароль не задан
     </span>
   );
@@ -54,7 +55,7 @@ function AccountState({ hasPassword }: { hasPassword: boolean }) {
 
 function AdminActionState() {
   return (
-    <span className="tech-label rounded-sm border border-forge-line px-2 py-1 text-[10px] text-forge-muted">
+    <span className={`${badgeBaseClass} border-forge-line text-forge-muted`}>
       блокировка готовится
     </span>
   );
