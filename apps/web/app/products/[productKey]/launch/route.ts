@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { portalLoginUrl, portalSessionFromRequest, safePortalReturnTo } from "@/lib/server/portal-auth-gate";
-import { getProductAccessRepository } from "@/lib/server/product-access-repository";
+import { getProductAccessRepository, subjectFromPortalSession } from "@/lib/server/product-access-repository";
 import { getProductExchangeRepository } from "@/lib/server/product-exchange-repository";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +32,15 @@ export async function GET(request: NextRequest, context: ProductLaunchContext): 
     });
   }
 
-  if (!(await getProductAccessRepository().exists(productKey))) {
+  const accessRepository = getProductAccessRepository();
+  const products = await accessRepository.listForSubject(subjectFromPortalSession(session));
+  const product = products.find((candidate) => candidate.key === productKey);
+
+  if (!product) {
     return NextResponse.json({ error: "unknown_product", ok: false }, { status: 404 });
+  }
+  if (!product.access.allowed) {
+    return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
   }
 
   const returnTo = safePortalReturnTo(request.nextUrl.searchParams.get("next") ?? "/");

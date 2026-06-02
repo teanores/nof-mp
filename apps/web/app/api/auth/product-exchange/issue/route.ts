@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { portalSessionFromRequest, requirePortalApiSession } from "@/lib/server/portal-auth-gate";
-import { getProductAccessRepository } from "@/lib/server/product-access-repository";
+import { getProductAccessRepository, subjectFromPortalSession } from "@/lib/server/product-access-repository";
 import { getProductExchangeRepository } from "@/lib/server/product-exchange-repository";
 
 function productCallbackOrigin(productKey: string): string {
@@ -35,8 +35,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "invalid_session", ok: false }, { status: 401 });
   }
 
-  if (!(await getProductAccessRepository().exists(productKey))) {
+  const accessRepository = getProductAccessRepository();
+  const products = await accessRepository.listForSubject(subjectFromPortalSession(session));
+  const product = products.find((candidate) => candidate.key === productKey);
+
+  if (!product) {
     return NextResponse.json({ error: "unknown_product", ok: false }, { status: 404 });
+  }
+  if (!product.access.allowed) {
+    return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
   }
 
   const state = randomUUID();
