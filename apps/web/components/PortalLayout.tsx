@@ -1,6 +1,7 @@
 import React from "react";
 
 import { PortalBreadcrumbs, type PortalBreadcrumbItem } from "@/components/PortalBreadcrumbs";
+import webPackage from "../package.json";
 
 interface PortalPageShellProps {
   children: React.ReactNode;
@@ -25,7 +26,13 @@ interface PortalActionBarProps {
 export function PortalPageShell({ children, maxWidthClassName = "max-w-[1500px]" }: PortalPageShellProps) {
   return (
     <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
-      <div className={`mx-auto flex w-full ${maxWidthClassName} flex-col gap-5`}>{children}</div>
+      <div className={`mx-auto flex w-full ${maxWidthClassName} flex-col gap-5`}>
+        {children}
+        <footer className="tech-label flex items-center justify-between border-t border-forge-line pt-4 text-[10px] text-forge-muted">
+          <span>NOF.MP // v{webPackage.version}</span>
+          <span>Narag&apos;Othal Forgath</span>
+        </footer>
+      </div>
     </main>
   );
 }
