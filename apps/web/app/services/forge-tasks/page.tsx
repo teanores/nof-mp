@@ -1,4 +1,5 @@
 import Link from "next/link";
+import React from "react";
 
 export default function ForgeTasksServicePage() {
   return (
@@ -11,9 +12,14 @@ export default function ForgeTasksServicePage() {
             Трекер задач, эпиков, спринтов и рабочих планов. Доступ к рабочим проектам выдаётся отдельно.
           </p>
         </div>
-        <Link className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent" href="/overview">
-          К разделам кузницы
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs text-black transition hover:border-forge-ink hover:bg-forge-ink" href="https://forge-tasks.forgath.ru/login">
+            Перейти в Forge Tasks
+          </Link>
+          <Link className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent" href="/overview">
+            К разделам кузницы
+          </Link>
+        </div>
       </section>
     </main>
   );
