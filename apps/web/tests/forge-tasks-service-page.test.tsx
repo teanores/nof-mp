@@ -9,7 +9,7 @@ describe("Forge Tasks service preview page", () => {
     render(<ForgeTasksServicePage />);
 
     expect(screen.getByRole("heading", { name: "Forge Tasks" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Перейти в Forge Tasks" })).toHaveAttribute("href", "https://forge-tasks.forgath.ru/login");
+    expect(screen.getByRole("link", { name: "Перейти в Forge Tasks" })).toHaveAttribute("href", "https://forge-tasks.forgath.ru/overview");
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
   });
 });
