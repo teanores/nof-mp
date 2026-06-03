@@ -81,7 +81,7 @@ describe("user profile MCP access", () => {
     expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
     expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
-    expect(screen.getByText("NOF.MP // v0.1.10")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
     expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
     expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe("user profile MCP access", () => {
     expect(document.body).toHaveTextContent("Войди, чтобы открыть профиль, настройки и доступные разделы платформы.");
     expect(document.body).not.toHaveTextContent("Dragon Forge");
     expect(document.body).not.toHaveTextContent("Python");
-    expect(screen.getByText("NOF.MP // v0.1.10")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
   });
 
   it("shows MCP setup only for projects granted to the current user", async () => {
@@ -122,35 +122,6 @@ describe("user profile MCP access", () => {
     expect(document.body).not.toHaveTextContent("30510");
   });
 
-  it("renders service blocks from the platform registry without implying unavailable access", async () => {
-    platformApi.fetchPlatformProjects.mockResolvedValue([
-      project({
-        access: { allowed: true, reason: "registered-user" },
-        description: "Task tracker and Wiki",
-        key: "nof-tt",
-        name: "Forge Tasks",
-      }),
-      project({
-        access: { allowed: false, reason: "not_granted" },
-        description: "Streamer platform preview",
-        key: "streamer",
-        name: "Streamer",
-      }),
-    ]);
-
-    render(<UserProfilePage />);
-
-    await screen.findByRole("heading", { name: "Сервисы платформы" });
-
-    expect(screen.getByText("Forge Tasks")).toBeInTheDocument();
-    expect(screen.getByText("Streamer")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Открыть" })).toHaveAttribute("href", "/services/nof-tt");
-    expect(screen.getByText("Доступ пока не выдан")).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent("example.com");
-    expect(document.body).not.toHaveTextContent("192.168.1.51");
-    expect(document.body).not.toHaveTextContent("30510");
-  });
-
   it("keeps MCP setup visible when the user already has a real token", async () => {
     const token: ForgeMcpToken = {
       createdAt: "2026-06-01T00:00:00.000Z",
@@ -168,5 +139,6 @@ describe("user profile MCP access", () => {
 
     expect(screen.getByText("MCP-ключи доступа")).toBeInTheDocument();
     expect(screen.getByText("nof-tt / nof_tt_1234...")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Сервисы платформы" })).not.toBeInTheDocument();
   });
 });

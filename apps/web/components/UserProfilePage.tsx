@@ -72,10 +72,6 @@ const profileCopy = {
     signIn: "Sign in",
     signInNote: "Sign in to open your profile, settings and available platform modules.",
     signInTitle: "Sign in to the platform",
-    serviceAccessOpen: "Open",
-    serviceAccessRestricted: "Access is not granted yet",
-    serviceBlocksDescription: "Services are shown from the platform registry and access policy. Product profile data will appear only after an approved service contract.",
-    serviceBlocksTitle: "Platform services",
     theme: "Theme",
     themeNote: "The color scheme is stored in the browser separately for each user.",
     title: "Profile",
@@ -108,10 +104,6 @@ const profileCopy = {
     signIn: "Войти",
     signInNote: "Войди, чтобы открыть профиль, настройки и доступные разделы платформы.",
     signInTitle: "Вход в платформу",
-    serviceAccessOpen: "Открыть",
-    serviceAccessRestricted: "Доступ пока не выдан",
-    serviceBlocksDescription: "Сервисы показаны из реестра платформы и политики доступа. Данные профиля из сервисов появятся только после согласованного контракта.",
-    serviceBlocksTitle: "Сервисы платформы",
     theme: "Тема",
     themeNote: "Световая схема хранится в браузере отдельно для каждого пользователя.",
     title: "Профиль",
@@ -411,46 +403,6 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 <DataRow label="LAST SEEN" value={formatDate(user.lastSeen)} />
               </div>
             </section>
-
-            {projects.length > 0 ? (
-              <section className="panel p-5">
-                <p className="tech-label text-xs text-forge-accent">{copy.serviceBlocksTitle}</p>
-                <h2 className="heading-tech mt-2 text-lg font-bold text-forge-ink">{copy.serviceBlocksTitle}</h2>
-                <p className="mt-2 text-sm leading-6 text-forge-muted">{copy.serviceBlocksDescription}</p>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {projects.map((project) => (
-                    <article key={project.key} className="rounded-sm border border-forge-line bg-forge-surface p-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-forge-ink">{project.name}</p>
-                          <p className="tech-label mt-1 text-[10px] text-forge-muted">{project.key}</p>
-                        </div>
-                        <span
-                          className={`tech-label shrink-0 rounded-sm border px-2 py-1 text-[9px] ${
-                            project.access.allowed
-                              ? "border-forge-accent text-forge-accent"
-                              : "border-forge-line text-forge-muted"
-                          }`}
-                        >
-                          {project.access.allowed ? "AVAILABLE" : "LOCKED"}
-                        </span>
-                      </div>
-                      <p className="mt-3 text-xs leading-5 text-forge-muted">{project.description}</p>
-                      {project.access.allowed ? (
-                        <a
-                          className="tech-label mt-3 inline-flex rounded-sm border border-forge-accent bg-forge-accent px-3 py-2 text-[10px] font-bold text-black transition"
-                          href={`/services/${project.key}`}
-                        >
-                          {copy.serviceAccessOpen}
-                        </a>
-                      ) : (
-                        <p className="tech-label mt-3 text-[10px] text-forge-muted">{copy.serviceAccessRestricted}</p>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ) : null}
 
             <section className="panel p-5">
               <p className="tech-label text-xs text-forge-accent">{copy.personalSettings}</p>
