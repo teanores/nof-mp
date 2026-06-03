@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Задания кузницы",
-  description: "Таск-трекер Dragon Forge / NOF Platform Hybrid",
+  title: "Narag'Othal Forgath",
+  description: "Главная платформа Narag'Othal Forgath",
   icons: {
     icon: "/icon.svg",
   },
