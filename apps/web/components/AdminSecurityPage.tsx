@@ -2,31 +2,8 @@ import Link from "next/link";
 import React from "react";
 
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
+import type { SecurityAuditDashboard } from "@/lib/server/security-audit-dashboard";
 import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
-
-interface SecuritySignal {
-  label: string;
-  note: string;
-  status: "active" | "planned" | "review";
-}
-
-const signals: SecuritySignal[] = [
-  {
-    label: "Login gate",
-    note: "Гости уходят на платформенный вход, закрытые страницы не показывают приватный контент.",
-    status: "active",
-  },
-  {
-    label: "Rate limit",
-    note: "Публичные auth endpoints должны возвращать 429 при частых попытках.",
-    status: "review",
-  },
-  {
-    label: "Access audit",
-    note: "Детальные события безопасности остаются платформенной зоной и не должны жить в продуктовых shell.",
-    status: "planned",
-  },
-];
 
 function initials(user?: ForgePortalUser): string {
   const username = user?.username?.trim();
@@ -51,28 +28,22 @@ function ProfileAction({ session }: { session: ForgePortalSession }) {
   );
 }
 
-function SignalCard({ signal }: { signal: SecuritySignal }) {
-  const statusClass =
-    signal.status === "active"
-      ? "border-emerald-500/40 text-emerald-300"
-      : signal.status === "review"
-        ? "border-amber-400/50 text-amber-200"
-        : "border-forge-line text-forge-muted";
-
+function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <article className="rounded-sm border border-forge-line bg-forge-surface p-4">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="heading-tech text-lg font-bold text-forge-ink">{signal.label}</h3>
-        <span className={`tech-label rounded-sm border px-2 py-1 text-[10px] ${statusClass}`}>
-          {signal.status}
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-6 text-forge-muted">{signal.note}</p>
-    </article>
+    <div className="rounded-sm border border-forge-line bg-forge-surface p-3">
+      <p className="tech-label text-xs text-forge-muted">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-forge-ink">{value}</p>
+    </div>
   );
 }
 
-export function AdminSecurityPage({ session }: { session: ForgePortalSession }) {
+export function AdminSecurityPage({
+  dashboard,
+  session,
+}: {
+  dashboard: SecurityAuditDashboard;
+  session: ForgePortalSession;
+}) {
   return (
     <PortalPageShell>
       <PortalHeader
@@ -81,40 +52,99 @@ export function AdminSecurityPage({ session }: { session: ForgePortalSession }) 
           { href: "/overview", label: "Разделы кузницы" },
           { label: "Безопасность" },
         ]}
-        description="Платформенная панель безопасности: входы, rate-limit, доступы и будущий аудит без продуктового footer и внутренних адресов."
+        description="Платформенная панель безопасности: входы, rate-limit, доступы и очищенные edge-события без продуктового footer и внутренних адресов."
         eyebrow="Администрирование"
         title="Безопасность платформы"
       />
 
       <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
         <article className="panel p-5">
-          <p className="tech-label text-xs text-forge-accent">Статус</p>
-          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Платформенная зона</h2>
+          <p className="tech-label text-xs text-forge-accent">Рекомендация</p>
+          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">{dashboard.recommendation}</h2>
           <p className="mt-3 text-sm leading-6 text-forge-muted">
-            Эта страница принадлежит NOF Main Platform. Продуктовые сервисы могут передавать безопасные summary-события
-            только через согласованный контракт, но не управляют shell, footer или платформенным доступом.
+            Сводка построена по очищенным событиям за последние 24 часа. Сырые логи, секреты, cookie и чувствительные
+            значения не отображаются.
           </p>
         </article>
 
-        <section className="grid gap-3 md:grid-cols-3" aria-label="Security signals">
-          {signals.map((signal) => (
-            <SignalCard key={signal.label} signal={signal} />
-          ))}
-        </section>
+        <article className="grid gap-3 sm:grid-cols-3">
+          <StatCard label="Успешные входы" value={dashboard.summary.successfulLogins} />
+          <StatCard label="Неудачные входы" value={dashboard.summary.failedLogins} />
+          <StatCard label="Rate limit / 429" value={dashboard.summary.rateLimited} />
+          <StatCard label="403 / 401" value={dashboard.summary.forbidden} />
+          <StatCard label="404 / unknown" value={dashboard.summary.notFound} />
+          <StatCard label="Сканы" value={dashboard.summary.suspiciousScans} />
+        </article>
       </section>
 
-      <section className="panel grid gap-4 p-5 text-sm text-forge-muted md:grid-cols-2">
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Что проверять сейчас</p>
-          <p className="mt-2">
-            Страница должна открываться в стандартном тёмном shell, показывать профиль в header и footer `NOF.MP`.
-          </p>
-        </div>
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Что не показывать</p>
-          <p className="mt-2">
-            Никаких секретов, значений env, внутренних NodePort, локальных IP, продуктовых footer или сырых логов.
-          </p>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <article className="panel p-5">
+          <h2 className="heading-tech text-xl font-bold text-forge-ink">Источники</h2>
+          <div className="mt-4 space-y-3">
+            {dashboard.topSources.length === 0 ? <p className="text-sm text-forge-muted">Событий пока нет.</p> : null}
+            {dashboard.topSources.map((source) => (
+              <div key={source.ip} className="rounded-sm border border-forge-line bg-forge-surface p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-mono text-sm text-forge-ink">{source.ip}</p>
+                  <span className="tech-label text-xs text-forge-muted">{source.total}</span>
+                </div>
+                <p className="mt-2 text-xs text-forge-muted">
+                  Ошибки входа: {source.failedLogins} / сканы: {source.scans}
+                </p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel p-5">
+          <h2 className="heading-tech text-xl font-bold text-forge-ink">Пути</h2>
+          <div className="mt-4 space-y-3">
+            {dashboard.topPaths.length === 0 ? <p className="text-sm text-forge-muted">Подозрительных путей пока нет.</p> : null}
+            {dashboard.topPaths.map((path) => (
+              <div key={path.path} className="rounded-sm border border-forge-line bg-forge-surface p-3">
+                <p className="font-mono text-sm text-forge-ink">{path.path}</p>
+                <p className="mt-2 text-xs text-forge-muted">Событий: {path.count}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="panel p-5">
+        <h2 className="heading-tech text-xl font-bold text-forge-ink">Последние события</h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead className="tech-label text-xs text-forge-muted">
+              <tr>
+                <th className="border-b border-forge-line py-2 pr-3">Время</th>
+                <th className="border-b border-forge-line py-2 pr-3">Кто</th>
+                <th className="border-b border-forge-line py-2 pr-3">Действие</th>
+                <th className="border-b border-forge-line py-2 pr-3">IP</th>
+                <th className="border-b border-forge-line py-2 pr-3">Путь</th>
+                <th className="border-b border-forge-line py-2 pr-3">Статус</th>
+                <th className="border-b border-forge-line py-2">User-agent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dashboard.recentEvents.map((event) => (
+                <tr key={event.id} className="align-top text-forge-muted">
+                  <td className="border-b border-forge-line py-2 pr-3">
+                    {new Date(event.createdAt).toLocaleString("ru-RU")}
+                  </td>
+                  <td className="border-b border-forge-line py-2 pr-3">
+                    <p className="font-medium text-forge-ink">{event.actorLabel}</p>
+                    {event.investigationHint ? <p className="mt-1 text-xs text-forge-muted">{event.investigationHint}</p> : null}
+                  </td>
+                  <td className="border-b border-forge-line py-2 pr-3">{event.activityLabel}</td>
+                  <td className="border-b border-forge-line py-2 pr-3 font-mono">{event.ip}</td>
+                  <td className="border-b border-forge-line py-2 pr-3 font-mono">{event.path}</td>
+                  <td className="border-b border-forge-line py-2 pr-3">{event.statusCode}</td>
+                  <td className="border-b border-forge-line py-2">{event.userAgent}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {dashboard.recentEvents.length === 0 ? <p className="mt-4 text-sm text-forge-muted">Событий пока нет.</p> : null}
         </div>
       </section>
     </PortalPageShell>

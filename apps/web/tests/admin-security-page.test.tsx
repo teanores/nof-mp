@@ -3,11 +3,42 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 
 import { AdminSecurityPage } from "@/components/AdminSecurityPage";
+import type { SecurityAuditDashboard } from "@/lib/server/security-audit-dashboard";
+
+const dashboard: SecurityAuditDashboard = {
+  generatedAt: "2026-06-03T20:40:00.000Z",
+  recentEvents: [
+    {
+      activityLabel: "Неудачный вход",
+      actorLabel: "Логин: a***n@forgath.ru",
+      classification: "auth",
+      createdAt: "2026-06-03T20:39:00.000Z",
+      id: "event-1",
+      ip: "203.0.113.10",
+      method: "POST",
+      path: "/api/login",
+      statusCode: 401,
+      userAgent: "curl",
+    },
+  ],
+  recommendation: "Проверить пользователя",
+  summary: {
+    failedLogins: 1,
+    forbidden: 0,
+    notFound: 0,
+    rateLimited: 0,
+    successfulLogins: 0,
+    suspiciousScans: 0,
+  },
+  topPaths: [{ count: 1, path: "/api/login" }],
+  topSources: [{ failedLogins: 1, ip: "203.0.113.10", scans: 0, total: 1 }],
+};
 
 describe("admin security page", () => {
   it("uses the platform shell and footer instead of a product shell", () => {
     render(
       <AdminSecurityPage
+        dashboard={dashboard}
         session={{
           authenticated: true,
           loginUrl: "/login",
@@ -22,9 +53,14 @@ describe("admin security page", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Безопасность платформы" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Проверить пользователя" })).toBeInTheDocument();
+    expect(screen.getByText("Неудачные входы")).toBeInTheDocument();
+    expect(screen.getByText("Логин: a***n@forgath.ru")).toBeInTheDocument();
+    expect(screen.getByText("Неудачный вход")).toBeInTheDocument();
+    expect(screen.getAllByText("203.0.113.10")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.13")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("NOF.TT");
     expect(document.body).not.toHaveTextContent("192.168.1.51");
     expect(document.body).not.toHaveTextContent("30500");
