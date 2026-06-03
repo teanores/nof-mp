@@ -11,10 +11,10 @@ interface RegisterPageProps {
 }
 
 const registrationPrinciples = [
-  "Google SMTP для UAT, порт 587 и STARTTLS.",
-  "Пользователь создаётся только после подтверждения email-кода.",
-  "Новый аккаунт получает базовый доступ: публичные разделы и свой профиль.",
-  "OAuth2 через Google, Yandex и Telegram остаётся отдельной задачей.",
+  "Регистрация доступна только через подтверждённую почту.",
+  "Новый аккаунт получает личный профиль и базовые разделы платформы.",
+  "Доступ к сервисам подключается отдельно по правилам платформы.",
+  "Если письмо не пришло, проверьте папку Спам и попробуйте запросить код снова.",
 ];
 
 function ErrorPanel({ error }: { error: RegisterError }) {
@@ -24,9 +24,9 @@ function ErrorPanel({ error }: { error: RegisterError }) {
 
   const message =
     error === "unavailable"
-      ? "Регистрация почти готова: нужен выкат Python backend и SMTP-контур."
+      ? "Регистратор ушёл на обЭд кушать технические шоколадки. Регистрация скоро вернётся. Сейчас можно только войти в уже созданный аккаунт."
       : error === "conflict"
-        ? "Такой логин или email уже используется."
+        ? "Не удалось создать аккаунт с такими данными."
         : "Проверьте введённые данные и попробуйте ещё раз.";
 
   return (
@@ -128,13 +128,13 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
       <section className="panel grid w-full max-w-5xl overflow-hidden lg:grid-cols-[1.05fr_0.95fr]">
         <div className="flex min-h-[560px] flex-col justify-between gap-8 p-6 sm:p-8">
           <div>
-            <p className="tech-label text-xs text-forge-accent">Dragon Forge / Registration</p>
+            <p className="tech-label text-xs text-forge-accent">{"Narag'Othal Forgath"}</p>
             <h1 className="heading-tech mt-3 text-4xl font-bold text-forge-ink sm:text-5xl">
-              {isConfirmStep ? "Введите код подтверждения" : "Регистрация в кузницу"}
+              {isConfirmStep ? "Введите код подтверждения" : "Стойка регистрации"}
             </h1>
             <p className="mt-4 text-sm leading-7 text-forge-muted">
-              Создаём аккаунт только через проверенный email-код. Пользователи хранятся в Python backend Dragon Forge,
-              а новый портал остаётся единым входом без отдельной базы аккаунтов.
+              Создаём аккаунт только через проверенный email-код. После регистрации вы сможете войти в профиль и
+              продолжить работу с сервисами платформы.
             </p>
           </div>
 
@@ -157,8 +157,8 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
         </div>
 
         <aside className="border-t border-forge-line bg-forge-surface p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="tech-label text-xs text-forge-accent">UAT scope</p>
-          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Что проверяем</h2>
+          <p className="tech-label text-xs text-forge-accent">Registration rules</p>
+          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Как это работает</h2>
           <div className="mt-5 grid gap-3">
             {registrationPrinciples.map((item) => (
               <article key={item} className="rounded-sm border border-forge-line bg-forge-panel p-3">

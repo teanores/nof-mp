@@ -8,12 +8,18 @@ describe("register page", () => {
   it("shows the email registration request form", () => {
     render(<RegisterPage />);
 
-    expect(screen.getByRole("heading", { name: "Регистрация в кузницу" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Стойка регистрации" })).toBeInTheDocument();
+    expect(screen.getByText("Narag'Othal Forgath")).toBeInTheDocument();
     expect(screen.getByLabelText("Логин")).toHaveAttribute("name", "username");
     expect(screen.getByLabelText("Email")).toHaveAttribute("name", "email");
     expect(screen.getByLabelText("Пароль")).toHaveAttribute("name", "password");
     expect(screen.getByRole("button", { name: "Получить код" })).toBeInTheDocument();
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/request");
+    expect(document.body.textContent).not.toContain("Dragon Forge");
+    expect(document.body.textContent).not.toContain("Python");
+    expect(document.body.textContent).not.toContain("OAuth");
+    expect(document.body.textContent).not.toContain("SMTP");
+    expect(document.body.textContent).not.toContain("backend");
   });
 
   it("shows the confirmation form when email is pending", () => {
@@ -29,8 +35,11 @@ describe("register page", () => {
   it("shows a controlled unavailable state before backend rollout", () => {
     render(<RegisterPage error="unavailable" />);
 
-    expect(screen.getByText(/Регистрация почти готова/)).toBeInTheDocument();
-    expect(screen.getByText(/Python backend и SMTP-контур/)).toBeInTheDocument();
+    expect(screen.getByText(/Регистратор ушёл на обЭд кушать технические шоколадки/)).toBeInTheDocument();
+    expect(screen.getByText(/Сейчас можно только войти в уже созданный аккаунт/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("Python");
+    expect(document.body.textContent).not.toContain("SMTP");
+    expect(document.body.textContent).not.toContain("backend");
   });
 
   it("guards against mojibake in owner-facing text", () => {

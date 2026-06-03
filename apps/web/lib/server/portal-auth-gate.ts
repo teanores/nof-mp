@@ -68,11 +68,15 @@ export async function requirePortalApiSession(request: NextRequest): Promise<Nex
 }
 
 export async function requirePortalPageSession(returnTo: string): Promise<ForgePortalSession> {
-  const cookieStore = await cookies();
-  const session = await getDragonForgeAuthRepository().sessionFromCookie(cookieStore.get(dragonForgeAuthCookieName)?.value);
+  const session = await portalPageSession();
   if (!session.authenticated) {
     redirect(portalLoginUrl(returnTo));
   }
 
   return session;
+}
+
+export async function portalPageSession(): Promise<ForgePortalSession> {
+  const cookieStore = await cookies();
+  return getDragonForgeAuthRepository().sessionFromCookie(cookieStore.get(dragonForgeAuthCookieName)?.value);
 }

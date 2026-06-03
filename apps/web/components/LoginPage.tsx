@@ -20,8 +20,8 @@ const copy = {
     language: "LANGUAGE",
     loginButton: "Sign in",
     password: "Password",
-    subtitle: "Sign in to open your profile, platform sections and connected services.",
-    title: "Portal sign-in",
+    subtitle: "Sign in to continue working with platform services.",
+    title: "Forge checkpoint",
   },
   ru: {
     accountHint: "Используй аккаунт, зарегистрированный для сервисов Narag'Othal Forgath.",
@@ -31,8 +31,8 @@ const copy = {
     language: "ЯЗЫК",
     loginButton: "Войти",
     password: "Пароль",
-    subtitle: "Войди, чтобы открыть профиль, разделы платформы и подключённые сервисы.",
-    title: "Вход в портал",
+    subtitle: "Войдите, чтобы продолжить работу с сервисами платформы.",
+    title: "Проходная Кузни",
   },
 };
 
