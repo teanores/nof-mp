@@ -12,14 +12,21 @@ describe("login language switch", () => {
   });
 
   it("changes login page copy immediately when language changes", () => {
-    render(<LoginPage />);
+    render(<LoginPage next="/overview" />);
 
-    expect(screen.getByRole("heading", { name: "Единый вход в кузницу" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Вход в портал" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Создать аккаунт" })).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("Dragon Forge");
+    expect(document.body.textContent).not.toContain("Python");
+    expect(document.body.textContent).not.toContain("OAuth");
+    expect(document.body.textContent).not.toContain("Auth Boundary");
+    expect(document.body.textContent).not.toContain("/overview");
 
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "en" } });
 
-    expect(screen.getByRole("heading", { name: "Unified forge sign-in" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Portal sign-in" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create account" })).toBeInTheDocument();
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 });

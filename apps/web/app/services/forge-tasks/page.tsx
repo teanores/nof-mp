@@ -13,7 +13,7 @@ export default function ForgeTasksServicePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Link className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs text-black transition hover:border-forge-ink hover:bg-forge-ink" href="https://forge-tasks.forgath.ru/overview">
+          <Link className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs text-black transition hover:border-forge-ink hover:bg-forge-ink" href="/products/nof-tt/launch?next=%2Foverview">
             Перейти в Forge Tasks
           </Link>
           <Link className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent" href="/overview">
