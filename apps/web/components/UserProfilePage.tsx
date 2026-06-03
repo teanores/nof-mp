@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { BrandHomeLink } from "@/components/BrandHomeLink";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
@@ -58,6 +58,7 @@ const profileCopy = {
     hideToken: "Hide",
     issueMcpKey: "ISSUE MCP KEY",
     mcpDescription: "The full token is shown only once. Keep it in agent secrets, not in Git, documentation or chat.",
+    mcpEmpty: "No active MCP keys yet.",
     mcpTitle: "Agent access to projects",
     mcpEyebrow: "MCP access keys",
     personalSettings: "Personal settings",
@@ -89,6 +90,7 @@ const profileCopy = {
     hideToken: "Скрыть",
     issueMcpKey: "ВЫПУСТИТЬ MCP-КЛЮЧ",
     mcpDescription: "Полный токен показывается только один раз. Храни его в секретах агента, не в Git, документации или чате.",
+    mcpEmpty: "Активных MCP-ключей пока нет.",
     mcpTitle: "Доступ агентов к проектам",
     mcpEyebrow: "MCP-ключи доступа",
     personalSettings: "Персональные настройки",
@@ -213,6 +215,8 @@ export function UserProfilePage() {
 
   const user = session?.user;
   const telegramLabel = user?.telegram?.username ? `@${user.telegram.username}` : user?.telegram?.id ? `id:${user.telegram.id}` : "-";
+  const accessibleMcpProjects = projects.filter((project) => project.access.allowed);
+  const hasMcpAccess = accessibleMcpProjects.length > 0 || mcpTokens.length > 0;
 
   function defaultTokenName(projectKey: string): string {
     return `${projectKey.toUpperCase().replaceAll("-", "_")}_MCP_TOKEN`;
@@ -416,6 +420,7 @@ export function UserProfilePage() {
               </div>
             </section>
 
+            {hasMcpAccess ? (
             <section className="panel p-5">
               <p className="tech-label text-xs text-forge-accent">{copy.mcpEyebrow}</p>
               <h2 className="heading-tech mt-2 text-lg font-bold text-forge-ink">{copy.mcpTitle}</h2>
@@ -430,7 +435,7 @@ export function UserProfilePage() {
                     onChange={(event) => handleProjectChange(event.target.value)}
                   >
                     <option value="">{copy.selectProject}</option>
-                    {projects.map((project) => (
+                    {accessibleMcpProjects.map((project) => (
                       <option key={project.key} value={project.key}>
                         {project.key} - {project.name}
                       </option>
@@ -449,7 +454,7 @@ export function UserProfilePage() {
                 </label>
                 <button
                   className="tech-label min-h-11 rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-center text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isTokenBusy || !newTokenName.trim() || !newTokenProjectKey.trim() || projects.length === 0}
+                  disabled={isTokenBusy || !newTokenName.trim() || !newTokenProjectKey.trim() || accessibleMcpProjects.length === 0}
                   type="button"
                   onClick={() => void handleCreateMcpToken()}
                 >
@@ -503,7 +508,7 @@ export function UserProfilePage() {
               {!createdToken && savedTokenNotice ? <p className="mt-3 text-xs leading-5 text-forge-muted">{savedTokenNotice}</p> : null}
 
               <div className="mt-4 grid gap-2">
-                {mcpTokens.length === 0 ? <p className="text-sm text-forge-muted">Активных MCP-ключей пока нет.</p> : null}
+                {mcpTokens.length === 0 ? <p className="text-sm text-forge-muted">{copy.mcpEmpty}</p> : null}
                 {mcpTokens.map((token) => (
                   <article key={token.id} className="rounded-sm border border-forge-line bg-forge-surface p-3">
                     <div className="flex items-start justify-between gap-3">
@@ -572,6 +577,7 @@ export function UserProfilePage() {
                 </div>
               </section>
             </section>
+            ) : null}
           </>
         ) : null}
       </div>
