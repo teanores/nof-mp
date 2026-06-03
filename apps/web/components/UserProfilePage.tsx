@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 
 import { BrandHomeLink } from "@/components/BrandHomeLink";
+import { PortalPageShell } from "@/components/PortalLayout";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePortalLanguage } from "@/lib/use-portal-language";
@@ -47,7 +48,7 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
 const profileCopy = {
   en: {
     aboutFallback: "Profile description is not filled yet.",
-    identity: "Dragon Forge identity",
+    identity: "Portal identity",
     language: "Portal language",
     languageNote: "The interface language is saved in your profile and applied to portal shell labels.",
     loading: "Loading profile...",
@@ -63,14 +64,14 @@ const profileCopy = {
     mcpEyebrow: "MCP access keys",
     personalSettings: "Personal settings",
     profile: "Profile",
-    profileClosed: "Profile locked",
+    profileClosed: "Sign in required",
     project: "Project",
     rotateToken: "Rotate",
     selectProject: "Select a project",
     showToken: "Show",
-    signIn: "Sign in through Dragon Forge",
-    signInNote: "The new portal uses the same users as the old Python portal. No separate account is created here.",
-    signInTitle: "Sign in through Dragon Forge",
+    signIn: "Sign in",
+    signInNote: "Sign in to open your profile, settings and available platform modules.",
+    signInTitle: "Sign in to the platform",
     theme: "Theme",
     themeNote: "The color scheme is stored in the browser separately for each user.",
     title: "Profile",
@@ -79,7 +80,7 @@ const profileCopy = {
   },
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
-    identity: "Dragon Forge identity",
+    identity: "Идентичность портала",
     language: "Язык портала",
     languageNote: "Язык интерфейса сохраняется в профиле и применяется к системным названиям портала.",
     loading: "Загружаю профиль...",
@@ -95,14 +96,14 @@ const profileCopy = {
     mcpEyebrow: "MCP-ключи доступа",
     personalSettings: "Персональные настройки",
     profile: "Профиль",
-    profileClosed: "Профиль закрыт",
+    profileClosed: "Требуется вход",
     project: "Проект",
     rotateToken: "Перевыпустить",
     selectProject: "Выбери проект",
     showToken: "Показать",
-    signIn: "Войти через Dragon Forge",
-    signInNote: "Новый портал использует тех же пользователей, что и старый Python-портал. Отдельный аккаунт здесь не создаётся.",
-    signInTitle: "Нужно войти через Dragon Forge",
+    signIn: "Войти",
+    signInNote: "Войди, чтобы открыть профиль, настройки и доступные разделы платформы.",
+    signInTitle: "Вход в платформу",
     theme: "Тема",
     themeNote: "Световая схема хранится в браузере отдельно для каждого пользователя.",
     title: "Профиль",
@@ -169,10 +170,10 @@ function LoginRequired({ loginUrl }: { loginUrl?: string }) {
   );
 }
 
-export function UserProfilePage() {
+export function UserProfilePage({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = profileCopy[usePortalLanguage()];
   const [error, setError] = useState<string | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialSession);
   const [isTokenBusy, setIsTokenBusy] = useState(false);
   const [mcpTokens, setMcpTokens] = useState<ForgeMcpToken[]>([]);
   const [projects, setProjects] = useState<ForgeProject[]>([]);
@@ -181,7 +182,7 @@ export function UserProfilePage() {
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
   const [createdToken, setCreatedToken] = useState<{ fullToken: string; token: ForgeMcpToken } | undefined>();
   const [isCreatedTokenVisible, setIsCreatedTokenVisible] = useState(false);
-  const [session, setSession] = useState<ForgePortalSession | undefined>();
+  const [session, setSession] = useState<ForgePortalSession | undefined>(initialSession);
 
   useEffect(() => {
     let isMounted = true;
@@ -189,7 +190,7 @@ export function UserProfilePage() {
     async function loadSession() {
       setError(undefined);
       try {
-        const nextSession = await fetchPortalSession();
+        const nextSession = initialSession ?? (await fetchPortalSession());
         if (isMounted) {
           setSession(nextSession);
           if (nextSession.user) {
@@ -214,7 +215,7 @@ export function UserProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialSession]);
 
   const user = session?.user;
   const telegramLabel = user?.telegram?.username ? `@${user.telegram.username}` : user?.telegram?.id ? `id:${user.telegram.id}` : "-";
@@ -332,8 +333,7 @@ export function UserProfilePage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-4">
+    <PortalPageShell maxWidthClassName="max-w-[1180px]">
         <header className="panel flex items-center justify-between gap-3 p-4">
           <div className="flex min-w-0 items-start gap-3">
             <div className="min-w-0">
@@ -583,7 +583,6 @@ export function UserProfilePage() {
             ) : null}
           </>
         ) : null}
-      </div>
-    </main>
+    </PortalPageShell>
   );
 }

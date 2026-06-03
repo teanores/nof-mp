@@ -73,6 +73,36 @@ describe("user profile MCP access", () => {
     expect(screen.queryByText("НАСТРОЙКА MCP-КЛИЕНТОВ")).not.toBeInTheDocument();
   });
 
+  it("renders the full profile from the server session without falling back to login", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByRole("heading", { name: "teanore" });
+
+    expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
+    expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.5")).toBeInTheDocument();
+    expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
+    expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
+  });
+
+  it("uses public copy on the login-required profile fallback", async () => {
+    platformApi.fetchPortalSession.mockResolvedValue({
+      authenticated: false,
+      loginUrl: "/login?next=%2Fprofile",
+    });
+
+    render(<UserProfilePage />);
+
+    await screen.findByText("Вход в платформу");
+
+    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login?next=%2Fprofile");
+    expect(document.body).toHaveTextContent("Войди, чтобы открыть профиль, настройки и доступные разделы платформы.");
+    expect(document.body).not.toHaveTextContent("Dragon Forge");
+    expect(document.body).not.toHaveTextContent("Python");
+    expect(screen.getByText("NOF.MP // v0.1.5")).toBeInTheDocument();
+  });
+
   it("shows MCP setup only for projects granted to the current user", async () => {
     platformApi.fetchPlatformProjects.mockResolvedValue([
       project({ access: { allowed: true, reason: "member" }, key: "nof-tt", name: "Forge Tasks" }),
