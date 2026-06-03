@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import { portalModules, portalModuleStatusLabel, systemHealthCards, type PortalModule } from "@/lib/portal-shell";
 import { fetchPortalSession } from "@/lib/platform-api";
-import type { ForgePortalUser } from "@/lib/types";
+import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
 const overviewCopy = {
@@ -71,11 +71,16 @@ function avatarInitials(user?: ForgePortalUser): string {
   return initials.toUpperCase();
 }
 
-function ProfileAction() {
+function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = overviewCopy[usePortalLanguage()];
-  const [user, setUser] = useState<ForgePortalUser | undefined>();
+  const [user, setUser] = useState<ForgePortalUser | undefined>(initialSession?.user);
 
   useEffect(() => {
+    if (initialSession) {
+      setUser(initialSession.user);
+      return;
+    }
+
     let isMounted = true;
 
     async function loadUser() {
@@ -96,7 +101,7 @@ function ProfileAction() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialSession]);
 
   if (!user) {
     return (
@@ -121,13 +126,13 @@ function ProfileAction() {
   );
 }
 
-export function PortalOverviewPage() {
+export function PortalOverviewPage({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = overviewCopy[usePortalLanguage()];
 
   return (
     <PortalPageShell>
       <PortalHeader
-        actions={<ProfileAction />}
+        actions={<ProfileAction initialSession={initialSession} />}
         description={copy.description}
         title="Narag'Othal Forgath"
       />
