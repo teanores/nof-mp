@@ -115,7 +115,7 @@ function mcpConfig(fullToken: string, projectKey: string): string {
   return JSON.stringify(
     {
       mcpServers: {
-        [`nof-platform-${projectKey}`]: {
+        [mcpServerName(projectKey)]: {
           type: "http",
           url: mcpServerUrl,
           headers: { "x-api-key": fullToken },
@@ -127,14 +127,17 @@ function mcpConfig(fullToken: string, projectKey: string): string {
   );
 }
 
-const mcpServerUrl = "http://192.168.1.51:30510/api/mcp";
-const mcpSseUrl = "http://192.168.1.51:30510/api/mcp/sse";
+const mcpServerUrl = "https://forge-tasks.forgath.ru/api/mcp";
+
+function mcpServerName(projectKey: string): string {
+  return `${projectKey}-mcp`;
+}
 
 function agentJsonExample(projectKey = "nof-tt"): string {
   return JSON.stringify(
     {
       mcpServers: {
-        [`nof-platform-${projectKey}`]: {
+        [mcpServerName(projectKey)]: {
           type: "http",
           url: mcpServerUrl,
           headers: { "x-api-key": "${MCP_TOKEN}" },
@@ -564,7 +567,7 @@ export function UserProfilePage() {
                     <p className="tech-label text-[10px] text-forge-accent">AutoClaw / Nimbalyst</p>
                     <p className="mt-2 text-sm leading-6 text-forge-muted">
                       Если клиент поддерживает HTTP MCP, укажи URL <code>{mcpServerUrl}</code> и header
-                      <code> x-api-key</code>. Если клиенту нужен SSE transport, используй <code>{mcpSseUrl}</code>.
+                      <code> x-api-key</code>. Один endpoint Forge Tasks принимает project-scoped ключи разных проектов.
                     </p>
                   </article>
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">

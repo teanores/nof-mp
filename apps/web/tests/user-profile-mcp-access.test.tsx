@@ -86,6 +86,10 @@ describe("user profile MCP access", () => {
     expect(screen.getByText("Доступ агентов к проектам")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "nof-tt - Forge Tasks" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "nof-mp - NOF Main Platform" })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/https:\/\/forge-tasks\.forgath\.ru\/api\/mcp/)).toHaveLength(2);
+    expect(screen.getByText(/nof-tt-mcp/)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("192.168.1.51");
+    expect(document.body).not.toHaveTextContent("30510");
   });
 
   it("keeps MCP setup visible when the user already has a real token", async () => {
