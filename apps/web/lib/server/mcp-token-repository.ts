@@ -39,8 +39,8 @@ function databaseUrl(): string {
   return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
-function schemaName(): string {
-  return process.env.NOF_PLATFORM_DB_SCHEMA ?? "nof_platform";
+export function mcpTokenSchemaName(): string {
+  return process.env.FORGE_TASKS_DB_SCHEMA ?? process.env.NOF_PLATFORM_MCP_DB_SCHEMA ?? process.env.NOF_PLATFORM_DB_SCHEMA ?? "forge_tasks";
 }
 
 function tokenSecret(): string {
@@ -76,7 +76,7 @@ export class McpTokenRepository {
   private readonly pool: Pool;
   private readonly schema: string;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = schemaName()) {
+  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = mcpTokenSchemaName()) {
     this.pool = pool;
     this.schema = schema;
   }

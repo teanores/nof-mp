@@ -81,7 +81,7 @@ describe("user profile MCP access", () => {
     expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
     expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
-    expect(screen.getByText("NOF.MP // v0.1.6")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.7")).toBeInTheDocument();
     expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
     expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
   });
@@ -100,7 +100,7 @@ describe("user profile MCP access", () => {
     expect(document.body).toHaveTextContent("Войди, чтобы открыть профиль, настройки и доступные разделы платформы.");
     expect(document.body).not.toHaveTextContent("Dragon Forge");
     expect(document.body).not.toHaveTextContent("Python");
-    expect(screen.getByText("NOF.MP // v0.1.6")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.7")).toBeInTheDocument();
   });
 
   it("shows MCP setup only for projects granted to the current user", async () => {
