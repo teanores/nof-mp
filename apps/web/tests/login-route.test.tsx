@@ -32,7 +32,7 @@ describe("login route", () => {
     mocks.portalPageSession.mockResolvedValue({
       authenticated: true,
       loginUrl: "/login",
-      user: { email: "owner@forgath.ru", id: 1, isAdmin: true, username: "owner" },
+      user: { email: "owner@forgath.ru", experience: 0, id: "1", username: "owner" },
     });
 
     await expect(LoginRoute({ searchParams: Promise.resolve({ next: "/overview" }) })).rejects.toThrow(
