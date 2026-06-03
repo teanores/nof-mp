@@ -93,6 +93,12 @@ function activityLabelFor(eventType: string, path: string): string {
   if (path.startsWith("/_next/static")) {
     return "Статика приложения";
   }
+  if (path.startsWith("/api/mcp")) {
+    return "MCP-запрос";
+  }
+  if (path === "/robots.txt" || path === "/sitemap.xml") {
+    return "Проверка служебного файла";
+  }
   if (path === "/" || path.startsWith("/overview")) {
     return "Обзор портала";
   }
@@ -108,6 +114,12 @@ function actorLabelFor(row: SecurityAuditRow): { actorLabel: string; investigati
   }
   if (row.login_identifier) {
     return { actorLabel: `Логин: ${row.login_identifier}` };
+  }
+  if (row.user_agent.toLowerCase().startsWith("claude-code") || row.path.startsWith("/api/mcp")) {
+    return { actorLabel: "MCP agent client" };
+  }
+  if (row.user_agent === "bot") {
+    return { actorLabel: "Поисковый робот" };
   }
   if (["Chrome", "Firefox", "Safari", "Edge"].some((browser) => row.user_agent.includes(browser))) {
     return {

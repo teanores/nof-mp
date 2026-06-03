@@ -20,6 +20,30 @@ const dashboard: SecurityAuditDashboard = {
       statusCode: 401,
       userAgent: "curl",
     },
+    {
+      activityLabel: "MCP-запрос",
+      actorLabel: "MCP agent client",
+      classification: "normal",
+      createdAt: "2026-06-03T20:38:00.000Z",
+      id: "event-2",
+      ip: "198.51.100.42",
+      method: "POST",
+      path: "/api/mcp",
+      statusCode: 200,
+      userAgent: "claude-code/2.1.161 (cli)",
+    },
+    {
+      activityLabel: "Проверка служебного файла",
+      actorLabel: "Поисковый робот",
+      classification: "normal",
+      createdAt: "2026-06-03T20:37:00.000Z",
+      id: "event-3",
+      ip: "203.0.113.99",
+      method: "GET",
+      path: "/robots.txt",
+      statusCode: 200,
+      userAgent: "bot",
+    },
   ],
   recommendation: "Проверить пользователя",
   summary: {
@@ -30,8 +54,16 @@ const dashboard: SecurityAuditDashboard = {
     successfulLogins: 0,
     suspiciousScans: 0,
   },
-  topPaths: [{ count: 1, path: "/api/login" }],
-  topSources: [{ failedLogins: 1, ip: "203.0.113.10", scans: 0, total: 1 }],
+  topPaths: [
+    { count: 1, path: "/api/login" },
+    { count: 1, path: "/api/mcp" },
+    { count: 1, path: "/robots.txt" },
+  ],
+  topSources: [
+    { failedLogins: 1, ip: "203.0.113.10", scans: 0, total: 1 },
+    { failedLogins: 0, ip: "198.51.100.42", scans: 0, total: 1 },
+    { failedLogins: 0, ip: "203.0.113.99", scans: 0, total: 1 },
+  ],
 };
 
 describe("admin security page", () => {
@@ -57,10 +89,14 @@ describe("admin security page", () => {
     expect(screen.getByText("Неудачные входы")).toBeInTheDocument();
     expect(screen.getByText("Логин: a***n@forgath.ru")).toBeInTheDocument();
     expect(screen.getByText("Неудачный вход")).toBeInTheDocument();
+    expect(screen.getByText("MCP agent client")).toBeInTheDocument();
+    expect(screen.getByText("MCP-запрос")).toBeInTheDocument();
+    expect(screen.getByText("Поисковый робот")).toBeInTheDocument();
+    expect(screen.getByText("Проверка служебного файла")).toBeInTheDocument();
     expect(screen.getAllByText("203.0.113.10")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
-    expect(screen.getByText("NOF.MP // v0.1.13")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.14")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("NOF.TT");
     expect(document.body).not.toHaveTextContent("192.168.1.51");
     expect(document.body).not.toHaveTextContent("30500");

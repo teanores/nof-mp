@@ -1,0 +1,32 @@
+import { describe, expect, it } from "vitest";
+
+import robots from "@/app/robots";
+import sitemap from "@/app/sitemap";
+
+describe("public metadata routes", () => {
+  it("serves crawler policy without exposing private platform surfaces", () => {
+    const policy = robots();
+
+    expect(policy.sitemap).toBe("https://forgath.ru/sitemap.xml");
+    expect(policy.rules).toMatchObject({
+      userAgent: "*",
+      allow: expect.arrayContaining(["/", "/services/forge-tasks", "/services/habit-tracker"]),
+      disallow: expect.arrayContaining(["/admin", "/api", "/profile", "/me", "/products"]),
+    });
+  });
+
+  it("publishes only public portal pages in the sitemap", () => {
+    const urls = sitemap().map((entry) => entry.url);
+
+    expect(urls).toEqual([
+      "https://forgath.ru",
+      "https://forgath.ru/login",
+      "https://forgath.ru/register",
+      "https://forgath.ru/services/forge-tasks",
+      "https://forgath.ru/services/habit-tracker",
+      "https://forgath.ru/services/streamer",
+    ]);
+    expect(urls).not.toContain("https://forgath.ru/admin/security");
+    expect(urls).not.toContain("https://forgath.ru/api/mcp");
+  });
+});
