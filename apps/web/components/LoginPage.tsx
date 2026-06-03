@@ -20,6 +20,7 @@ const copy = {
     language: "LANGUAGE",
     loginButton: "Sign in",
     password: "Password",
+    tagline: '"Show your guild badge!"',
     subtitle: "Sign in to continue working with platform services.",
     title: "Forge checkpoint",
   },
@@ -31,6 +32,7 @@ const copy = {
     language: "ЯЗЫК",
     loginButton: "Войти",
     password: "Пароль",
+    tagline: "«Покажите жетон гильдии!»",
     subtitle: "Войдите, чтобы продолжить работу с сервисами платформы.",
     title: "Проходная Кузни",
   },
@@ -59,8 +61,9 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
           </div>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-10 text-center" data-testid="login-copy-block">
           <h1 className="heading-tech text-4xl font-bold text-forge-ink">{text.title}</h1>
+          <p className="mt-3 text-sm font-semibold italic leading-6 text-forge-accent">{text.tagline}</p>
           <p className="mt-4 text-sm leading-7 text-forge-muted">{text.subtitle}</p>
         </div>
 

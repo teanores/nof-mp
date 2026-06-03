@@ -14,7 +14,7 @@ describe("portal layout primitives", () => {
 
     expect(screen.getByRole("main")).toHaveClass("min-h-screen");
     expect(screen.getByText("Portal content").parentElement).toHaveClass("max-w-test");
-    expect(screen.getByText("NOF.MP // v0.1.8")).toBeInTheDocument();
+    expect(screen.getByText("NOF.MP // v0.1.9")).toBeInTheDocument();
   });
 
   it("renders a header with eyebrow, title, description and actions", () => {

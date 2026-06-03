@@ -15,6 +15,8 @@ describe("login language switch", () => {
     render(<LoginPage next="/overview" />);
 
     expect(screen.getByRole("heading", { name: "Проходная Кузни" })).toBeInTheDocument();
+    expect(screen.getByText("«Покажите жетон гильдии!»")).toBeInTheDocument();
+    expect(screen.getByTestId("login-copy-block")).toHaveClass("text-center");
     expect(screen.getByRole("link", { name: "Создать аккаунт" })).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("Dragon Forge");
     expect(document.body.textContent).not.toContain("Python");
@@ -25,6 +27,7 @@ describe("login language switch", () => {
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "en" } });
 
     expect(screen.getByRole("heading", { name: "Forge checkpoint" })).toBeInTheDocument();
+    expect(screen.getByText('"Show your guild badge!"')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create account" })).toBeInTheDocument();
     expect(screen.getByText("Password")).toBeInTheDocument();
