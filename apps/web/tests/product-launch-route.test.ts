@@ -27,8 +27,29 @@ vi.mock("@/lib/server/portal-auth-gate", () => ({
 }));
 
 vi.mock("@/lib/server/product-access-repository", () => ({
+  subjectFromPortalSession: () => ({ role: "user", userId: "user-1" }),
   getProductAccessRepository: () => ({
-    exists: async (productKey: string) => productKey === "nof-tt",
+    exists: async (productKey: string) => productKey === "nof-tt" || productKey === "nof-onw",
+    listForSubject: async () => [
+      {
+        access: { allowed: true, reason: "registered-user" },
+        createdAt: "2026-05-28T00:00:00.000Z",
+        description: "Task tracker",
+        key: "nof-tt",
+        name: "Forge Tasks",
+        status: "active",
+        visibility: "registered",
+      },
+      {
+        access: { allowed: false, reason: "invitation-required" },
+        createdAt: "2026-05-28T00:00:00.000Z",
+        description: "Private service",
+        key: "nof-onw",
+        name: "Private Service",
+        status: "active",
+        visibility: "invited",
+      },
+    ],
   }),
 }));
 
@@ -82,5 +103,18 @@ describe("product launch route", () => {
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ error: "unknown_product", ok: false });
+  });
+
+  it("denies launch when the platform policy does not allow the product", async () => {
+    const response = await launchProduct(launchRequest("/products/nof-onw/launch"), {
+      params: Promise.resolve({ productKey: "nof-onw" }),
+    });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "access_denied",
+      ok: false,
+      reason: "invitation-required",
+    });
   });
 });

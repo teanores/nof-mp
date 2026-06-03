@@ -1,31 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import React, { useEffect, useState } from "react";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import { portalModules, portalModuleStatusLabel, systemHealthCards, type PortalModule } from "@/lib/portal-shell";
+import { fetchPortalSession } from "@/lib/platform-api";
+import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
 const overviewCopy = {
   en: {
-    description: "Single entry point for account, profile, product discovery, access and platform administration.",
+    adminRequests: "Requests",
+    adminRequestsNote: "Login attempts, rate limits and public scans.",
+    adminUsers: "Users",
+    adminUsersNote: "Accounts, roles and access risks.",
+    description: "Portal experiments: habit tracker, task tracker and streamer portal.",
+    open: "Open",
     portalState: "Portal state",
-    portalStateNote: "The platform owns identity and access. Products integrate through session and access contracts instead of copying account code.",
+    portalStateNote: "The platform is the entry point for account, profile, product discovery and access.",
     portalTitle: "NOF Platform",
-    profile: "PROFILE",
-    modules: "Platform modules",
+    profile: "Profile",
+    modules: "Разделы кузницы",
   },
   ru: {
-    description: "Единая точка входа для учётной записи, профиля, продуктов, доступа и администрирования платформы.",
+    adminRequests: "Запросы",
+    adminRequestsNote: "Входы, rate-limit и публичные сканы.",
+    adminUsers: "Пользователи",
+    adminUsersNote: "Аккаунты, роли и риски доступа.",
+    description: "Портал экспериментов Te'An'ore. Трекер привычек, Трекер задач, Портал стримера.",
+    open: "Открыть",
     portalState: "Состояние портала",
-    portalStateNote: "Платформа хранит идентификацию и доступ. Продукты интегрируются через контракты сессии и прав, а не копируют код учётных записей.",
+    portalStateNote: "Платформа является точкой входа для аккаунта, профиля, обзора сервисов и доступа.",
     portalTitle: "NOF Platform",
-    profile: "ПРОФИЛЬ",
-    modules: "Разделы платформы",
+    profile: "Профиль",
+    modules: "Разделы кузницы",
   },
 } as const;
 
+const adminLinks = [
+  { href: "/admin/security", key: "admin-requests" },
+  { href: "/admin/users", key: "admin-users" },
+] as const;
+
 function ModuleCard({ module }: { module: PortalModule }) {
+  const copy = overviewCopy[usePortalLanguage()];
+
   return (
     <Link className="panel block min-h-[190px] p-4 transition hover:border-forge-accent" href={module.href}>
       <div className="flex items-start justify-between gap-3">
@@ -36,25 +56,83 @@ function ModuleCard({ module }: { module: PortalModule }) {
       </div>
       <h3 className="heading-tech mt-3 text-xl font-bold text-forge-ink">{module.title}</h3>
       <p className="mt-3 text-sm leading-6 text-forge-muted">{module.description}</p>
-      <span className="tech-label mt-5 inline-flex text-xs text-forge-accent">Открыть {">"}</span>
+      <span className="tech-label mt-5 inline-flex text-xs text-forge-accent">{copy.open} {">"}</span>
     </Link>
   );
 }
 
-export function PortalOverviewPage() {
+function avatarInitials(user?: ForgePortalUser): string {
+  const username = user?.username?.trim();
+  if (!username) {
+    return "?";
+  }
+  const parts = username.split(/[\s._-]+/).filter(Boolean);
+  const initials = parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : username.slice(0, 2);
+  return initials.toUpperCase();
+}
+
+function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession }) {
+  const copy = overviewCopy[usePortalLanguage()];
+  const [user, setUser] = useState<ForgePortalUser | undefined>(initialSession?.user);
+
+  useEffect(() => {
+    if (initialSession) {
+      setUser(initialSession.user);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadUser() {
+      try {
+        const session = await fetchPortalSession();
+        if (isMounted) {
+          setUser(session.user);
+        }
+      } catch {
+        if (isMounted) {
+          setUser(undefined);
+        }
+      }
+    }
+
+    void loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialSession]);
+
+  if (!user) {
+    return (
+      <Link
+        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-xs font-bold text-black transition"
+        href="/profile"
+      >
+        {copy.profile}
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      aria-label={`Профиль ${user.username}`}
+      className="grid h-12 w-12 place-items-center rounded-full border border-forge-accent bg-forge-surface text-sm font-bold text-forge-accent transition hover:bg-forge-accent hover:text-black"
+      href="/profile"
+      title={user.username}
+    >
+      {avatarInitials(user)}
+    </Link>
+  );
+}
+
+export function PortalOverviewPage({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = overviewCopy[usePortalLanguage()];
 
   return (
     <PortalPageShell>
       <PortalHeader
-        actions={
-          <Link
-            className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-xs font-bold text-black transition"
-            href="/profile"
-          >
-            {copy.profile}
-          </Link>
-        }
+        actions={<ProfileAction initialSession={initialSession} />}
         description={copy.description}
         title="Narag'Othal Forgath"
       />
@@ -76,6 +154,20 @@ export function PortalOverviewPage() {
                 <p className="mt-1 text-xs text-forge-muted">{note}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {adminLinks.map((link) => {
+              const title = link.key === "admin-requests" ? copy.adminRequests : copy.adminUsers;
+              const note = link.key === "admin-requests" ? copy.adminRequestsNote : copy.adminUsersNote;
+
+              return (
+                <Link key={link.key} className="rounded-sm border border-forge-line bg-forge-surface p-3 transition hover:border-forge-accent" href={link.href}>
+                  <p className="tech-label text-[10px] text-forge-accent">Администрирование</p>
+                  <p className="mt-1 text-sm font-bold text-forge-ink">{title}</p>
+                  <p className="mt-1 text-xs text-forge-muted">{note}</p>
+                </Link>
+              );
+            })}
           </div>
         </article>
       </section>
