@@ -52,11 +52,12 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 ## Task 4: Token Endpoint
 
-- [ ] Implement `POST /oauth/token`.
-- [ ] Accept authorization code exchange only from product server credentials or approved internal auth mechanism.
-- [ ] Return stable platform subject, verified email when available, and explicit claims.
-- [ ] Do not return passwords, raw cookies, internal roles outside agreed scopes, or secrets.
-- [ ] Tests must cover success, replay, expired code, bad client, bad redirect URI and missing code.
+- [x] Implement preliminary `POST /oauth/token`.
+- [x] Accept authorization code exchange only through the validated authorization-code repository.
+- [ ] Add production client authentication or approved internal auth mechanism before external exposure.
+- [ ] Return signed token format and enrich claims with verified email when available.
+- [x] Do not return passwords, raw cookies, internal roles outside agreed scopes, or secrets.
+- [x] Tests must cover success, replay, expired code, bad client, bad redirect URI and missing code.
 
 ## Task 5: Product UX Contract
 
