@@ -36,10 +36,10 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 ## Task 2: Authorization Code Store
 
-- [ ] Create a repository that issues `oauth_code_*` codes with TTL, single-use state, nonce, client id, redirect URI, platform user id and requested scopes.
-- [ ] Use PostgreSQL for production path and an in-memory implementation only where existing tests need it.
-- [ ] Write tests for expiry, replay, client mismatch and redirect URI mismatch.
-- [ ] Run `npm --workspace apps/web run test:run -- tests/oauth-authorization-code-repository.test.ts`.
+- [x] Create a repository that issues `oauth_code_*` codes with TTL, single-use state, nonce, client id, redirect URI, platform user id and requested scopes.
+- [x] Use PostgreSQL for production path and an in-memory implementation only where existing tests need it.
+- [x] Write tests for expiry, replay, client mismatch and redirect URI mismatch.
+- [x] Run `npm --workspace apps/web run test:run -- tests/oauth-authorization-code-repository.test.ts`.
 
 ## Task 3: Authorization Endpoint
 
