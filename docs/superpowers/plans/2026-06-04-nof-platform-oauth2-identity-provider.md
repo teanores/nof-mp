@@ -47,8 +47,8 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 - [x] Validate `client_id`, `redirect_uri`, `response_type=code`, `scope`, `state`, and `nonce`.
 - [x] Require platform session; guests redirect to `/login?next=...`.
 - [x] If consent/linking is required, redirect to `/oauth/consent`.
-- [ ] On approval, redirect to the product `redirect_uri` with `code` and original `state`.
-- [ ] Tests must cover invalid redirect, guest redirect, success, and state preservation.
+- [x] On approval, redirect to the product `redirect_uri` with `code` and original `state`.
+- [x] Tests must cover invalid redirect, guest redirect, success, and state preservation.
 
 ## Task 4: Token Endpoint
 
