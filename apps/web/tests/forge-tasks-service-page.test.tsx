@@ -14,7 +14,7 @@ describe("service preview pages", () => {
     expect(screen.getByRole("heading", { name: "Forge Tasks" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Перейти в Forge Tasks" })).toHaveAttribute(
       "href",
-      "/products/nof-tt/launch?next=%2Foverview",
+      "https://forge-tasks.forgath.ru/auth/platform/start?next=%2Fprojects",
     );
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
