@@ -29,10 +29,10 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 ## Task 1: Client Registry
 
-- [ ] Create `oauth-client-registry.ts` with static first registry entries for `nof-tt` and `nof-ht`.
-- [ ] Each client must have `clientId`, `productKey`, `displayName`, `redirectUris`, and allowed `scopes`.
-- [ ] Write tests proving unknown clients fail and redirect URIs must match exactly.
-- [ ] Run `npm --workspace apps/web run test:run -- tests/oauth-client-registry.test.ts`.
+- [x] Create `oauth-client-registry.ts` with static first registry entries for `nof-tt` and `nof-ht`.
+- [x] Each client must have `clientId`, `productKey`, `displayName`, `redirectUris`, and allowed `scopes`.
+- [x] Write tests proving unknown clients fail and redirect URIs must match exactly.
+- [x] Run `npm --workspace apps/web run test:run -- tests/oauth-client-registry.test.ts`.
 
 ## Task 2: Authorization Code Store
 
