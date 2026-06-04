@@ -8,15 +8,16 @@ export default function HabitTrackerServicePage() {
     <PortalPageShell maxWidthClassName="max-w-4xl">
       <PortalHeader
         breadcrumbs={[{ href: "/overview", label: "Разделы кузницы" }, { label: "Habit Tracker" }]}
-        description="Трекер привычек, целей и регулярных практик. Сервис открыт в тестовом режиме."
+        description="Трекер привычек, целей и регулярных практик. Вход через платформу временно закрыт до завершения безопасной привязки аккаунта."
         eyebrow="Portal module"
         title="Habit Tracker"
       />
       <section className="panel grid gap-6 p-6 sm:p-8">
+        <p className="text-sm leading-6 text-forge-muted">
+          Habit Tracker пока использует собственную сессию. Чтобы не открыть чужую старую сессию браузера, переход из
+          платформы будет включён только после platform identity handoff.
+        </p>
         <div className="flex flex-wrap gap-3">
-          <Link className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs text-black transition hover:border-forge-ink hover:bg-forge-ink" href="https://habit-tracker.forgath.ru">
-            Перейти в Habit Tracker
-          </Link>
           <Link className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent" href="/overview">
             К разделам кузницы
           </Link>

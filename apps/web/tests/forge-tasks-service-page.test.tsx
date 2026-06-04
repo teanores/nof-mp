@@ -20,14 +20,12 @@ describe("service preview pages", () => {
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
-  it("shows Habit Tracker as an external service entry with the standard shell", () => {
+  it("keeps Habit Tracker launch closed until platform identity handoff is ready", () => {
     render(<HabitTrackerServicePage />);
 
     expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Перейти в Habit Tracker" })).toHaveAttribute(
-      "href",
-      "https://habit-tracker.forgath.ru",
-    );
+    expect(screen.queryByRole("link", { name: "Перейти в Habit Tracker" })).not.toBeInTheDocument();
+    expect(screen.getByText(/собственную сессию/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
