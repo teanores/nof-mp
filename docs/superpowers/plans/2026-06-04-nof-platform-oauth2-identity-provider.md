@@ -19,6 +19,8 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 - Create: `apps/web/lib/server/oauth-client-registry.ts`
 - Create: `apps/web/lib/server/oauth-authorization-code-repository.ts`
 - Create: `apps/web/lib/server/oauth-consent-challenge-repository.ts`
+- Create: `apps/web/lib/server/oauth-client-auth.ts`
+- Create: `apps/web/lib/server/oauth-token-signer.ts`
 - Create: `apps/web/app/oauth/authorize/route.ts`
 - Create: `apps/web/app/oauth/token/route.ts`
 - Create: `apps/web/app/oauth/consent/page.tsx`
@@ -26,6 +28,7 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 - Create: `apps/web/tests/oauth-client-registry.test.ts`
 - Create: `apps/web/tests/oauth-authorize-route.test.ts`
 - Create: `apps/web/tests/oauth-token-route.test.ts`
+- Create: `apps/web/tests/oauth-token-signer.test.ts`
 - Create: `apps/web/tests/oauth-consent-challenge-repository.test.ts`
 - Create: `apps/web/tests/oauth-consent-page.test.tsx`
 - Create: `apps/web/tests/oauth-consent-approve-route.test.ts`
@@ -59,8 +62,9 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 - [x] Implement preliminary `POST /oauth/token`.
 - [x] Accept authorization code exchange only through the validated authorization-code repository.
-- [ ] Add production client authentication or approved internal auth mechanism before external exposure.
-- [ ] Return signed token format and enrich claims with verified email when available.
+- [x] Add production client authentication or approved internal auth mechanism before external exposure.
+- [x] Return signed token format.
+- [ ] Enrich claims with verified email when available.
 - [x] Do not return passwords, raw cookies, internal roles outside agreed scopes, or secrets.
 - [x] Tests must cover success, replay, expired code, bad client, bad redirect URI and missing code.
 
