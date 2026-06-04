@@ -3,9 +3,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import {
   findOAuthClient,
   isAllowedOAuthRedirectUri,
-  normalizeOAuthScopes,
 } from "@/lib/server/oauth-client-registry";
 import { getOAuthAuthorizationCodeRepository } from "@/lib/server/oauth-authorization-code-repository";
+import { getOAuthConsentChallengeRepository } from "@/lib/server/oauth-consent-challenge-repository";
 import { portalLoginUrl, portalSessionFromRequest } from "@/lib/server/portal-auth-gate";
 
 export const dynamic = "force-dynamic";
@@ -27,27 +27,8 @@ function redirectToCallback(redirectUri: string, params: Record<string, string>)
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const form = await request.formData();
-  const clientId = String(form.get("client_id") ?? "");
-  const redirectUri = String(form.get("redirect_uri") ?? "");
-  const responseType = String(form.get("response_type") ?? "");
-  const scope = String(form.get("scope") ?? "");
-  const state = String(form.get("state") ?? "");
-  const nonce = String(form.get("nonce") ?? "");
+  const challengeId = String(form.get("challenge_id") ?? "");
   const decision = String(form.get("decision") ?? "");
-
-  const client = findOAuthClient(clientId);
-  if (!client) {
-    return jsonError("invalid_client", 400);
-  }
-  if (responseType !== "code") {
-    return jsonError("unsupported_response_type", 400);
-  }
-  if (!isAllowedOAuthRedirectUri(client.clientId, redirectUri)) {
-    return jsonError("invalid_redirect_uri", 400);
-  }
-  if (!state || !nonce) {
-    return jsonError("invalid_request", 400);
-  }
 
   const session = await portalSessionFromRequest(request);
   if (!session.authenticated || !session.user?.id) {
@@ -57,19 +38,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
+  const challenge = await getOAuthConsentChallengeRepository().consume({
+    challengeId,
+    platformUserId: session.user.id,
+  });
+  if (!challenge.ok) {
+    return jsonError("invalid_consent_challenge", 400);
+  }
+
+  const client = findOAuthClient(challenge.record.clientId);
+  if (!client) {
+    return jsonError("invalid_client", 400);
+  }
+  if (!isAllowedOAuthRedirectUri(client.clientId, challenge.record.redirectUri)) {
+    return jsonError("invalid_redirect_uri", 400);
+  }
+
   if (decision !== "approve") {
-    return redirectToCallback(redirectUri, { error: "access_denied", state });
+    return redirectToCallback(challenge.record.redirectUri, { error: "access_denied", state: challenge.record.state });
   }
 
   const issued = await getOAuthAuthorizationCodeRepository().issue({
     clientId: client.clientId,
-    nonce,
+    nonce: challenge.record.nonce,
     platformUserId: session.user.id,
-    redirectUri,
-    scopes: normalizeOAuthScopes(client.clientId, scope),
-    state,
+    redirectUri: challenge.record.redirectUri,
+    scopes: challenge.record.scopes,
+    state: challenge.record.state,
     ttlSeconds: 120,
   });
 
-  return redirectToCallback(redirectUri, { code: issued.code, state });
+  return redirectToCallback(challenge.record.redirectUri, { code: issued.code, state: challenge.record.state });
 }

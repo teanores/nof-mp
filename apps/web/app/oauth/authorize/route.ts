@@ -30,7 +30,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const clientId = request.nextUrl.searchParams.get("client_id") ?? "";
   const redirectUri = request.nextUrl.searchParams.get("redirect_uri") ?? "";
   const responseType = request.nextUrl.searchParams.get("response_type") ?? "";
-  const scope = request.nextUrl.searchParams.get("scope") ?? "";
   const state = request.nextUrl.searchParams.get("state") ?? "";
   const nonce = request.nextUrl.searchParams.get("nonce") ?? "";
 

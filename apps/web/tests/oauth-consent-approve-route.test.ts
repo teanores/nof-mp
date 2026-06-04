@@ -19,6 +19,24 @@ const issuedCodes = vi.hoisted(() => ({
   calls: [] as unknown[],
 }));
 
+const consumedChallenges = vi.hoisted(() => ({
+  calls: [] as unknown[],
+  result: {
+    ok: true,
+    record: {
+      challengeId: "oauth_consent_test",
+      clientId: "nof-tt",
+      expiresAt: "2026-06-04T15:02:00.000Z",
+      nonce: "n",
+      platformUserId: "platform-user-1",
+      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      scopes: ["openid", "email"],
+      state: "s",
+      usedAt: "2026-06-04T15:00:00.000Z",
+    },
+  } as unknown,
+}));
+
 vi.mock("@/lib/server/portal-auth-gate", () => ({
   portalLoginUrl: (returnTo: string) => `/login?next=${encodeURIComponent(returnTo)}`,
   portalSessionFromRequest: vi.fn(async () => portalSession.value),
@@ -37,6 +55,15 @@ vi.mock("@/lib/server/oauth-authorization-code-repository", () => ({
   }),
 }));
 
+vi.mock("@/lib/server/oauth-consent-challenge-repository", () => ({
+  getOAuthConsentChallengeRepository: () => ({
+    consume: async (input: unknown) => {
+      consumedChallenges.calls.push(input);
+      return consumedChallenges.result;
+    },
+  }),
+}));
+
 import { POST as approveConsent } from "@/app/oauth/consent/approve/route";
 
 function approveRequest(body: URLSearchParams): NextRequest {
@@ -49,6 +76,21 @@ function approveRequest(body: URLSearchParams): NextRequest {
 
 describe("oauth consent approve route", () => {
   beforeEach(() => {
+    consumedChallenges.calls = [];
+    consumedChallenges.result = {
+      ok: true,
+      record: {
+        challengeId: "oauth_consent_test",
+        clientId: "nof-tt",
+        expiresAt: "2026-06-04T15:02:00.000Z",
+        nonce: "n",
+        platformUserId: "platform-user-1",
+        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        scopes: ["openid", "email"],
+        state: "s",
+        usedAt: "2026-06-04T15:00:00.000Z",
+      },
+    };
     issuedCodes.calls = [];
     portalSession.value = {
       authenticated: true,
@@ -62,22 +104,23 @@ describe("oauth consent approve route", () => {
   });
 
   it("rejects invalid redirect URIs without issuing a code", async () => {
+    consumedChallenges.result = {
+      error: "not_found",
+      ok: false,
+    };
+
     const response = await approveConsent(
       approveRequest(
         new URLSearchParams({
-          client_id: "nof-tt",
+          challenge_id: "missing",
           decision: "approve",
-          nonce: "n",
-          redirect_uri: "https://evil.example/callback",
-          response_type: "code",
-          scope: "openid",
-          state: "s",
         }),
       ),
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "invalid_redirect_uri", ok: false });
+    await expect(response.json()).resolves.toEqual({ error: "invalid_consent_challenge", ok: false });
+    expect(consumedChallenges.calls).toEqual([{ challengeId: "missing", platformUserId: "platform-user-1" }]);
     expect(issuedCodes.calls).toEqual([]);
   });
 
@@ -87,19 +130,15 @@ describe("oauth consent approve route", () => {
     const response = await approveConsent(
       approveRequest(
         new URLSearchParams({
-          client_id: "nof-tt",
+          challenge_id: "oauth_consent_test",
           decision: "approve",
-          nonce: "n",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
-          response_type: "code",
-          scope: "openid",
-          state: "s",
         }),
       ),
     );
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/login?next=%2Foauth%2Fconsent");
+    expect(consumedChallenges.calls).toEqual([]);
     expect(issuedCodes.calls).toEqual([]);
   });
 
@@ -107,13 +146,9 @@ describe("oauth consent approve route", () => {
     const response = await approveConsent(
       approveRequest(
         new URLSearchParams({
-          client_id: "nof-tt",
+          challenge_id: "oauth_consent_test",
           decision: "approve",
-          nonce: "n",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
-          response_type: "code",
-          scope: "openid unknown email",
-          state: "s",
+          scope: "openid unknown evil",
         }),
       ),
     );
@@ -122,6 +157,7 @@ describe("oauth consent approve route", () => {
     expect(response.headers.get("location")).toBe(
       "https://forge-tasks.forgath.ru/auth/platform/callback?code=oauth_code_test&state=s",
     );
+    expect(consumedChallenges.calls).toEqual([{ challengeId: "oauth_consent_test", platformUserId: "platform-user-1" }]);
     expect(issuedCodes.calls).toEqual([
       {
         clientId: "nof-tt",
@@ -139,13 +175,8 @@ describe("oauth consent approve route", () => {
     const response = await approveConsent(
       approveRequest(
         new URLSearchParams({
-          client_id: "nof-tt",
+          challenge_id: "oauth_consent_test",
           decision: "deny",
-          nonce: "n",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
-          response_type: "code",
-          scope: "openid",
-          state: "s",
         }),
       ),
     );
@@ -154,6 +185,7 @@ describe("oauth consent approve route", () => {
     expect(response.headers.get("location")).toBe(
       "https://forge-tasks.forgath.ru/auth/platform/callback?error=access_denied&state=s",
     );
+    expect(consumedChallenges.calls).toEqual([{ challengeId: "oauth_consent_test", platformUserId: "platform-user-1" }]);
     expect(issuedCodes.calls).toEqual([]);
   });
 });

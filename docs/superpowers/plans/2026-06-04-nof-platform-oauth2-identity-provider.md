@@ -18,12 +18,17 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 - Create: `apps/web/lib/server/oauth-client-registry.ts`
 - Create: `apps/web/lib/server/oauth-authorization-code-repository.ts`
+- Create: `apps/web/lib/server/oauth-consent-challenge-repository.ts`
 - Create: `apps/web/app/oauth/authorize/route.ts`
 - Create: `apps/web/app/oauth/token/route.ts`
 - Create: `apps/web/app/oauth/consent/page.tsx`
+- Create: `apps/web/app/oauth/consent/approve/route.ts`
 - Create: `apps/web/tests/oauth-client-registry.test.ts`
 - Create: `apps/web/tests/oauth-authorize-route.test.ts`
 - Create: `apps/web/tests/oauth-token-route.test.ts`
+- Create: `apps/web/tests/oauth-consent-challenge-repository.test.ts`
+- Create: `apps/web/tests/oauth-consent-page.test.tsx`
+- Create: `apps/web/tests/oauth-consent-approve-route.test.ts`
 - Modify: `apps/web/lib/server/portal-auth-gate.ts`
 - Modify: `apps/web/app/services/habit-tracker/page.tsx` only after the standard is ready
 
@@ -61,18 +66,20 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 ## Task 5: Product UX Contract
 
+- [x] Implement `/oauth/consent` page that shows the product, requested scopes, current platform user and explicit approve/deny actions.
+- [x] Bind OAuth consent approval to a server-side challenge so the browser cannot forge OAuth request fields.
 - [ ] Document product-side required behavior in Wiki: linked account check, account switch, registration/linking consent and no silent synthetic users.
 - [ ] Update nof-tt and nof-ht MCP tasks after the ADR is frozen.
 - [ ] Only then update `services/habit-tracker` CTA from closed state to a standard OAuth launch entry.
 
 ## Verification
 
-- [ ] `npm --workspace apps/web run test:run`
-- [ ] `npm --workspace apps/web run build`
-- [ ] `npm --workspace apps/web run typecheck`
-- [ ] `npm --workspace apps/web run lint`
-- [ ] `npm audit`
-- [ ] `git diff --check`
+- [x] `npm --workspace apps/web run test:run`
+- [x] `npm --workspace apps/web run build`
+- [x] `npm --workspace apps/web run typecheck`
+- [x] `npm --workspace apps/web run lint`
+- [x] `npm audit --workspace apps/web`
+- [x] `git diff --check`
 
 ## Stop Conditions
 
