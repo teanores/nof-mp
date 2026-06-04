@@ -46,15 +46,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const nowSeconds = Math.floor(Date.now() / 1000);
+  const scope = redeemed.record.scopes.join(" ");
   const claims = {
     aud: client.clientId,
-    email_verified: false,
     exp: nowSeconds + 300,
     iat: nowSeconds,
     iss: oauthIssuer(),
     nonce: redeemed.record.nonce,
-    scope: redeemed.record.scopes.join(" "),
+    scope,
     sub: redeemed.record.platformUserId,
+    ...(redeemed.record.scopes.includes("email") ? { email_verified: false } : {}),
   };
   const token = signOAuthJwt(claims);
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     access_token: token,
     expires_in: 300,
     id_token: token,
-    scope: redeemed.record.scopes.join(" "),
+    scope,
     token_type: "Bearer",
   });
 }

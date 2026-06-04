@@ -49,6 +49,11 @@ function tokenRequest(body: URLSearchParams): NextRequest {
   });
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+  const [, payload] = token.split(".");
+  return JSON.parse(Buffer.from(payload ?? "", "base64url").toString("utf8")) as Record<string, unknown>;
+}
+
 describe("oauth token route", () => {
   beforeEach(() => {
     redeemState.calls = [];
@@ -183,5 +188,42 @@ describe("oauth token route", () => {
     await expect(missing.json()).resolves.toEqual({ error: "invalid_client", ok: false });
     await expect(invalid.json()).resolves.toEqual({ error: "invalid_client", ok: false });
     expect(redeemState.calls).toEqual([]);
+  });
+
+  it("does not emit email claims when the email scope was not granted", async () => {
+    redeemState.result = {
+      ok: true,
+      record: {
+        clientId: "nof-tt",
+        code: "oauth_code_valid",
+        expiresAt: "2026-06-04T15:02:00.000Z",
+        nonce: "nonce-1",
+        platformUserId: "platform-user-1",
+        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        scopes: ["openid", "profile"],
+        state: "state-1",
+        usedAt: "2026-06-04T15:00:00.000Z",
+      },
+    };
+
+    const response = await token(
+      tokenRequest(
+        new URLSearchParams({
+          client_id: "nof-tt",
+          client_secret: "nof-tt-secret",
+          code: "oauth_code_valid",
+          grant_type: "authorization_code",
+          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const payload = decodeJwtPayload(String(body.id_token));
+
+    expect(payload.scope).toBe("openid profile");
+    expect(payload).not.toHaveProperty("email");
+    expect(payload).not.toHaveProperty("email_verified");
   });
 });

@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 
 interface OAuthTokenClaims {
   aud: string;
-  email_verified: boolean;
+  email_verified?: boolean;
   exp: number;
   iat: number;
   iss: string;

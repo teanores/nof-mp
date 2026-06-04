@@ -64,6 +64,7 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 - [x] Accept authorization code exchange only through the validated authorization-code repository.
 - [x] Add production client authentication or approved internal auth mechanism before external exposure.
 - [x] Return signed token format.
+- [x] Limit email-related claims to granted `email` scope.
 - [ ] Enrich claims with verified email when available.
 - [x] Do not return passwords, raw cookies, internal roles outside agreed scopes, or secrets.
 - [x] Tests must cover success, replay, expired code, bad client, bad redirect URI and missing code.
