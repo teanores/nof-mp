@@ -20,12 +20,12 @@ describe("service preview pages", () => {
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
-  it("keeps Habit Tracker launch closed until platform identity handoff is ready", () => {
+  it("keeps Habit Tracker launch closed until the NOF Platform identity flow is ready", () => {
     render(<HabitTrackerServicePage />);
 
     expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Перейти в Habit Tracker" })).not.toBeInTheDocument();
-    expect(screen.getByText(/собственную сессию/)).toBeInTheDocument();
+    expect(screen.getByText(/Прямой переход закрыт/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
