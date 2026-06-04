@@ -12,7 +12,8 @@
     "build": "npm --workspace @nof/nof-platform-web run build",
     "lint": "npm --workspace @nof/nof-platform-web run lint",
     "typecheck": "npm --workspace @nof/nof-platform-web run typecheck",
-    "test": "npm --workspace @nof/nof-platform-web run test",
+    "test": "npm --workspace @nof/nof-platform-web run test:run",
+    "test:watch": "npm --workspace @nof/nof-platform-web run test",
     "check": "npm --workspace @nof/nof-platform-web run check"
   },
   "overrides": {

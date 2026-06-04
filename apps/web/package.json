@@ -7,8 +7,9 @@
     "build": "next build",
     "lint": "eslint .",
     "test": "vitest",
+    "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck && npm run test"
+    "check": "npm run lint && npm run typecheck && npm run test:run"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -30,13 +31,14 @@
     "@types/node": "22.15.21",
     "@types/react": "19.1.5",
     "@types/react-dom": "19.1.5",
+    "@vitejs/plugin-react": "6.0.2",
     "eslint": "9.27.0",
     "eslint-config-next": "15.3.2",
     "jsdom": "26.1.0",
     "postcss": "8.5.10",
     "tailwindcss": "3.4.17",
     "typescript": "5.8.3",
-    "vitest": "3.1.4"
+    "vitest": "4.1.8"
   },
   "description": "NOF Platform web portal and account surface"
 }
