@@ -3,6 +3,7 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 
 import { AdminSecurityPage } from "@/components/AdminSecurityPage";
+import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 import type { SecurityAuditDashboard } from "@/lib/server/security-audit-dashboard";
 
 const dashboard: SecurityAuditDashboard = {
@@ -96,7 +97,7 @@ describe("admin security page", () => {
     expect(screen.getAllByText("203.0.113.10")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
-    expect(screen.getByText("NOF.MP // v0.1.14")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("NOF.TT");
     expect(document.body).not.toHaveTextContent("192.168.1.51");
     expect(document.body).not.toHaveTextContent("30500");

@@ -3,6 +3,7 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
+import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 
 describe("portal layout primitives", () => {
   it("renders a stable page shell with constrained content", () => {
@@ -14,7 +15,7 @@ describe("portal layout primitives", () => {
 
     expect(screen.getByRole("main")).toHaveClass("min-h-screen");
     expect(screen.getByText("Portal content").parentElement).toHaveClass("max-w-test");
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
   it("renders a header with eyebrow, title, description and actions", () => {

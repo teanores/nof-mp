@@ -3,6 +3,7 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserProfilePage } from "@/components/UserProfilePage";
+import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 import type { ForgeMcpToken, ForgeProject } from "@/lib/types";
 
 const platformApi = vi.hoisted(() => ({
@@ -81,7 +82,7 @@ describe("user profile MCP access", () => {
     expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
     expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
     expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
     expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
   });
@@ -100,7 +101,7 @@ describe("user profile MCP access", () => {
     expect(document.body).toHaveTextContent("Войди, чтобы открыть профиль, настройки и доступные разделы платформы.");
     expect(document.body).not.toHaveTextContent("Dragon Forge");
     expect(document.body).not.toHaveTextContent("Python");
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
   it("shows MCP setup only for projects granted to the current user", async () => {

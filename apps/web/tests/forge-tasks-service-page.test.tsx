@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import ForgeTasksServicePage from "@/app/services/forge-tasks/page";
 import HabitTrackerServicePage from "@/app/services/habit-tracker/page";
 import StreamerServicePage from "@/app/services/streamer/page";
+import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 
 describe("service preview pages", () => {
   it("shows an explicit Forge Tasks entry button without auto redirecting the preview page", () => {
@@ -16,7 +17,7 @@ describe("service preview pages", () => {
       "/products/nof-tt/launch?next=%2Foverview",
     );
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
   it("shows Habit Tracker as an external service entry with the standard shell", () => {
@@ -28,7 +29,7 @@ describe("service preview pages", () => {
       "https://habit-tracker.forgath.ru",
     );
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
   it("keeps streamer preview as a coming-soon page without a broken open button", () => {
@@ -37,6 +38,6 @@ describe("service preview pages", () => {
     expect(screen.getByRole("heading", { name: "Портал стримера" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Перейти/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
-    expect(screen.getByText("NOF.MP // v0.1.11")).toBeInTheDocument();
+    expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 });

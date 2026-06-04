@@ -1,7 +1,7 @@
 import React from "react";
 
 import { PortalBreadcrumbs, type PortalBreadcrumbItem } from "@/components/PortalBreadcrumbs";
-import webPackage from "../package.json";
+import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 
 interface PortalPageShellProps {
   children: React.ReactNode;
@@ -29,7 +29,7 @@ export function PortalPageShell({ children, maxWidthClassName = "max-w-[1500px]"
       <div className={`mx-auto flex w-full ${maxWidthClassName} flex-col gap-5`}>
         {children}
         <footer className="tech-label flex items-center justify-between border-t border-forge-line pt-4 text-[10px] text-forge-muted">
-          <span>NOF.MP // v{webPackage.version}</span>
+          <span>{NOF_MP_FOOTER_MARKER}</span>
           <span>Narag&apos;Othal Forgath</span>
         </footer>
       </div>
