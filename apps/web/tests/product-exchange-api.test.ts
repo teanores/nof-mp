@@ -10,6 +10,11 @@ const authSession = vi.hoisted(() => ({
   } as ForgePortalSession,
 }));
 
+vi.stubEnv(
+  "NOF_PLATFORM_OAUTH_CLIENT_SECRET_SHA256_NOF_TT",
+  "bd44784944c8c62f639d7340f7020b75666e9554e788638a5df0b29b3b024c8e",
+);
+
 vi.mock("@/lib/server/portal-auth-gate", () => ({
   portalSessionFromRequest: vi.fn(async () => authSession.value),
   requirePortalApiSession: vi.fn(async () => {
@@ -115,6 +120,7 @@ describe("product exchange API", () => {
     const response = await redeemExchange(
       jsonRequest("/api/auth/product-exchange/redeem", {
         code: issued.code,
+        clientSecret: "nof-tt-secret",
         productKey: "nof-tt",
         state: "state-1",
       }),
@@ -132,6 +138,7 @@ describe("product exchange API", () => {
     const response = await redeemExchange(
       jsonRequest("/api/auth/product-exchange/redeem", {
         code: "px_missing",
+        clientSecret: "nof-tt-secret",
         productKey: "nof-tt",
         state: "state-1",
       }),
@@ -142,5 +149,36 @@ describe("product exchange API", () => {
       error: "not_found",
       ok: false,
     });
+  });
+
+  it("requires product client authentication before redeeming exchange codes", async () => {
+    const issued = await getProductExchangeRepository().issue({
+      platformUserId: "user-1",
+      productKey: "nof-tt",
+      returnTo: "/projects",
+      state: "state-1",
+      ttlSeconds: 120,
+    });
+
+    const missing = await redeemExchange(
+      jsonRequest("/api/auth/product-exchange/redeem", {
+        code: issued.code,
+        productKey: "nof-tt",
+        state: "state-1",
+      }),
+    );
+    const invalid = await redeemExchange(
+      jsonRequest("/api/auth/product-exchange/redeem", {
+        code: issued.code,
+        clientSecret: "wrong-secret",
+        productKey: "nof-tt",
+        state: "state-1",
+      }),
+    );
+
+    expect(missing.status).toBe(401);
+    expect(invalid.status).toBe(401);
+    await expect(missing.json()).resolves.toEqual({ error: "invalid_client", ok: false });
+    await expect(invalid.json()).resolves.toEqual({ error: "invalid_client", ok: false });
   });
 });
