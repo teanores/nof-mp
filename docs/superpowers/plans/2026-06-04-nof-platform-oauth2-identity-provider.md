@@ -68,7 +68,7 @@ Habit Tracker direct launch remains closed in NOF MP until this standard exists.
 
 - [x] Implement `/oauth/consent` page that shows the product, requested scopes, current platform user and explicit approve/deny actions.
 - [x] Bind OAuth consent approval to a server-side challenge so the browser cannot forge OAuth request fields.
-- [ ] Document product-side required behavior in Wiki: linked account check, account switch, registration/linking consent and no silent synthetic users.
+- [x] Document product-side required behavior in Wiki: linked account check, account switch, registration/linking consent and no silent synthetic users.
 - [ ] Update nof-tt and nof-ht MCP tasks after the ADR is frozen.
 - [ ] Only then update `services/habit-tracker` CTA from closed state to a standard OAuth launch entry.
 
