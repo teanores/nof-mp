@@ -2,7 +2,7 @@
 
 Status: draft
 Project: NOF Main Platform / `nof-mp`
-Repository: `nof-platform`
+Repository: `nof-mp`
 
 ## Purpose
 
@@ -10,12 +10,12 @@ This runbook keeps NOF MP releases scoped when the shared release-builder manife
 
 ## Current Release Identity
 
-- Local repository: `C:\Users\User\Documents\dev\nof-platform`
+- Local repository: `C:\Users\User\Documents\dev\NOF\nof-mp` after local folder rename
 - Product identity: NOF Main Platform / `nof-mp`
-- Current GitHub repository used by release-builder: `https://github.com/teanores/nof-platform.git`
-- Release-builder service key: `nof-platform`
-- Kubernetes release: `nof-platform`
-- Image repository: `localhost:32000/nof-platform`
+- Target GitHub repository: `https://github.com/teanores/nof-mp.git`
+- Target release-builder service key: `nof-mp`
+- Target Kubernetes release: `nof-mp`
+- Target image repository: `localhost:32000/nof-mp`
 - Namespace: `nof-apps`
 
 ## Scoped Deploy Rule
@@ -23,7 +23,7 @@ This runbook keeps NOF MP releases scoped when the shared release-builder manife
 When only NOF MP should be deployed, use the scoped builder command:
 
 ```bash
-/opt/nof-release-builder/nof-release-builder.sh deploy nof-platform <approved-ref>
+/opt/nof-release-builder/nof-release-builder.sh deploy nof-mp <approved-ref>
 ```
 
 Do not use broad manifest sync for a NOF MP-only release unless every enabled service row is explicitly approved for deployment in the same release window.
@@ -92,6 +92,6 @@ Stop before deploy if:
 - desired state would deploy unrelated services;
 - required token/config checks require printing secret values;
 - Docker build fails;
-- Helm upgrade affects a release other than `nof-platform`;
+- Helm upgrade affects a release other than `nof-mp`;
 - rollout does not become ready;
 - public smoke shows the wrong product marker, white page, broken login routes or leaked internal data.

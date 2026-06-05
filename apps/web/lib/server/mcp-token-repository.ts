@@ -44,7 +44,7 @@ export function mcpTokenSchemaName(): string {
 }
 
 function tokenSecret(): string {
-  return process.env.NOF_PLATFORM_MCP_TOKEN_SECRET ?? process.env.FORGE_TASKS_MCP_TOKEN_SECRET ?? process.env.SECRET_KEY ?? "nof-platform-local-mcp-token-secret";
+  return process.env.NOF_PLATFORM_MCP_TOKEN_SECRET ?? process.env.FORGE_TASKS_MCP_TOKEN_SECRET ?? process.env.SECRET_KEY ?? "nof-mp-local-mcp-token-secret";
 }
 
 function toIso(value: Date | string | null): string | undefined {

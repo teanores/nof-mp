@@ -1,7 +1,7 @@
 # NOF Platform OAuth Identity Environment Contract
 
 Status: draft for Sprint 4 local verification.
-Scope: `nof-platform` / future `nof-mp` OAuth identity provider.
+Scope: `nof-mp` OAuth identity provider.
 
 This file documents variable names, ownership and rotation expectations only.
 Do not store or paste real secret values here.

@@ -1,5 +1,5 @@
 {
-  "name": "@nof/nof-platform-web",
+  "name": "@nof/nof-mp-web",
   "version": "0.1.14",
   "private": true,
   "scripts": {
@@ -40,5 +40,5 @@
     "typescript": "5.8.3",
     "vitest": "4.1.8"
   },
-  "description": "NOF Platform web portal and account surface"
+  "description": "NOF Main Platform web portal and account surface"
 }

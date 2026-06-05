@@ -1,6 +1,6 @@
 # NOF Platform Boundary
 
-`nof-platform` is the central account and portal product. Other products integrate with it for identity and access instead of copying login/profile code.
+`nof-mp` is the central account and portal product. Other products integrate with it for identity and access instead of copying login/profile code.
 
 ## Platform Responsibilities
 

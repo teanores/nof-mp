@@ -6,7 +6,7 @@ Define the first honest platform-owned data model and access contract so product
 
 ## Ownership
 
-`nof-platform` owns identity, profile, global preferences, product registry, product access decisions and MCP-token issuance.
+`nof-mp` owns identity, profile, global preferences, product registry, product access decisions and MCP-token issuance.
 
 Product repositories such as `nof-tt` own their domain data and receive a platform-provided session/access context.
 

@@ -62,7 +62,7 @@ export function canAccessProduct(subject: PlatformAccessSubject, policy: Platfor
 export interface PlatformTableSpec {
   name: string;
   purpose: string;
-  owner: "nof-platform";
+  owner: "nof-mp";
   storesSecrets: boolean;
 }
 
@@ -70,37 +70,37 @@ export const platformTableSpecs: PlatformTableSpec[] = [
   {
     name: "nof_platform.users",
     purpose: "Canonical platform account identity and profile linkage to existing Dragon Forge users during migration.",
-    owner: "nof-platform",
+    owner: "nof-mp",
     storesSecrets: false,
   },
   {
     name: "nof_platform.sessions",
     purpose: "Server-side session records or signed session metadata for platform login and product handoff.",
-    owner: "nof-platform",
+    owner: "nof-mp",
     storesSecrets: true,
   },
   {
     name: "nof_platform.user_preferences",
     purpose: "Per-user language, theme and future personal portal settings.",
-    owner: "nof-platform",
+    owner: "nof-mp",
     storesSecrets: false,
   },
   {
     name: "nof_platform.products",
     purpose: "Product registry: task tracker, habit tracker, coffee portal, learning portal and future tools.",
-    owner: "nof-platform",
+    owner: "nof-mp",
     storesSecrets: false,
   },
   {
     name: "nof_platform.product_access",
     purpose: "Product visibility and per-user access rules: public, registered, invited or owners only.",
-    owner: "nof-platform",
+    owner: "nof-mp",
     storesSecrets: false,
   },
   {
     name: "nof_platform.mcp_tokens",
     purpose: "Hashed MCP tokens issued from the platform profile and scoped to products/projects.",
-    owner: "nof-platform",
+    owner: "nof-mp",
     storesSecrets: true,
   },
 ];

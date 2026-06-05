@@ -1,6 +1,6 @@
-# NOF Platform
+# NOF MP
 
-`nof-platform` owns the central Narag'Othal Forgath portal surface: login, registration, user profile, personal settings, global MCP token issue UI, product discovery and future subscription/access management.
+`nof-mp` owns the central Narag'Othal Forgath portal surface: login, registration, user profile, personal settings, global MCP token issue UI, product discovery, platform OAuth and future subscription/access management.
 
 ## Ownership Boundary
 

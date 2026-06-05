@@ -1,14 +1,14 @@
-# AGENTS.md - NOF Main Platform
+# AGENTS.md - NOF MP
 
 Read this file first when an agent starts inside this repository.
 
 ## Project Identity
 
-Current repository name: `nof-platform`.
+Canonical repository name: `nof-mp`.
 
 Product identity: NOF Main Platform, project key `nof-mp`.
 
-This repository is the current local and GitHub source for the future `nof-mp` service name. Until the rename is complete, use `nof-platform / future nof-mp` in release notes and architecture discussions when ambiguity matters.
+This repository owns the NOF Main Platform service. The old `nof-platform` name is migration debt and may appear only in rollback, historical release evidence or rename runbooks.
 
 ## Ownership Boundary
 
@@ -69,7 +69,7 @@ Controlled NOF MP deploy is allowed only when the owner explicitly asks in the c
 
 - `nof-mp-hardening-release-runbook-2026-06-04`
 
-The scoped release-builder service is `nof-platform`; do not use broad manifest sync when only NOF MP should deploy.
+The target scoped release-builder service is `nof-mp`. If production still uses legacy `nof-platform`, treat that as migration debt and follow the rename runbook.
 
 ## Secret Rules
 
