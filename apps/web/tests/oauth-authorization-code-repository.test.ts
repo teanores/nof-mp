@@ -14,7 +14,7 @@ describe("oauth authorization code repository", () => {
       clientId: "nof-tt",
       nonce: "nonce-1",
       platformUserId: "platform-user-1",
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       scopes: ["openid", "profile"],
       state: "state-1",
       ttlSeconds: 120,
@@ -27,7 +27,7 @@ describe("oauth authorization code repository", () => {
       clientId: "nof-tt",
       nonce: "nonce-1",
       platformUserId: "platform-user-1",
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       scopes: ["openid", "profile"],
       state: "state-1",
     });
@@ -39,7 +39,7 @@ describe("oauth authorization code repository", () => {
       clientId: "nof-tt",
       nonce: "nonce-1",
       platformUserId: "platform-user-1",
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       scopes: ["openid"],
       state: "state-1",
       ttlSeconds: 120,
@@ -48,12 +48,12 @@ describe("oauth authorization code repository", () => {
     const first = await repo.redeem({
       clientId: "nof-tt",
       code: record.code,
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
     });
     const second = await repo.redeem({
       clientId: "nof-tt",
       code: record.code,
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
     });
 
     expect(first).toEqual({ ok: true, record: { ...record, usedAt: "2026-06-04T15:00:00.000Z" } });
@@ -67,7 +67,7 @@ describe("oauth authorization code repository", () => {
       clientId: "nof-tt",
       nonce: "nonce-1",
       platformUserId: "platform-user-1",
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       scopes: ["openid"],
       state: "state-1",
       ttlSeconds: 120,
@@ -79,7 +79,7 @@ describe("oauth authorization code repository", () => {
       repo.redeem({
         clientId: "nof-ht",
         code: record.code,
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       }),
     ).resolves.toEqual({ error: "client_mismatch", ok: false });
     await expect(
@@ -93,7 +93,7 @@ describe("oauth authorization code repository", () => {
       expiredRepo.redeem({
         clientId: "nof-tt",
         code: record.code,
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       }),
     ).resolves.toEqual({ error: "expired", ok: false });
   });

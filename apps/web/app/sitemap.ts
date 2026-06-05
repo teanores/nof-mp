@@ -28,7 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       lastModified: now,
       priority: 0.8,
-      url: `${origin}/services/forge-tasks`,
+      url: `${origin}/services/task-tracker`,
     },
     {
       changeFrequency: "weekly",

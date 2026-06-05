@@ -18,7 +18,7 @@ const redeemState = vi.hoisted(() => ({
       expiresAt: "2026-06-04T15:02:00.000Z",
       nonce: "nonce-1",
       platformUserId: "platform-user-1",
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       scopes: ["openid", "profile", "email"],
       state: "state-1",
       usedAt: "2026-06-04T15:00:00.000Z",
@@ -65,7 +65,7 @@ describe("oauth token route", () => {
         expiresAt: "2026-06-04T15:02:00.000Z",
         nonce: "nonce-1",
         platformUserId: "platform-user-1",
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
         scopes: ["openid", "profile", "email"],
         state: "state-1",
         usedAt: "2026-06-04T15:00:00.000Z",
@@ -81,7 +81,7 @@ describe("oauth token route", () => {
           client_secret: "nof-tt-secret",
           code: "oauth_code_valid",
           grant_type: "authorization_code",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
         }),
       ),
     );
@@ -100,7 +100,7 @@ describe("oauth token route", () => {
       {
         clientId: "nof-tt",
         code: "oauth_code_valid",
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       },
     ]);
   });
@@ -113,7 +113,7 @@ describe("oauth token route", () => {
           client_secret: "nof-tt-secret",
           code: "oauth_code_valid",
           grant_type: "password",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
         }),
       ),
     );
@@ -133,7 +133,7 @@ describe("oauth token route", () => {
           client_secret: "nof-tt-secret",
           code: "oauth_code_valid",
           grant_type: "authorization_code",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
         }),
       ),
     );
@@ -167,7 +167,7 @@ describe("oauth token route", () => {
           client_id: "nof-tt",
           code: "oauth_code_valid",
           grant_type: "authorization_code",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
         }),
       ),
     );
@@ -178,7 +178,7 @@ describe("oauth token route", () => {
           client_secret: "wrong-secret",
           code: "oauth_code_valid",
           grant_type: "authorization_code",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
         }),
       ),
     );
@@ -199,7 +199,7 @@ describe("oauth token route", () => {
         expiresAt: "2026-06-04T15:02:00.000Z",
         nonce: "nonce-1",
         platformUserId: "platform-user-1",
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
         scopes: ["openid", "profile"],
         state: "state-1",
         usedAt: "2026-06-04T15:00:00.000Z",
@@ -213,7 +213,7 @@ describe("oauth token route", () => {
           client_secret: "nof-tt-secret",
           code: "oauth_code_valid",
           grant_type: "authorization_code",
-          redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
         }),
       ),
     );

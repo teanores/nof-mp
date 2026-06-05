@@ -13,7 +13,7 @@ describe("platform shell manifest", () => {
   });
 
   it("opens service preview pages instead of product internals", () => {
-    expect(portalModules.find((module) => module.key === "tracker")?.href).toBe("/services/forge-tasks");
+    expect(portalModules.find((module) => module.key === "tracker")?.href).toBe("/services/task-tracker");
     expect(portalModules.find((module) => module.key === "habits")?.href).toBe("/services/habit-tracker");
     expect(portalModules.find((module) => module.key === "streamer")?.href).toBe("/services/streamer");
     expect(portalModules.map((module) => module.href)).not.toContain("/ideas");

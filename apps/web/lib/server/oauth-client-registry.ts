@@ -11,10 +11,7 @@ export const oauthClientRegistry: OAuthClientRegistration[] = [
     clientId: "nof-tt",
     displayName: "Task Tracker",
     productKey: "nof-tt",
-    redirectUris: [
-      "https://task-tracker.forgath.ru/auth/platform/callback",
-      "https://forge-tasks.forgath.ru/auth/platform/callback",
-    ],
+    redirectUris: ["https://task-tracker.forgath.ru/auth/platform/callback"],
     scopes: ["openid", "profile", "email"],
   },
   {

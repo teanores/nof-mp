@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it } from "vitest";
 
-import TaskTrackerServicePage from "@/app/services/forge-tasks/page";
+import TaskTrackerServicePage from "@/app/services/task-tracker/page";
 import HabitTrackerServicePage from "@/app/services/habit-tracker/page";
 import StreamerServicePage from "@/app/services/streamer/page";
 import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";

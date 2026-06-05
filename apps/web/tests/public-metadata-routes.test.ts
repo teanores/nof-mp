@@ -10,7 +10,7 @@ describe("public metadata routes", () => {
     expect(policy.sitemap).toBe("https://forgath.ru/sitemap.xml");
     expect(policy.rules).toMatchObject({
       userAgent: "*",
-      allow: expect.arrayContaining(["/", "/services/forge-tasks", "/services/habit-tracker"]),
+      allow: expect.arrayContaining(["/", "/services/task-tracker", "/services/habit-tracker"]),
       disallow: expect.arrayContaining(["/admin", "/api", "/profile", "/me", "/products"]),
     });
   });
@@ -22,7 +22,7 @@ describe("public metadata routes", () => {
       "https://forgath.ru",
       "https://forgath.ru/login",
       "https://forgath.ru/register",
-      "https://forgath.ru/services/forge-tasks",
+      "https://forgath.ru/services/task-tracker",
       "https://forgath.ru/services/habit-tracker",
       "https://forgath.ru/services/streamer",
     ]);

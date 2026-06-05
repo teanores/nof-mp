@@ -56,12 +56,23 @@ describe("oauth authorize route", () => {
     await expect(response.json()).resolves.toEqual({ error: "invalid_redirect_uri", ok: false });
   });
 
+  it("rejects the legacy Forge Tasks callback after Task Tracker hard cutover", async () => {
+    const response = await authorize(
+      authorizeRequest(
+        "?client_id=nof-tt&redirect_uri=https%3A%2F%2Fforge-tasks.forgath.ru%2Fauth%2Fplatform%2Fcallback&response_type=code&scope=openid&state=s&nonce=n",
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "invalid_redirect_uri", ok: false });
+  });
+
   it("redirects guests to platform login with the original authorize request as next", async () => {
     portalSession.value = { authenticated: false, loginUrl: "/login?next=%2Foauth%2Fauthorize" };
 
     const response = await authorize(
       authorizeRequest(
-        "?client_id=nof-tt&redirect_uri=https%3A%2F%2Fforge-tasks.forgath.ru%2Fauth%2Fplatform%2Fcallback&response_type=code&scope=openid&state=s&nonce=n",
+        "?client_id=nof-tt&redirect_uri=https%3A%2F%2Ftask-tracker.forgath.ru%2Fauth%2Fplatform%2Fcallback&response_type=code&scope=openid&state=s&nonce=n",
       ),
     );
 
@@ -72,7 +83,7 @@ describe("oauth authorize route", () => {
   it("redirects authenticated users to explicit consent without issuing a code from query parameters", async () => {
     const response = await authorize(
       authorizeRequest(
-        "?client_id=nof-tt&redirect_uri=https%3A%2F%2Fforge-tasks.forgath.ru%2Fauth%2Fplatform%2Fcallback&response_type=code&scope=openid%20email&state=s&nonce=n&consent=accepted",
+        "?client_id=nof-tt&redirect_uri=https%3A%2F%2Ftask-tracker.forgath.ru%2Fauth%2Fplatform%2Fcallback&response_type=code&scope=openid%20email&state=s&nonce=n&consent=accepted",
       ),
     );
 

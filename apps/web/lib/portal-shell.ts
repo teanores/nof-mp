@@ -19,7 +19,7 @@ export const portalModules: PortalModule[] = [
     key: "tracker",
     title: "Task Tracker",
     description: "Трекер задач, эпиков, спринтов и рабочих планов.",
-    href: "/services/forge-tasks",
+    href: "/services/task-tracker",
     status: "available",
   },
   {

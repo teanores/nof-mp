@@ -29,7 +29,7 @@ const consumedChallenges = vi.hoisted(() => ({
       expiresAt: "2026-06-04T15:02:00.000Z",
       nonce: "n",
       platformUserId: "platform-user-1",
-      redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
       scopes: ["openid", "email"],
       state: "s",
       usedAt: "2026-06-04T15:00:00.000Z",
@@ -85,7 +85,7 @@ describe("oauth consent approve route", () => {
         expiresAt: "2026-06-04T15:02:00.000Z",
         nonce: "n",
         platformUserId: "platform-user-1",
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
         scopes: ["openid", "email"],
         state: "s",
         usedAt: "2026-06-04T15:00:00.000Z",
@@ -155,7 +155,7 @@ describe("oauth consent approve route", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://forge-tasks.forgath.ru/auth/platform/callback?code=oauth_code_test&state=s",
+      "https://task-tracker.forgath.ru/auth/platform/callback?code=oauth_code_test&state=s",
     );
     expect(consumedChallenges.calls).toEqual([{ challengeId: "oauth_consent_test", platformUserId: "platform-user-1" }]);
     expect(issuedCodes.calls).toEqual([
@@ -163,7 +163,7 @@ describe("oauth consent approve route", () => {
         clientId: "nof-tt",
         nonce: "n",
         platformUserId: "platform-user-1",
-        redirectUri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
         scopes: ["openid", "email"],
         state: "s",
         ttlSeconds: 120,
@@ -183,7 +183,7 @@ describe("oauth consent approve route", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://forge-tasks.forgath.ru/auth/platform/callback?error=access_denied&state=s",
+      "https://task-tracker.forgath.ru/auth/platform/callback?error=access_denied&state=s",
     );
     expect(consumedChallenges.calls).toEqual([{ challengeId: "oauth_consent_test", platformUserId: "platform-user-1" }]);
     expect(issuedCodes.calls).toEqual([]);
