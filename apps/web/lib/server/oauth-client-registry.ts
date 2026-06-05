@@ -27,6 +27,10 @@ export function findOAuthClient(clientId: string): OAuthClientRegistration | und
   return oauthClientRegistry.find((client) => client.clientId === clientId);
 }
 
+export function isOAuthManagedProduct(productKey: string): boolean {
+  return oauthClientRegistry.some((client) => client.productKey === productKey);
+}
+
 export function isAllowedOAuthRedirectUri(clientId: string, redirectUri: string): boolean {
   return findOAuthClient(clientId)?.redirectUris.includes(redirectUri) ?? false;
 }

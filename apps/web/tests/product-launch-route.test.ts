@@ -34,6 +34,15 @@ vi.mock("@/lib/server/product-access-repository", () => ({
       {
         access: { allowed: true, reason: "registered-user" },
         createdAt: "2026-05-28T00:00:00.000Z",
+        description: "Habit tracker",
+        key: "nof-ht",
+        name: "Habit Tracker",
+        status: "active",
+        visibility: "registered",
+      },
+      {
+        access: { allowed: true, reason: "registered-user" },
+        createdAt: "2026-05-28T00:00:00.000Z",
         description: "Task tracker",
         key: "nof-tt",
         name: "Forge Tasks",
@@ -72,17 +81,30 @@ describe("product launch route", () => {
     };
   });
 
-  it("redirects authenticated users to the product callback with an exchange code", async () => {
+  it("does not issue legacy exchange codes for OAuth-managed products", async () => {
     const response = await launchProduct(launchRequest("/products/nof-tt/launch?next=/projects/nof-tt"), {
       params: Promise.resolve({ productKey: "nof-tt" }),
     });
 
-    expect(response.status).toBe(303);
-    const location = response.headers.get("location");
-    expect(location).toContain("http://localhost:3001/auth/platform/callback?");
-    expect(location).toContain("code=px_");
-    expect(location).toContain("state=");
-    expect(location).toContain("next=%2Fprojects%2Fnof-tt");
+    expect(response.status).toBe(410);
+    await expect(response.json()).resolves.toEqual({
+      error: "standard_oauth_required",
+      ok: false,
+      productKey: "nof-tt",
+    });
+  });
+
+  it("fails closed for direct Habit Tracker launch instead of creating a silent product session", async () => {
+    const response = await launchProduct(launchRequest("/products/nof-ht/launch?next=/"), {
+      params: Promise.resolve({ productKey: "nof-ht" }),
+    });
+
+    expect(response.status).toBe(410);
+    await expect(response.json()).resolves.toEqual({
+      error: "standard_oauth_required",
+      ok: false,
+      productKey: "nof-ht",
+    });
   });
 
   it("redirects guests to platform login before launching the product", async () => {

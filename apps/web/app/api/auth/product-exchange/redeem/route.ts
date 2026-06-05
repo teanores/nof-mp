@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { authenticateOAuthClient } from "@/lib/server/oauth-client-auth";
+import { isOAuthManagedProduct } from "@/lib/server/oauth-client-registry";
 import { getProductExchangeRepository } from "@/lib/server/product-exchange-repository";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!code || !productKey || !state) {
     return NextResponse.json({ error: "invalid_request", ok: false }, { status: 400 });
+  }
+  if (isOAuthManagedProduct(productKey)) {
+    return NextResponse.json({ error: "standard_oauth_required", ok: false, productKey }, { status: 410 });
   }
   if (!authenticateOAuthClient(productKey, clientSecret)) {
     return NextResponse.json({ error: "invalid_client", ok: false }, { status: 401 });

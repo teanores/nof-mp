@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { isOAuthManagedProduct } from "@/lib/server/oauth-client-registry";
 import { portalSessionFromRequest, requirePortalApiSession } from "@/lib/server/portal-auth-gate";
 import { getProductAccessRepository, subjectFromPortalSession } from "@/lib/server/product-access-repository";
 import { getProductExchangeRepository } from "@/lib/server/product-exchange-repository";
@@ -44,6 +45,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   if (!product.access.allowed) {
     return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
+  }
+  if (isOAuthManagedProduct(productKey)) {
+    return NextResponse.json({ error: "standard_oauth_required", ok: false, productKey }, { status: 410 });
   }
 
   const state = randomUUID();

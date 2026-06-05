@@ -14,6 +14,10 @@ vi.stubEnv(
   "NOF_PLATFORM_OAUTH_CLIENT_SECRET_SHA256_NOF_TT",
   "bd44784944c8c62f639d7340f7020b75666e9554e788638a5df0b29b3b024c8e",
 );
+vi.stubEnv(
+  "NOF_PLATFORM_OAUTH_CLIENT_SECRET_SHA256_NOF_CB",
+  "ce84a520b7e83a8cbe4c9bb8821b7d27cd8c172b3c67d4b137497d11f1d63600",
+);
 
 vi.mock("@/lib/server/portal-auth-gate", () => ({
   portalSessionFromRequest: vi.fn(async () => authSession.value),
@@ -38,6 +42,15 @@ vi.mock("@/lib/server/product-access-repository", () => ({
   getProductAccessRepository: () => ({
     exists: async (productKey: string) => productKey === "nof-tt" || productKey === "nof-onw",
     listForSubject: async () => [
+      {
+        access: { allowed: true, reason: "registered-user" },
+        createdAt: "2026-05-28T00:00:00.000Z",
+        description: "Coffee bot",
+        key: "nof-cb",
+        name: "Coffee Bot",
+        status: "active",
+        visibility: "public",
+      },
       {
         access: { allowed: true, reason: "registered-user" },
         createdAt: "2026-05-28T00:00:00.000Z",
@@ -108,7 +121,54 @@ describe("product exchange API", () => {
     });
   });
 
+  it("does not issue legacy exchange codes for OAuth-managed products", async () => {
+    authSession.value = {
+      authenticated: true,
+      loginUrl: "/login",
+      user: {
+        experience: 0,
+        id: "user-1",
+        username: "teanore",
+      },
+    };
+
+    const response = await issueExchange(jsonRequest("/api/auth/product-exchange/issue", { productKey: "nof-tt" }));
+
+    expect(response.status).toBe(410);
+    await expect(response.json()).resolves.toEqual({
+      error: "standard_oauth_required",
+      ok: false,
+      productKey: "nof-tt",
+    });
+  });
+
   it("redeems a valid one-time exchange code", async () => {
+    const issued = await getProductExchangeRepository().issue({
+      platformUserId: "user-1",
+      productKey: "nof-cb",
+      returnTo: "/projects",
+      state: "state-1",
+      ttlSeconds: 120,
+    });
+
+    const response = await redeemExchange(
+      jsonRequest("/api/auth/product-exchange/redeem", {
+        code: issued.code,
+        clientSecret: "nof-cb-secret",
+        productKey: "nof-cb",
+        state: "state-1",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      platformUserId: "user-1",
+      productKey: "nof-cb",
+      returnTo: "/projects",
+    });
+  });
+
+  it("does not redeem legacy exchange codes for OAuth-managed products", async () => {
     const issued = await getProductExchangeRepository().issue({
       platformUserId: "user-1",
       productKey: "nof-tt",
@@ -126,11 +186,11 @@ describe("product exchange API", () => {
       }),
     );
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
-      platformUserId: "user-1",
+    expect(response.status).toBe(410);
+    await expect(response.json()).resolves.toEqual({
+      error: "standard_oauth_required",
+      ok: false,
       productKey: "nof-tt",
-      returnTo: "/projects",
     });
   });
 
@@ -138,8 +198,8 @@ describe("product exchange API", () => {
     const response = await redeemExchange(
       jsonRequest("/api/auth/product-exchange/redeem", {
         code: "px_missing",
-        clientSecret: "nof-tt-secret",
-        productKey: "nof-tt",
+        clientSecret: "nof-cb-secret",
+        productKey: "nof-cb",
         state: "state-1",
       }),
     );
@@ -154,7 +214,7 @@ describe("product exchange API", () => {
   it("requires product client authentication before redeeming exchange codes", async () => {
     const issued = await getProductExchangeRepository().issue({
       platformUserId: "user-1",
-      productKey: "nof-tt",
+      productKey: "nof-cb",
       returnTo: "/projects",
       state: "state-1",
       ttlSeconds: 120,
@@ -163,7 +223,7 @@ describe("product exchange API", () => {
     const missing = await redeemExchange(
       jsonRequest("/api/auth/product-exchange/redeem", {
         code: issued.code,
-        productKey: "nof-tt",
+        productKey: "nof-cb",
         state: "state-1",
       }),
     );
@@ -171,7 +231,7 @@ describe("product exchange API", () => {
       jsonRequest("/api/auth/product-exchange/redeem", {
         code: issued.code,
         clientSecret: "wrong-secret",
-        productKey: "nof-tt",
+        productKey: "nof-cb",
         state: "state-1",
       }),
     );
