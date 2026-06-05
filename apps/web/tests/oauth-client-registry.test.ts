@@ -30,11 +30,12 @@ describe("oauth client registry", () => {
   });
 
   it("allows only exact registered redirect URIs", () => {
+    expect(isAllowedOAuthRedirectUri("nof-tt", "https://task-tracker.forgath.ru/auth/platform/callback")).toBe(true);
     expect(isAllowedOAuthRedirectUri("nof-tt", "https://forge-tasks.forgath.ru/auth/platform/callback")).toBe(true);
-    expect(isAllowedOAuthRedirectUri("nof-tt", "https://forge-tasks.forgath.ru/auth/platform/callback/")).toBe(false);
+    expect(isAllowedOAuthRedirectUri("nof-tt", "https://task-tracker.forgath.ru/auth/platform/callback/")).toBe(false);
     expect(isAllowedOAuthRedirectUri("nof-tt", "https://evil.example/auth/platform/callback")).toBe(false);
-    expect(isAllowedOAuthRedirectUri("nof-tt", "https://forge-tasks.forgath.ru/auth/platform/callback?next=/")).toBe(false);
-    expect(isAllowedOAuthRedirectUri("unknown", "https://forge-tasks.forgath.ru/auth/platform/callback")).toBe(false);
+    expect(isAllowedOAuthRedirectUri("nof-tt", "https://task-tracker.forgath.ru/auth/platform/callback?next=/")).toBe(false);
+    expect(isAllowedOAuthRedirectUri("unknown", "https://task-tracker.forgath.ru/auth/platform/callback")).toBe(false);
   });
 
   it("normalizes requested scopes to the client allowlist", () => {

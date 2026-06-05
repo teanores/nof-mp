@@ -9,9 +9,12 @@ export interface OAuthClientRegistration {
 export const oauthClientRegistry: OAuthClientRegistration[] = [
   {
     clientId: "nof-tt",
-    displayName: "Forge Tasks",
+    displayName: "Task Tracker",
     productKey: "nof-tt",
-    redirectUris: ["https://forge-tasks.forgath.ru/auth/platform/callback"],
+    redirectUris: [
+      "https://task-tracker.forgath.ru/auth/platform/callback",
+      "https://forge-tasks.forgath.ru/auth/platform/callback",
+    ],
     scopes: ["openid", "profile", "email"],
   },
   {

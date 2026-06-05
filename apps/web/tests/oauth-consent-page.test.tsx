@@ -31,7 +31,7 @@ import OAuthConsentPage from "@/app/oauth/consent/page";
 const validParams = {
   client_id: "nof-tt",
   nonce: "nonce-1",
-  redirect_uri: "https://forge-tasks.forgath.ru/auth/platform/callback",
+  redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
   response_type: "code",
   scope: "openid email",
   state: "state-1",
@@ -85,7 +85,7 @@ describe("oauth consent page", () => {
 
     render(await OAuthConsentPage({ searchParams: Promise.resolve(validParams) }));
 
-    expect(screen.getByRole("heading", { name: "Подключение Forge Tasks" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Подключение Task Tracker" })).toBeInTheDocument();
     expect(screen.getByText(/teanore/)).toBeInTheDocument();
     expect(screen.getByText(/owner@forgath.ru/)).toBeInTheDocument();
     expect(screen.getByText("openid")).toBeInTheDocument();

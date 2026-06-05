@@ -35,7 +35,7 @@ function project(overrides: Partial<ForgeProject>): ForgeProject {
     createdAt: "2026-06-01T00:00:00.000Z",
     description: "Project",
     key: "nof-tt",
-    name: "Forge Tasks",
+    name: "Task Tracker",
     status: "active",
     visibility: "registered",
     ...overrides,
@@ -106,7 +106,7 @@ describe("user profile MCP access", () => {
 
   it("shows MCP setup only for projects granted to the current user", async () => {
     platformApi.fetchPlatformProjects.mockResolvedValue([
-      project({ access: { allowed: true, reason: "member" }, key: "nof-tt", name: "Forge Tasks" }),
+      project({ access: { allowed: true, reason: "member" }, key: "nof-tt", name: "Task Tracker" }),
       project({ access: { allowed: false, reason: "not_granted" }, key: "nof-mp", name: "NOF Main Platform" }),
     ]);
 
@@ -115,9 +115,9 @@ describe("user profile MCP access", () => {
     await screen.findByText("MCP-ключи доступа");
 
     expect(screen.getByText("Доступ агентов к проектам")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "nof-tt - Forge Tasks" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "nof-tt - Task Tracker" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "nof-mp - NOF Main Platform" })).not.toBeInTheDocument();
-    expect(screen.getAllByText(/https:\/\/forge-tasks\.forgath\.ru\/api\/mcp/)).toHaveLength(2);
+    expect(screen.getAllByText(/https:\/\/task-tracker\.forgath\.ru\/api\/mcp/)).toHaveLength(2);
     expect(screen.getByText(/nof-tt-mcp/)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("192.168.1.51");
     expect(document.body).not.toHaveTextContent("30510");

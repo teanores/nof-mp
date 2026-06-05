@@ -45,7 +45,7 @@ vi.mock("@/lib/server/product-access-repository", () => ({
         createdAt: "2026-05-28T00:00:00.000Z",
         description: "Task tracker",
         key: "nof-tt",
-        name: "Forge Tasks",
+        name: "Task Tracker",
         status: "active",
         visibility: "registered",
       },

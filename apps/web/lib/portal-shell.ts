@@ -17,7 +17,7 @@ export interface SystemHealthCard {
 export const portalModules: PortalModule[] = [
   {
     key: "tracker",
-    title: "Forge Tasks",
+    title: "Task Tracker",
     description: "Трекер задач, эпиков, спринтов и рабочих планов.",
     href: "/services/forge-tasks",
     status: "available",

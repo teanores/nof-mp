@@ -24,7 +24,7 @@ This repository owns:
 
 This repository does not own:
 
-- Forge Tasks tracker boards, Wiki, tasks, sprints or tracker MCP methods, owned by `nof-tt`;
+- Task Tracker boards, Wiki, tasks, sprints or tracker MCP methods, owned by `nof-tt`;
 - Habit Tracker domain logic, owned by `nof-ht`;
 - legacy Python/FastAPI backend and Telegram bot code, owned by legacy `nof-service`;
 - Helm/release-builder canonical infrastructure, intended for `nof-infra`;

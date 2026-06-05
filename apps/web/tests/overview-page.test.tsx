@@ -35,7 +35,7 @@ describe("platform overview page", () => {
     render(await OverviewPage());
 
     expect(screen.getByRole("heading", { name: "Narag'Othal Forgath" })).toBeInTheDocument();
-    expect(screen.getByText("Forge Tasks")).toBeInTheDocument();
+    expect(screen.getByText("Task Tracker")).toBeInTheDocument();
     expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
     expect(screen.getByText("Портал стримера")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Запросы/ })).toHaveAttribute("href", "/admin/security");

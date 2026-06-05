@@ -128,7 +128,7 @@ function mcpConfig(fullToken: string, projectKey: string): string {
   );
 }
 
-const mcpServerUrl = "https://forge-tasks.forgath.ru/api/mcp";
+const mcpServerUrl = "https://task-tracker.forgath.ru/api/mcp";
 
 function mcpServerName(projectKey: string): string {
   return `${projectKey}-mcp`;
@@ -567,7 +567,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                     <p className="tech-label text-[10px] text-forge-accent">AutoClaw / Nimbalyst</p>
                     <p className="mt-2 text-sm leading-6 text-forge-muted">
                       Если клиент поддерживает HTTP MCP, укажи URL <code>{mcpServerUrl}</code> и header
-                      <code> x-api-key</code>. Один endpoint Forge Tasks принимает project-scoped ключи разных проектов.
+                      <code> x-api-key</code>. Один endpoint Task Tracker принимает project-scoped ключи разных проектов.
                     </p>
                   </article>
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
