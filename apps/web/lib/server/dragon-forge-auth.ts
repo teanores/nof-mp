@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 import { Pool, type QueryResultRow } from "pg";
 
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 
 const cookieName = "auth_token";
@@ -37,24 +38,6 @@ interface PortalUserRow extends QueryResultRow {
   telegram_lastname: string | null;
   telegram_username: string | null;
   username: string;
-}
-
-function databaseUrl(): string {
-  if (process.env.FORGE_TASKS_DATABASE_URL) {
-    return process.env.FORGE_TASKS_DATABASE_URL;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for Dragon Forge portal users");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
 function base64UrlDecode(value: string): Buffer {
@@ -169,7 +152,7 @@ function toPortalUser(row: PortalUserRow): ForgePortalUser {
 export class DragonForgeAuthRepository {
   private readonly pool: Pool;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 })) {
+  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("Dragon Forge portal users"), max: 3 })) {
     this.pool = pool;
   }
 

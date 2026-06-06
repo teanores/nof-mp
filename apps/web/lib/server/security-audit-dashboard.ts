@@ -1,5 +1,7 @@
 import { Pool, type QueryResultRow } from "pg";
 
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
+
 export type SecurityAuditRecommendation = "Наблюдать" | "Проверить пользователя" | "Усилить лимиты" | "Проверить инцидент";
 
 export interface SecurityAuditEvent {
@@ -55,24 +57,6 @@ const emptySummary = {
   successfulLogins: 0,
   suspiciousScans: 0,
 };
-
-function databaseUrl(): string {
-  if (process.env.FORGE_TASKS_DATABASE_URL) {
-    return process.env.FORGE_TASKS_DATABASE_URL;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for platform security dashboard");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
-}
 
 function activityLabelFor(eventType: string, path: string): string {
   if (eventType === "login_success") {
@@ -215,7 +199,7 @@ function toDashboard(rows: SecurityAuditRow[]): SecurityAuditDashboard {
 export class SecurityAuditDashboardRepository {
   private readonly pool: Pool;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 2 })) {
+  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("platform security dashboard"), max: 2 })) {
     this.pool = pool;
   }
 

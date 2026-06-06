@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { Pool, type QueryResultRow } from "pg";
 
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
+
 interface OAuthConsentChallengePool {
   query<T extends QueryResultRow = QueryResultRow>(sql: string, values?: unknown[]): Promise<{ rows: T[] }>;
 }
@@ -34,25 +36,6 @@ export type ConsumeOAuthConsentChallengeResult =
 export interface OAuthConsentChallengeRepository {
   consume(input: ConsumeOAuthConsentChallengeInput): Promise<ConsumeOAuthConsentChallengeResult>;
   issue(input: IssueOAuthConsentChallengeInput): Promise<OAuthConsentChallengeRecord>;
-}
-
-function databaseUrl(): string {
-  const configuredUrl = process.env.NOF_PLATFORM_DATABASE_URL ?? process.env.FORGE_TASKS_DATABASE_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for NOF Platform OAuth consent challenges");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
 function schemaName(): string {
@@ -160,7 +143,10 @@ export class PostgresOAuthConsentChallengeRepository implements OAuthConsentChal
   private readonly schema: string;
 
   constructor(
-    private readonly pool: OAuthConsentChallengePool = new Pool({ connectionString: databaseUrl(), max: 3 }),
+    private readonly pool: OAuthConsentChallengePool = new Pool({
+      connectionString: platformDatabaseUrl("NOF Platform OAuth consent challenges"),
+      max: 3,
+    }),
     schema = schemaName(),
     private readonly now: () => Date = () => new Date(),
   ) {

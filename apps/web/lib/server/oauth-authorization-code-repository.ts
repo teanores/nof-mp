@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { Pool, type QueryResultRow } from "pg";
 
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
+
 interface OAuthAuthorizationCodePool {
   query<T extends QueryResultRow = QueryResultRow>(sql: string, values?: unknown[]): Promise<{ rows: T[] }>;
 }
@@ -35,25 +37,6 @@ export interface RedeemOAuthAuthorizationCodeInput {
 export interface OAuthAuthorizationCodeRepository {
   issue(input: IssueOAuthAuthorizationCodeInput): Promise<OAuthAuthorizationCodeRecord>;
   redeem(input: RedeemOAuthAuthorizationCodeInput): Promise<RedeemOAuthAuthorizationCodeResult>;
-}
-
-function databaseUrl(): string {
-  const configuredUrl = process.env.NOF_PLATFORM_DATABASE_URL ?? process.env.FORGE_TASKS_DATABASE_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for NOF Platform OAuth authorization codes");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
 function schemaName(): string {
@@ -163,7 +146,10 @@ export class PostgresOAuthAuthorizationCodeRepository implements OAuthAuthorizat
   private initialized = false;
 
   constructor(
-    private readonly pool: OAuthAuthorizationCodePool = new Pool({ connectionString: databaseUrl(), max: 3 }),
+    private readonly pool: OAuthAuthorizationCodePool = new Pool({
+      connectionString: platformDatabaseUrl("NOF Platform OAuth authorization codes"),
+      max: 3,
+    }),
     schema = schemaName(),
     private readonly now: () => Date = () => new Date(),
   ) {

@@ -4,6 +4,7 @@ import { Pool, type QueryResultRow } from "pg";
 
 import { projectExists } from "@/lib/platform-projects";
 import { mcpTokenPrefixForProject, normalizeMcpProjectKey } from "@/lib/server/mcp-project-scope";
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import type { ForgeMcpToken } from "@/lib/types";
 
 const defaultProjectKey = "nof-tt";
@@ -20,31 +21,12 @@ interface McpTokenRow extends QueryResultRow {
   token_prefix: string;
 }
 
-function databaseUrl(): string {
-  const configuredUrl = process.env.NOF_PLATFORM_DATABASE_URL ?? process.env.FORGE_TASKS_DATABASE_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for NOF Platform MCP tokens");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
-}
-
 export function mcpTokenSchemaName(): string {
-  return process.env.FORGE_TASKS_DB_SCHEMA ?? process.env.NOF_PLATFORM_MCP_DB_SCHEMA ?? process.env.NOF_PLATFORM_DB_SCHEMA ?? "forge_tasks";
+  return process.env.NOF_PLATFORM_MCP_DB_SCHEMA ?? process.env.NOF_PLATFORM_DB_SCHEMA ?? "forge_tasks";
 }
 
 function tokenSecret(): string {
-  return process.env.NOF_PLATFORM_MCP_TOKEN_SECRET ?? process.env.FORGE_TASKS_MCP_TOKEN_SECRET ?? process.env.SECRET_KEY ?? "nof-mp-local-mcp-token-secret";
+  return process.env.NOF_PLATFORM_MCP_TOKEN_SECRET ?? process.env.SECRET_KEY ?? "nof-mp-local-mcp-token-secret";
 }
 
 function toIso(value: Date | string | null): string | undefined {
@@ -76,7 +58,7 @@ export class McpTokenRepository {
   private readonly pool: Pool;
   private readonly schema: string;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = mcpTokenSchemaName()) {
+  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("NOF Platform MCP tokens"), max: 3 }), schema = mcpTokenSchemaName()) {
     this.pool = pool;
     this.schema = schema;
   }

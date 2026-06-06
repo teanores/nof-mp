@@ -1,6 +1,7 @@
 import { Pool, type QueryResultRow } from "pg";
 
 import { defaultPortalLanguage, normalizePortalLanguage, type PortalLanguage } from "@/lib/portal-language";
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 
 export interface PortalUserPreferences {
   language: PortalLanguage;
@@ -8,25 +9,6 @@ export interface PortalUserPreferences {
 
 interface UserPreferencesRow extends QueryResultRow {
   language: string | null;
-}
-
-function databaseUrl(): string {
-  const configuredUrl = process.env.NOF_PLATFORM_DATABASE_URL ?? process.env.FORGE_TASKS_DATABASE_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for NOF Platform user preferences");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
 export function platformPreferencesSchemaName(): string {
@@ -38,7 +20,7 @@ export class UserPreferencesRepository {
   private readonly pool: Pool;
   private readonly schema: string;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = platformPreferencesSchemaName()) {
+  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("NOF Platform user preferences"), max: 3 }), schema = platformPreferencesSchemaName()) {
     this.pool = pool;
     this.schema = schema;
   }

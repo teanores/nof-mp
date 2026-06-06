@@ -4,7 +4,6 @@ import { mcpTokenSchemaName } from "@/lib/server/mcp-token-repository";
 
 describe("mcp token repository", () => {
   afterEach(() => {
-    delete process.env.FORGE_TASKS_DB_SCHEMA;
     delete process.env.NOF_PLATFORM_MCP_DB_SCHEMA;
     delete process.env.NOF_PLATFORM_DB_SCHEMA;
   });
@@ -14,9 +13,15 @@ describe("mcp token repository", () => {
   });
 
   it("allows explicit schema overrides for controlled migrations", () => {
-    process.env.FORGE_TASKS_DB_SCHEMA = "forge_tasks_preview";
+    process.env.NOF_PLATFORM_MCP_DB_SCHEMA = "forge_tasks_preview";
 
     expect(mcpTokenSchemaName()).toBe("forge_tasks_preview");
+  });
+
+  it("uses platform schema override only when no MCP-specific schema is configured", () => {
+    process.env.NOF_PLATFORM_DB_SCHEMA = "nof_platform";
+
+    expect(mcpTokenSchemaName()).toBe("nof_platform");
   });
 });
 

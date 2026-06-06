@@ -1,5 +1,7 @@
 import { Pool, type QueryResultRow } from "pg";
 
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
+
 export type AdminUserRisk = "missing-password" | "external-email" | "telegram-placeholder-email";
 
 export interface AdminUserListItem {
@@ -34,24 +36,6 @@ interface AdminUserRow extends QueryResultRow {
   telegram_id: string | number | null;
   telegram_username: string | null;
   username: string;
-}
-
-function databaseUrl(): string {
-  if (process.env.FORGE_TASKS_DATABASE_URL) {
-    return process.env.FORGE_TASKS_DATABASE_URL;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for platform admin users");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
 function toIso(value: Date | string | null): string | undefined {
@@ -117,7 +101,7 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
 export class AdminUsersRepository {
   private readonly pool: Pool;
 
-  constructor(pool = new Pool({ connectionString: databaseUrl(), max: 3 })) {
+  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("platform admin users"), max: 3 })) {
     this.pool = pool;
   }
 

@@ -8,6 +8,7 @@ import {
   type ProductVisibility,
 } from "@/lib/platform-access-contract";
 import { listPlatformProjects, platformProjectRecords, projectExists } from "@/lib/platform-projects";
+import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import type { ForgePortalSession, ForgeProject } from "@/lib/types";
 
 const platformRoles: PlatformRole[] = ["owner", "admin", "moderator", "user", "guest"];
@@ -25,25 +26,6 @@ interface ProductAccessRow extends QueryResultRow {
   owner_user_ids: string[] | null;
   status: "active" | "archived";
   visibility: ProductVisibility;
-}
-
-function databaseUrl(): string {
-  const configuredUrl = process.env.NOF_PLATFORM_DATABASE_URL ?? process.env.FORGE_TASKS_DATABASE_URL;
-  if (configuredUrl) {
-    return configuredUrl;
-  }
-
-  const host = process.env.DB_SERVER ?? "postgres";
-  const port = process.env.DB_PORT ?? "5432";
-  const database = process.env.DB_NAME;
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-
-  if (!database || !user || !password) {
-    throw new Error("PostgreSQL settings are not configured for NOF Platform product access");
-  }
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
 function schemaName(): string {
@@ -105,7 +87,10 @@ export class ProductAccessRepository {
     return new ProductAccessRepository("static");
   }
 
-  static fromDatabase(pool: ProductAccessPool = new Pool({ connectionString: databaseUrl(), max: 3 }), schema = schemaName()): ProductAccessRepository {
+  static fromDatabase(
+    pool: ProductAccessPool = new Pool({ connectionString: platformDatabaseUrl("NOF Platform product access"), max: 3 }),
+    schema = schemaName(),
+  ): ProductAccessRepository {
     return new ProductAccessRepository("database", pool, schema);
   }
 
