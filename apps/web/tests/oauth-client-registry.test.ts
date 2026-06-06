@@ -35,6 +35,8 @@ describe("oauth client registry", () => {
     expect(isAllowedOAuthRedirectUri("nof-tt", "https://task-tracker.forgath.ru/auth/platform/callback/")).toBe(false);
     expect(isAllowedOAuthRedirectUri("nof-tt", "https://evil.example/auth/platform/callback")).toBe(false);
     expect(isAllowedOAuthRedirectUri("nof-tt", "https://task-tracker.forgath.ru/auth/platform/callback?next=/")).toBe(false);
+    expect(isAllowedOAuthRedirectUri("nof-ht", "https://habit-tracker.forgath.ru/api/auth/platform/callback")).toBe(true);
+    expect(isAllowedOAuthRedirectUri("nof-ht", "https://habit-tracker.forgath.ru/auth/platform/callback")).toBe(false);
     expect(isAllowedOAuthRedirectUri("unknown", "https://task-tracker.forgath.ru/auth/platform/callback")).toBe(false);
   });
 

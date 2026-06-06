@@ -18,7 +18,7 @@ export const oauthClientRegistry: OAuthClientRegistration[] = [
     clientId: "nof-ht",
     displayName: "Habit Tracker",
     productKey: "nof-ht",
-    redirectUris: ["https://habit-tracker.forgath.ru/auth/platform/callback"],
+    redirectUris: ["https://habit-tracker.forgath.ru/api/auth/platform/callback"],
     scopes: ["openid", "profile", "email"],
   },
 ];
