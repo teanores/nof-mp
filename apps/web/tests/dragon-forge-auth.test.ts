@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { decodeDragonForgeAuthToken } from "@/lib/server/dragon-forge-auth";
 
@@ -18,7 +18,24 @@ function sign(payload: object, secret: string): string {
 describe("dragon forge auth token", () => {
   afterEach(() => {
     delete process.env.DRAGON_FORGE_SECRET_KEY;
+    delete process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL;
     delete process.env.SECRET_KEY;
+    vi.resetModules();
+  });
+
+  it("uses a platform-relative login URL by default", async () => {
+    const { dragonForgeLoginUrl } = await import("@/lib/server/dragon-forge-auth");
+
+    expect(dragonForgeLoginUrl).toBe("/login");
+    expect(dragonForgeLoginUrl).not.toContain("192.168.1.51");
+    expect(dragonForgeLoginUrl).not.toContain("30500");
+  });
+
+  it("keeps the configured Dragon Forge login URL override", async () => {
+    process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL = "https://forgath.ru/login";
+    const { dragonForgeLoginUrl } = await import("@/lib/server/dragon-forge-auth");
+
+    expect(dragonForgeLoginUrl).toBe("https://forgath.ru/login");
   });
 
   it("decodes the existing Dragon Forge HS256 auth_token shape", () => {
