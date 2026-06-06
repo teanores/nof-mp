@@ -6,13 +6,15 @@ import sitemap from "@/app/sitemap";
 describe("public metadata routes", () => {
   it("serves crawler policy without exposing private platform surfaces", () => {
     const policy = robots();
+    const rules = Array.isArray(policy.rules) ? policy.rules[0] : policy.rules;
 
     expect(policy.sitemap).toBe("https://forgath.ru/sitemap.xml");
-    expect(policy.rules).toMatchObject({
+    expect(rules).toMatchObject({
       userAgent: "*",
       allow: expect.arrayContaining(["/", "/services/task-tracker", "/services/habit-tracker"]),
       disallow: expect.arrayContaining(["/admin", "/api", "/profile", "/me", "/products"]),
     });
+    expect(rules.allow).not.toContain("/services/streamer");
   });
 
   it("publishes only public portal pages in the sitemap", () => {
@@ -24,8 +26,8 @@ describe("public metadata routes", () => {
       "https://forgath.ru/register",
       "https://forgath.ru/services/task-tracker",
       "https://forgath.ru/services/habit-tracker",
-      "https://forgath.ru/services/streamer",
     ]);
+    expect(urls).not.toContain("https://forgath.ru/services/streamer");
     expect(urls).not.toContain("https://forgath.ru/admin/security");
     expect(urls).not.toContain("https://forgath.ru/api/mcp");
   });
