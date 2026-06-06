@@ -39,9 +39,9 @@ export const portalModules: PortalModule[] = [
 ];
 
 export const systemHealthCards: SystemHealthCard[] = [
-  { label: "Canonical", value: "192.168.1.51:30500", note: "gateway target" },
-  { label: "Backend", value: "dragon-forge-service", note: "auth/source of truth" },
-  { label: "Storage", value: "forge_tasks", note: "tracker/wiki schema" },
+  { label: "Public URL", value: "forgath.ru", note: "platform entry" },
+  { label: "Identity", value: "NOF Main Platform", note: "account surface" },
+  { label: "Workspace", value: "Task Tracker", note: "delivery and Wiki" },
 ];
 
 export const protectedPortalRoutes = [

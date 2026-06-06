@@ -21,12 +21,31 @@ describe("platform shell manifest", () => {
     expect(portalModules.map((module) => module.href)).not.toContain("/products/nof-tt/launch?next=/projects/nof-tt");
   });
 
-  it("documents canonical address for the cutover path", () => {
+  it("uses product-facing system card labels", () => {
     expect(systemHealthCards).toContainEqual({
-      label: "Canonical",
-      note: "gateway target",
-      value: "192.168.1.51:30500",
+      label: "Public URL",
+      note: "platform entry",
+      value: "forgath.ru",
     });
+    expect(systemHealthCards).toContainEqual({
+      label: "Identity",
+      note: "account surface",
+      value: "NOF Main Platform",
+    });
+    expect(systemHealthCards).toContainEqual({
+      label: "Workspace",
+      note: "delivery and Wiki",
+      value: "Task Tracker",
+    });
+  });
+
+  it("does not expose internal infrastructure names in shell cards", () => {
+    const shellText = JSON.stringify(systemHealthCards);
+
+    expect(shellText).not.toContain("192.168.1.51");
+    expect(shellText).not.toContain("30500");
+    expect(shellText).not.toContain("dragon-forge-service");
+    expect(shellText).not.toContain("forge_tasks");
   });
 
   it("renders stable status labels", () => {
