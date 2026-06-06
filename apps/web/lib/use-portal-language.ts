@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   defaultPortalLanguage,
   languageChangeEventName,
+  legacyPortalLanguageStorageKey,
   normalizePortalLanguage,
   portalLanguageStorageKey,
   type PortalLanguage,
@@ -14,6 +15,12 @@ export function usePortalLanguage(initialLanguage: PortalLanguage = defaultPorta
   const [language, setLanguage] = useState<PortalLanguage>(initialLanguage);
 
   useEffect(() => {
+    // Migrate legacy localStorage key written by old nof-forge-tasks builds
+    const legacy = window.localStorage.getItem(legacyPortalLanguageStorageKey);
+    if (legacy) {
+      window.localStorage.setItem(portalLanguageStorageKey, legacy);
+      window.localStorage.removeItem(legacyPortalLanguageStorageKey);
+    }
     const saved = window.localStorage.getItem(portalLanguageStorageKey);
     const nextLanguage = normalizePortalLanguage(saved ?? initialLanguage);
     setLanguage(nextLanguage);
