@@ -39,9 +39,9 @@ export const portalModules: PortalModule[] = [
 ];
 
 export const systemHealthCards: SystemHealthCard[] = [
-  { label: "Public URL", value: "forgath.ru", note: "platform entry" },
-  { label: "Identity", value: "NOF Main Platform", note: "account surface" },
-  { label: "Workspace", value: "Task Tracker", note: "delivery and Wiki" },
+  { label: "Публичный адрес", value: "forgath.ru", note: "точка входа" },
+  { label: "Учётная запись", value: "NOF Main Platform", note: "единый профиль" },
+  { label: "Рабочее пространство", value: "Task Tracker", note: "задачи и Wiki" },
 ];
 
 export const protectedPortalRoutes = [
@@ -51,5 +51,11 @@ export const protectedPortalRoutes = [
 ];
 
 export function portalModuleStatusLabel(status: PortalModuleStatus): string {
-  return status;
+  const labels: Record<PortalModuleStatus, string> = {
+    available: "Доступен",
+    legacy: "Архив",
+    planned: "Запланирован",
+    preview: "Предпросмотр",
+  };
+  return labels[status];
 }

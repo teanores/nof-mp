@@ -10,7 +10,7 @@ export function PortalBreadcrumbs({ items = [] }: { items?: PortalBreadcrumbItem
   return (
     <nav className="tech-label flex flex-wrap items-center gap-x-1 gap-y-1 text-xs text-forge-accent" aria-label="Portal breadcrumbs">
       <Link className="transition hover:text-forge-ink" href="/">
-        {"// DRAGON FORGE // Narag'Othal Forgath"}
+        NOF Platform
       </Link>
       {items.map((item, index) => (
         <React.Fragment key={`${item.label}-${index}`}>

@@ -22,6 +22,8 @@ const overviewCopy = {
     portalTitle: "NOF Platform",
     profile: "Profile",
     modules: "Разделы кузницы",
+    modulesEyebrow: "Сервисы платформы",
+    systemStatus: "Статус сервисов",
   },
   ru: {
     adminRequests: "Запросы",
@@ -35,6 +37,8 @@ const overviewCopy = {
     portalTitle: "NOF Platform",
     profile: "Профиль",
     modules: "Разделы кузницы",
+    modulesEyebrow: "Сервисы платформы",
+    systemStatus: "Статус сервисов",
   },
 } as const;
 
@@ -145,7 +149,7 @@ export function PortalOverviewPage({ initialSession }: { initialSession?: ForgeP
         </article>
 
         <article className="panel p-5">
-          <p className="tech-label text-xs text-forge-accent">System health</p>
+          <p className="tech-label text-xs text-forge-accent">{copy.systemStatus}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {systemHealthCards.map(({ label, note, value }) => (
               <div key={label} className="rounded-sm border border-forge-line bg-forge-surface p-3">
@@ -172,7 +176,7 @@ export function PortalOverviewPage({ initialSession }: { initialSession?: ForgeP
         </article>
       </section>
 
-      <PortalActionBar eyebrow="Portal modules" title={copy.modules} />
+      <PortalActionBar eyebrow={copy.modulesEyebrow} title={copy.modules} />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {portalModules.map((module) => (

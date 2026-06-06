@@ -16,16 +16,21 @@ describe("service preview pages", () => {
       "href",
       "https://task-tracker.forgath.ru/auth/platform/start?next=%2Fprojects",
     );
+    expect(screen.getByText(/собирает идеи, требования, задачи, спринты и UAT/i)).toBeInTheDocument();
+    expect(screen.getByText(/руководителя продукта/i)).toBeInTheDocument();
+    expect(screen.getByText(/экономит время команды/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
-  it("keeps Habit Tracker launch closed until the NOF Platform identity flow is ready", () => {
+  it("shows Habit Tracker context and restores the product launch button", () => {
     render(<HabitTrackerServicePage />);
 
     expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Перейти в Habit Tracker" })).not.toBeInTheDocument();
-    expect(screen.getByText(/Прямой переход закрыт/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Перейти в Habit Tracker" })).toHaveAttribute("href", "https://habit-tracker.forgath.ru");
+    expect(screen.getByText(/помогает удерживать регулярные практики/i)).toBeInTheDocument();
+    expect(screen.getByText(/личных целей и командных ритуалов/i)).toBeInTheDocument();
+    expect(screen.getByText(/ценность видна каждый день/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });

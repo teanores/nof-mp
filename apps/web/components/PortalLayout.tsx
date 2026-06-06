@@ -25,9 +25,9 @@ interface PortalActionBarProps {
 
 export function PortalPageShell({ children, maxWidthClassName = "max-w-[1500px]" }: PortalPageShellProps) {
   return (
-    <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
-      <div className={`mx-auto flex w-full ${maxWidthClassName} flex-col gap-5`}>
-        {children}
+    <main className="flex min-h-screen flex-col px-4 py-5 sm:px-6 lg:px-8">
+      <div className={`mx-auto flex w-full flex-1 ${maxWidthClassName} flex-col gap-5`}>
+        <div className="flex flex-1 flex-col gap-5">{children}</div>
         <footer className="tech-label flex items-center justify-between border-t border-forge-line pt-4 text-[10px] text-forge-muted">
           <span>{NOF_MP_FOOTER_MARKER}</span>
           <span>Narag&apos;Othal Forgath</span>

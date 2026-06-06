@@ -23,18 +23,18 @@ describe("platform shell manifest", () => {
 
   it("uses product-facing system card labels", () => {
     expect(systemHealthCards).toContainEqual({
-      label: "Public URL",
-      note: "platform entry",
+      label: "Публичный адрес",
+      note: "точка входа",
       value: "forgath.ru",
     });
     expect(systemHealthCards).toContainEqual({
-      label: "Identity",
-      note: "account surface",
+      label: "Учётная запись",
+      note: "единый профиль",
       value: "NOF Main Platform",
     });
     expect(systemHealthCards).toContainEqual({
-      label: "Workspace",
-      note: "delivery and Wiki",
+      label: "Рабочее пространство",
+      note: "задачи и Wiki",
       value: "Task Tracker",
     });
   });
@@ -49,9 +49,9 @@ describe("platform shell manifest", () => {
   });
 
   it("renders stable status labels", () => {
-    expect(portalModuleStatusLabel("available")).toBe("available");
-    expect(portalModuleStatusLabel("legacy")).toBe("legacy");
-    expect(portalModuleStatusLabel("planned")).toBe("planned");
-    expect(portalModuleStatusLabel("preview")).toBe("preview");
+    expect(portalModuleStatusLabel("available")).toBe("Доступен");
+    expect(portalModuleStatusLabel("legacy")).toBe("Архив");
+    expect(portalModuleStatusLabel("planned")).toBe("Запланирован");
+    expect(portalModuleStatusLabel("preview")).toBe("Предпросмотр");
   });
 });
