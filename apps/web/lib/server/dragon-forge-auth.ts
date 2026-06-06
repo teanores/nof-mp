@@ -7,7 +7,7 @@ import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 
 const cookieName = "auth_token";
 const algorithm = "HS256";
-const loginUrl = process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL ?? "http://192.168.1.51:30500/login";
+const loginUrl = process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL ?? "/login";
 
 interface JwtPayload {
   exp?: number;
