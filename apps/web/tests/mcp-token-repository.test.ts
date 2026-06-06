@@ -9,7 +9,7 @@ describe("mcp token repository", () => {
     delete process.env.NOF_PLATFORM_DB_SCHEMA;
   });
 
-  it("uses the Forge Tasks schema by default because the public MCP endpoint is owned by Forge Tasks", () => {
+  it("uses the tracker schema by default because the public MCP endpoint is owned by Task Tracker", () => {
     expect(mcpTokenSchemaName()).toBe("forge_tasks");
   });
 

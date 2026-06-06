@@ -6,7 +6,8 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 
 type Theme = "dark" | "light" | "system";
 
-const storageKey = "nof-forge-tasks-theme";
+const storageKey = "nof-mp-theme";
+const legacyStorageKey = "nof-forge-tasks-theme";
 
 function systemPrefersLight(): boolean {
   return window.matchMedia("(prefers-color-scheme: light)").matches;
@@ -26,6 +27,12 @@ export function ThemeToggle() {
       : { dark: "ТЕНЬ", light: "СВЕТ", system: "КАК В СИСТЕМЕ" };
 
   useEffect(() => {
+    const legacyTheme = window.localStorage.getItem(legacyStorageKey);
+    if (legacyTheme) {
+      window.localStorage.setItem(storageKey, legacyTheme);
+      window.localStorage.removeItem(legacyStorageKey);
+    }
+
     const saved = window.localStorage.getItem(storageKey);
     const initialTheme: Theme = saved === "light" || saved === "dark" ? saved : "system";
     setTheme(initialTheme);
