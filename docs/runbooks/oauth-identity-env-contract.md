@@ -8,6 +8,24 @@ Do not store or paste real secret values here.
 
 ## Platform Variables
 
+`DRAGON_FORGE_SECRET_KEY`
+
+- Owner: `nof-mp`, shared operationally with `dragon-forge-service` during decomposition.
+- Purpose: verifies HS256 JWTs issued by `dragon-forge-service` (legacy session cookie `auth_token`).
+- Consumers: `apps/web/lib/server/dragon-forge-auth.ts` → `decodeDragonForgeAuthToken`.
+- Fallback: falls back to `SECRET_KEY` when absent (backward compatibility during migration).
+- Rotation: coordinate with `dragon-forge-service` secret store. Remove fallback after `dragon-forge-service` is fully decommissioned.
+- Secret handling: never expose to browser JavaScript, logs, Wiki, tracker comments or build output.
+
+`NOF_PLATFORM_MCP_TOKEN_SECRET`
+
+- Owner: `nof-mp`.
+- Purpose: HMAC-SHA256 key for hashing and verifying MCP tokens stored in `mcp_tokens` table.
+- Consumers: `apps/web/lib/server/mcp-token-repository.ts` → `tokenSecret()`.
+- Fallback: falls back to `SECRET_KEY`, then a local dev default.
+- Rotation: invalidates all existing MCP tokens — coordinate with token holders.
+- Secret handling: never expose to browser JavaScript, logs, Wiki, tracker comments or build output.
+
 `NOF_PLATFORM_OAUTH_JWT_SECRET`
 
 - Owner: `nof-mp`.

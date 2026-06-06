@@ -52,7 +52,7 @@ function safeEqual(left: string, right: string): boolean {
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function decodeDragonForgeAuthToken(token: string, secret = process.env.SECRET_KEY): JwtPayload | undefined {
+export function decodeDragonForgeAuthToken(token: string, secret = process.env.DRAGON_FORGE_SECRET_KEY ?? process.env.SECRET_KEY): JwtPayload | undefined {
   if (!secret) {
     return undefined;
   }
