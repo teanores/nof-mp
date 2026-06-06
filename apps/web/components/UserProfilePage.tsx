@@ -162,7 +162,7 @@ function LoginRequired({ loginUrl }: { loginUrl?: string }) {
       </p>
       <a
         className="tech-label mt-5 inline-flex rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition"
-        href={loginUrl ?? "http://192.168.1.51:30500/login"}
+        href={loginUrl ?? "/login"}
       >
         {copy.signIn}
       </a>

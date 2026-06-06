@@ -104,6 +104,20 @@ describe("user profile MCP access", () => {
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });
 
+  it("uses the public login route when the session response has no login URL", async () => {
+    platformApi.fetchPortalSession.mockResolvedValue({
+      authenticated: false,
+    });
+
+    render(<UserProfilePage />);
+
+    await screen.findByText("Вход в платформу");
+
+    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login");
+    expect(document.body).not.toHaveTextContent("192.168.1.51");
+    expect(document.body).not.toHaveTextContent("30500");
+  });
+
   it("shows MCP setup only for projects granted to the current user", async () => {
     platformApi.fetchPlatformProjects.mockResolvedValue([
       project({ access: { allowed: true, reason: "member" }, key: "nof-tt", name: "Task Tracker" }),
