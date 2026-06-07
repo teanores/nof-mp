@@ -5,6 +5,7 @@ import { portalModules, portalModuleStatusLabel, protectedPortalRoutes, systemHe
 describe("platform shell manifest", () => {
   it("keeps only platform-level service cards visible", () => {
     expect(portalModules.map((module) => module.key)).toEqual(["tracker", "habits", "streamer"]);
+    expect(portalModules.map((module) => module.eyebrowLabel)).toEqual(["Задачи", "Привычки", "Стримы"]);
   });
 
   it("keeps platform-owned routes behind the auth gate during preview", () => {

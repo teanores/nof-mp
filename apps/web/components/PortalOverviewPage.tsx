@@ -53,7 +53,7 @@ function ModuleCard({ module }: { module: PortalModule }) {
   return (
     <Link className="panel block min-h-[190px] p-4 transition hover:border-forge-accent" href={module.href}>
       <div className="flex items-start justify-between gap-3">
-        <p className="tech-label text-xs text-forge-accent">{module.key}</p>
+        <p className="tech-label text-xs text-forge-accent">{module.eyebrowLabel}</p>
         <span className="tech-label rounded-sm border border-forge-line bg-forge-surface px-2 py-1 text-[10px] text-forge-muted">
           {portalModuleStatusLabel(module.status)}
         </span>

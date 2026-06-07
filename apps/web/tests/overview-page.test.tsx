@@ -38,6 +38,11 @@ describe("platform overview page", () => {
     expect(screen.getByRole("heading", { name: "Task Tracker" })).toBeInTheDocument();
     expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
     expect(screen.getByText("Портал стримера")).toBeInTheDocument();
+    expect(screen.getByText("Задачи")).toBeInTheDocument();
+    expect(screen.getByText("Привычки")).toBeInTheDocument();
+    expect(screen.getByText("Стримы")).toBeInTheDocument();
+    expect(screen.queryByText("tracker")).not.toBeInTheDocument();
+    expect(screen.queryByText("habits")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Запросы/ })).toHaveAttribute("href", "/admin/security");
     expect(screen.getByRole("link", { name: /Пользователи/ })).toHaveAttribute("href", "/admin/users");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
