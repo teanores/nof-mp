@@ -134,7 +134,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                       </div>
                       <div>
                         <p className="font-bold text-forge-ink">{user.username}</p>
-                        <p className="text-xs text-forge-muted">{user.registrationSource ?? "source unknown"}</p>
+                        <p className="text-xs text-forge-muted">{user.registrationSource ?? "источник неизвестен"}</p>
                       </div>
                     </div>
                   </td>

@@ -58,6 +58,12 @@ const profileCopy = {
     deleteToken: "Delete",
     hideToken: "Hide",
     issueMcpKey: "ISSUE MCP KEY",
+    labelCreated: "CREATED",
+    labelLastSeen: "LAST SEEN",
+    labelLevel: "LEVEL",
+    labelRank: "RANK",
+    labelSource: "SOURCE",
+    labelUserId: "USER ID",
     mcpDescription: "The full token is shown only once. Keep it in agent secrets, not in Git, documentation or chat.",
     mcpEmpty: "No active MCP keys yet.",
     mcpTitle: "Agent access to projects",
@@ -90,6 +96,12 @@ const profileCopy = {
     deleteToken: "Удалить",
     hideToken: "Скрыть",
     issueMcpKey: "ВЫПУСТИТЬ MCP-КЛЮЧ",
+    labelCreated: "Создан",
+    labelLastSeen: "Последний вход",
+    labelLevel: "Уровень",
+    labelRank: "Ранг",
+    labelSource: "Источник",
+    labelUserId: "ID пользователя",
     mcpDescription: "Полный токен показывается только один раз. Храни его в секретах агента, не в Git, документации или чате.",
     mcpEmpty: "Активных MCP-ключей пока нет.",
     mcpTitle: "Доступ агентов к проектам",
@@ -241,7 +253,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       setSavedTokenNotice(undefined);
       setMcpTokens((current) => [nextToken.token, ...current]);
     } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "MCP token was not created");
+      setError(createError instanceof Error ? createError.message : "MCP-ключ не был создан");
     } finally {
       setIsTokenBusy(false);
     }
@@ -310,7 +322,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       setSavedTokenNotice(undefined);
       setMcpTokens((current) => [nextToken.token, ...current.filter((item) => item.id !== token.id)]);
     } catch (rotateError) {
-      setError(rotateError instanceof Error ? rotateError.message : "MCP token was not rotated");
+      setError(rotateError instanceof Error ? rotateError.message : "MCP-ключ не был перевыпущен");
     } finally {
       setIsTokenBusy(false);
     }
@@ -326,7 +338,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
         setCreatedToken(undefined);
       }
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "MCP token was not deleted");
+      setError(deleteError instanceof Error ? deleteError.message : "MCP-ключ не был удалён");
     } finally {
       setIsTokenBusy(false);
     }
@@ -383,7 +395,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   <div className="mt-3 space-y-2">
                     <DataRow label="EMAIL" value={user.email ?? "-"} />
                     <DataRow label="TG" value={telegramLabel} />
-                    <DataRow label="SOURCE" value={user.registrationSource ?? "-"} />
+                    <DataRow label={copy.labelSource} value={user.registrationSource ?? "-"} />
                   </div>
                 </div>
               </div>
@@ -391,16 +403,16 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
 
             <section className="grid grid-cols-3 gap-3">
               <StatPill label="XP" value={user.experience} />
-              <StatPill label="LEVEL" value={user.level?.name ?? "-"} />
-              <StatPill label="RANK" value={user.rank?.name ?? "-"} />
+              <StatPill label={copy.labelLevel} value={user.level?.name ?? "-"} />
+              <StatPill label={copy.labelRank} value={user.rank?.name ?? "-"} />
             </section>
 
             <section className="panel p-5">
               <p className="tech-label text-xs text-forge-muted">{copy.identity}</p>
               <div className="mt-4 space-y-2">
-                <DataRow label="USER ID" value={user.id} />
-                <DataRow label="CREATED" value={formatDate(user.createdAt)} />
-                <DataRow label="LAST SEEN" value={formatDate(user.lastSeen)} />
+                <DataRow label={copy.labelUserId} value={user.id} />
+                <DataRow label={copy.labelCreated} value={formatDate(user.createdAt)} />
+                <DataRow label={copy.labelLastSeen} value={formatDate(user.lastSeen)} />
               </div>
             </section>
 
