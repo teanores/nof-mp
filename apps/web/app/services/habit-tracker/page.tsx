@@ -9,7 +9,7 @@ function habitTrackerHref(): string {
 
 export default function HabitTrackerServicePage() {
   return (
-    <PortalPageShell maxWidthClassName="max-w-4xl">
+    <PortalPageShell maxWidthClassName="max-w-[1200px]">
       <PortalHeader
         breadcrumbs={[{ href: "/overview", label: "Разделы кузницы" }, { label: "Habit Tracker" }]}
         description="Habit Tracker помогает удерживать регулярные практики, видеть прогресс и не терять важные личные ритуалы."

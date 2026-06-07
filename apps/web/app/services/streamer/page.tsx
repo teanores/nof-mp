@@ -5,7 +5,7 @@ import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 
 export default function StreamerServicePage() {
   return (
-    <PortalPageShell maxWidthClassName="max-w-4xl">
+    <PortalPageShell maxWidthClassName="max-w-[1200px]">
       <PortalHeader
         breadcrumbs={[{ href: "/overview", label: "Разделы кузницы" }, { label: "Портал стримера" }]}
         description="Раздел будет доступен позже. Сейчас мы готовим страницу стримера и публичные материалы Te'An'ore."

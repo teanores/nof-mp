@@ -9,9 +9,10 @@ import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 
 describe("service preview pages", () => {
   it("shows an explicit Task Tracker entry button without auto redirecting the preview page", () => {
-    render(<TaskTrackerServicePage />);
+    const { container } = render(<TaskTrackerServicePage />);
 
     expect(screen.getByRole("heading", { name: "Task Tracker" })).toBeInTheDocument();
+    expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Перейти в Task Tracker" })).toHaveAttribute(
       "href",
       "https://task-tracker.forgath.ru/auth/platform/start?next=%2Fprojects",
@@ -24,9 +25,10 @@ describe("service preview pages", () => {
   });
 
   it("shows Habit Tracker context and restores the product launch button", () => {
-    render(<HabitTrackerServicePage />);
+    const { container } = render(<HabitTrackerServicePage />);
 
     expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
+    expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Перейти в Habit Tracker" })).toHaveAttribute("href", "https://habit-tracker.forgath.ru");
     expect(screen.getByText(/помогает удерживать регулярные практики/i)).toBeInTheDocument();
     expect(screen.getByText(/личных целей и командных ритуалов/i)).toBeInTheDocument();
@@ -36,9 +38,10 @@ describe("service preview pages", () => {
   });
 
   it("keeps streamer preview as a coming-soon page without a broken open button", () => {
-    render(<StreamerServicePage />);
+    const { container } = render(<StreamerServicePage />);
 
     expect(screen.getByRole("heading", { name: "Портал стримера" })).toBeInTheDocument();
+    expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
     expect(screen.queryByRole("link", { name: /Перейти/ })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();

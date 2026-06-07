@@ -12,7 +12,7 @@ function taskTrackerOAuthStartHref(): string {
 
 export default function TaskTrackerServicePage() {
   return (
-    <PortalPageShell maxWidthClassName="max-w-4xl">
+    <PortalPageShell maxWidthClassName="max-w-[1200px]">
       <PortalHeader
         breadcrumbs={[{ href: "/overview", label: "Разделы кузницы" }, { label: "Task Tracker" }]}
         description="Task Tracker собирает идеи, требования, задачи, спринты и UAT в один управляемый рабочий контур."
