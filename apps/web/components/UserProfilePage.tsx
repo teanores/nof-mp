@@ -561,15 +561,15 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 <p className="tech-label text-xs text-forge-accent">НАСТРОЙКА MCP-КЛИЕНТОВ</p>
                 <h3 className="heading-tech mt-2 text-base font-bold text-forge-ink">Конфигурация агентов</h3>
                 <p className="mt-2 text-sm leading-6 text-forge-muted">
-                  Токен показывается только один раз после выпуска. Храни его в secret storage агента и передавай как
+                  Токен показывается только один раз после выпуска. Храни его в хранилище секретов агента и передавай как
                   <code> x-api-key</code>. Не сохраняй токен в Git, Wiki или чате.
                 </p>
                 <div className="mt-4 grid gap-3">
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
                     <p className="tech-label text-[10px] text-forge-accent">Claude Code / Codex / OpenCode</p>
                     <p className="mt-2 text-sm leading-6 text-forge-muted">
-                      Используй HTTP MCP server. Вставь JSON в конфиг клиента и замени
-                      <code> {"${MCP_TOKEN}"}</code> значением из переменной окружения или secret storage.
+                      Используй HTTP MCP-сервер. Вставь JSON в конфиг клиента и замени
+                      <code> {"${MCP_TOKEN}"}</code> значением из переменной окружения или хранилища секретов.
                     </p>
                     <pre className="mt-3 overflow-x-auto rounded-sm border border-forge-line bg-forge-panel p-3 text-xs text-forge-ink">
                       {agentJsonExample(newTokenProjectKey || "nof-tt")}
@@ -578,8 +578,8 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
                     <p className="tech-label text-[10px] text-forge-accent">AutoClaw / Nimbalyst</p>
                     <p className="mt-2 text-sm leading-6 text-forge-muted">
-                      Если клиент поддерживает HTTP MCP, укажи URL <code>{mcpServerUrl}</code> и header
-                      <code> x-api-key</code>. Один endpoint Task Tracker принимает project-scoped ключи разных проектов.
+                      Если клиент поддерживает HTTP MCP, укажи URL <code>{mcpServerUrl}</code> и заголовок
+                      <code> x-api-key</code>. Одна точка доступа Task Tracker принимает проектные ключи разных проектов.
                     </p>
                   </article>
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">

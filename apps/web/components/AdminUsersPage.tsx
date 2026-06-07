@@ -7,7 +7,7 @@ import type { AdminUserListItem, AdminUserRisk } from "@/lib/server/admin-users-
 const riskLabels: Record<AdminUserRisk, string> = {
   "external-email": "внешний email",
   "missing-password": "нет пароля",
-  "telegram-placeholder-email": "telegram email",
+  "telegram-placeholder-email": "telegram-почта",
 };
 const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
 

@@ -166,6 +166,12 @@ describe("user profile MCP access", () => {
 
     expect(screen.getByText("MCP-ключи доступа")).toBeInTheDocument();
     expect(screen.getByText("nof-tt / nof_tt_1234...")).toBeInTheDocument();
+    expect(document.body).toHaveTextContent("хранилище секретов агента");
+    expect(document.body).toHaveTextContent("HTTP MCP-сервер");
+    expect(document.body).toHaveTextContent("Одна точка доступа Task Tracker принимает проектные ключи разных проектов.");
+    expect(document.body).not.toHaveTextContent("secret storage");
+    expect(document.body).not.toHaveTextContent("HTTP MCP server");
+    expect(document.body).not.toHaveTextContent("project-scoped");
     expect(screen.queryByRole("heading", { name: "Сервисы платформы" })).not.toBeInTheDocument();
   });
 });

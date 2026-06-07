@@ -35,7 +35,7 @@ describe("admin users page", () => {
   it("keeps short account and risk labels on one readable badge line", () => {
     render(<AdminUsersPage users={users} />);
 
-    for (const label of ["пароль не задан", "нет пароля", "telegram email"]) {
+    for (const label of ["пароль не задан", "нет пароля", "telegram-почта"]) {
       expect(screen.getByText(label)).toHaveClass("whitespace-nowrap");
     }
     for (const label of screen.getAllByText("блокировка готовится")) {
@@ -48,5 +48,6 @@ describe("admin users page", () => {
 
     expect(screen.getByText("источник неизвестен")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("source unknown");
+    expect(document.body).not.toHaveTextContent("telegram email");
   });
 });
