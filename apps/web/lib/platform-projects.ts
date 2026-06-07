@@ -23,7 +23,7 @@ export const platformProjectRecords: PlatformProjectRecord[] = [
   {
     key: "nof-tt",
     name: "Narag'Othal Forgath Task Tracker",
-    description: "Task tracker, Wiki, ideas, sprints and MCP automation for platform/product delivery.",
+    description: "Трекер задач, Wiki, идей, спринтов и MCP-автоматизации для доставки сервисов NOF.",
     status: "active",
     visibility: "registered",
     createdAt: "2026-05-28T00:00:00.000Z",
@@ -31,7 +31,7 @@ export const platformProjectRecords: PlatformProjectRecord[] = [
   {
     key: "nof-ht",
     name: "NOF Habit Tracker",
-    description: "Habit tracker product integrated with the platform account and access model.",
+    description: "Трекер привычек, целей и регулярных практик с входом через единый аккаунт платформы.",
     status: "active",
     visibility: "registered",
     createdAt: "2026-05-28T00:00:00.000Z",
@@ -39,7 +39,7 @@ export const platformProjectRecords: PlatformProjectRecord[] = [
   {
     key: "nof-cb",
     name: "NOF Coffee Bot",
-    description: "Standalone coffee ordering product with optional platform integration.",
+    description: "Самостоятельный сервис заказа кофе с опциональной интеграцией в платформу.",
     status: "active",
     visibility: "public",
     createdAt: "2026-05-28T00:00:00.000Z",

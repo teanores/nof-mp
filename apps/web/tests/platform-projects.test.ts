@@ -30,6 +30,17 @@ describe("platform project registry", () => {
     expect(platformProjectRecords.find((project) => project.key === "nof-onw")?.name).toBe("Орден Нейронного Пути");
   });
 
+  it("keeps platform product descriptions in Russian for the Russian portal", () => {
+    const registryText = JSON.stringify(platformProjectRecords);
+
+    expect(platformProjectRecords.find((project) => project.key === "nof-tt")?.description).toContain("Трекер задач");
+    expect(platformProjectRecords.find((project) => project.key === "nof-ht")?.description).toContain("Трекер привычек");
+    expect(platformProjectRecords.find((project) => project.key === "nof-cb")?.description).toContain("Самостоятельный сервис");
+    expect(registryText).not.toContain("Task tracker");
+    expect(registryText).not.toContain("Habit tracker");
+    expect(registryText).not.toContain("Standalone coffee ordering");
+  });
+
   it("checks project existence against records, not access-decorated DTOs", () => {
     expect(projectExists("nof-ht")).toBe(true);
     expect(projectExists("unknown-product")).toBe(false);
