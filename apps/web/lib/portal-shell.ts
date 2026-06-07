@@ -36,7 +36,7 @@ export const portalModules: PortalModule[] = [
     key: "streamer",
     eyebrowLabel: "Стримы",
     title: "Портал стримера",
-    description: "Раздел для стримов, контента и публичных активностей Te'An'ore.",
+    description: "Инкубационный сервис для планирования стримов, подготовки публикаций и будущей автоматизации публичных активностей.",
     href: "/services/streamer",
     status: "planned",
   },

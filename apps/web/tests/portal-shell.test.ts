@@ -6,6 +6,9 @@ describe("platform shell manifest", () => {
   it("keeps only platform-level service cards visible", () => {
     expect(portalModules.map((module) => module.key)).toEqual(["tracker", "habits", "streamer"]);
     expect(portalModules.map((module) => module.eyebrowLabel)).toEqual(["Задачи", "Привычки", "Стримы"]);
+    expect(portalModules.find((module) => module.key === "streamer")?.description).toBe(
+      "Инкубационный сервис для планирования стримов, подготовки публикаций и будущей автоматизации публичных активностей.",
+    );
   });
 
   it("keeps platform-owned routes behind the auth gate during preview", () => {
