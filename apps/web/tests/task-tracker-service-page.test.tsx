@@ -43,6 +43,10 @@ describe("service preview pages", () => {
     expect(screen.getByRole("heading", { name: "Портал стримера" })).toBeInTheDocument();
     expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
     expect(screen.queryByRole("link", { name: /Перейти/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/собирает подготовку эфиров/i)).toBeInTheDocument();
+    expect(screen.getByText(/планирование стримов/i)).toBeInTheDocument();
+    expect(screen.getByText(/Будущая автоматизация/i)).toBeInTheDocument();
+    expect(screen.getByText(/рабочим кабинетом для автора/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
   });

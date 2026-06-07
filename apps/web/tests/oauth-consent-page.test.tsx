@@ -26,6 +26,10 @@ vi.mock("@/lib/server/oauth-consent-challenge-repository", () => ({
   }),
 }));
 
+vi.mock("@/lib/server/oauth-consent-token", () => ({
+  signOAuthConsentRecord: () => "signed_consent_token_test",
+}));
+
 import OAuthConsentPage from "@/app/oauth/consent/page";
 
 const validParams = {
@@ -96,6 +100,7 @@ describe("oauth consent page", () => {
     expect(approveForm).toHaveAttribute("method", "post");
     expect(within(approveForm).getByDisplayValue("approve")).toHaveAttribute("name", "decision");
     expect(within(approveForm).getByDisplayValue("oauth_consent_test")).toHaveAttribute("name", "challenge_id");
+    expect(within(approveForm).getByDisplayValue("signed_consent_token_test")).toHaveAttribute("name", "consent_token");
     expect(within(approveForm).queryByDisplayValue("nof-tt")).not.toBeInTheDocument();
     expect(within(approveForm).queryByDisplayValue(validParams.redirect_uri)).not.toBeInTheDocument();
 
@@ -104,6 +109,7 @@ describe("oauth consent page", () => {
     expect(denyForm).toHaveAttribute("method", "post");
     expect(within(denyForm).getByDisplayValue("deny")).toHaveAttribute("name", "decision");
     expect(within(denyForm).getByDisplayValue("oauth_consent_test")).toHaveAttribute("name", "challenge_id");
+    expect(within(denyForm).getByDisplayValue("signed_consent_token_test")).toHaveAttribute("name", "consent_token");
     expect(mocks.issueChallenge).toHaveBeenCalledWith({
       clientId: "nof-tt",
       nonce: "nonce-1",
@@ -111,7 +117,7 @@ describe("oauth consent page", () => {
       redirectUri: validParams.redirect_uri,
       scopes: ["openid", "email"],
       state: "state-1",
-      ttlSeconds: 120,
+      ttlSeconds: 600,
     });
   });
 });

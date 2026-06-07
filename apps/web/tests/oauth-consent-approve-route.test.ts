@@ -37,6 +37,10 @@ const consumedChallenges = vi.hoisted(() => ({
   } as unknown,
 }));
 
+const consentTokens = vi.hoisted(() => ({
+  result: undefined as unknown,
+}));
+
 vi.mock("@/lib/server/portal-auth-gate", () => ({
   portalLoginUrl: (returnTo: string) => `/login?next=${encodeURIComponent(returnTo)}`,
   portalSessionFromRequest: vi.fn(async () => portalSession.value),
@@ -62,6 +66,10 @@ vi.mock("@/lib/server/oauth-consent-challenge-repository", () => ({
       return consumedChallenges.result;
     },
   }),
+}));
+
+vi.mock("@/lib/server/oauth-consent-token", () => ({
+  verifyOAuthConsentToken: vi.fn(() => consentTokens.result),
 }));
 
 import { POST as approveConsent } from "@/app/oauth/consent/approve/route";
@@ -92,6 +100,7 @@ describe("oauth consent approve route", () => {
       },
     };
     issuedCodes.calls = [];
+    consentTokens.result = undefined;
     portalSession.value = {
       authenticated: true,
       loginUrl: "/login",
@@ -169,6 +178,39 @@ describe("oauth consent approve route", () => {
         ttlSeconds: 120,
       },
     ]);
+  });
+
+  it("uses a signed consent token when the database challenge is unavailable", async () => {
+    consumedChallenges.result = {
+      error: "not_found",
+      ok: false,
+    };
+    consentTokens.result = {
+      challengeId: "oauth_consent_test",
+      clientId: "nof-tt",
+      expiresAt: "2026-06-04T15:02:00.000Z",
+      nonce: "n",
+      platformUserId: "platform-user-1",
+      redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
+      scopes: ["openid", "email"],
+      state: "s",
+    };
+
+    const response = await approveConsent(
+      approveRequest(
+        new URLSearchParams({
+          challenge_id: "oauth_consent_test",
+          consent_token: "signed_consent_token_test",
+          decision: "approve",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "https://task-tracker.forgath.ru/auth/platform/callback?code=oauth_code_test&state=s",
+    );
+    expect(issuedCodes.calls).toHaveLength(1);
   });
 
   it("returns access denied to the product callback when consent is declined", async () => {

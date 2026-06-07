@@ -8,6 +8,7 @@ import {
   normalizeOAuthScopes,
 } from "@/lib/server/oauth-client-registry";
 import { getOAuthConsentChallengeRepository } from "@/lib/server/oauth-consent-challenge-repository";
+import { signOAuthConsentRecord } from "@/lib/server/oauth-consent-token";
 import { portalLoginUrl, portalPageSession } from "@/lib/server/portal-auth-gate";
 
 interface OAuthConsentPageProps {
@@ -24,13 +25,16 @@ interface OAuthConsentPageProps {
 function HiddenConsentFields({
   challengeId,
   decision,
+  consentToken,
 }: {
   challengeId: string;
+  consentToken: string;
   decision: "approve" | "deny";
 }) {
   return (
     <>
       <input name="challenge_id" type="hidden" value={challengeId} />
+      <input name="consent_token" type="hidden" value={consentToken} />
       <input name="decision" type="hidden" value={decision} />
     </>
   );
@@ -63,8 +67,9 @@ export default async function OAuthConsentPage({ searchParams }: OAuthConsentPag
     redirectUri,
     scopes,
     state,
-    ttlSeconds: 120,
+    ttlSeconds: 600,
   });
+  const consentToken = signOAuthConsentRecord(challenge);
 
   return (
     <PortalPageShell maxWidthClassName="max-w-4xl">
@@ -99,7 +104,7 @@ export default async function OAuthConsentPage({ searchParams }: OAuthConsentPag
 
         <div className="flex flex-wrap gap-3">
           <form action="/oauth/consent/approve" data-testid="oauth-approve-form" method="post">
-            <HiddenConsentFields challengeId={challenge.challengeId} decision="approve" />
+            <HiddenConsentFields challengeId={challenge.challengeId} consentToken={consentToken} decision="approve" />
             <button
               className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs text-black transition hover:border-forge-ink hover:bg-forge-ink"
               type="submit"
@@ -108,7 +113,7 @@ export default async function OAuthConsentPage({ searchParams }: OAuthConsentPag
             </button>
           </form>
           <form action="/oauth/consent/approve" data-testid="oauth-deny-form" method="post">
-            <HiddenConsentFields challengeId={challenge.challengeId} decision="deny" />
+            <HiddenConsentFields challengeId={challenge.challengeId} consentToken={consentToken} decision="deny" />
             <button
               className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
               type="submit"

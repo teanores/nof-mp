@@ -6,6 +6,7 @@ import {
 } from "@/lib/server/oauth-client-registry";
 import { getOAuthAuthorizationCodeRepository } from "@/lib/server/oauth-authorization-code-repository";
 import { getOAuthConsentChallengeRepository } from "@/lib/server/oauth-consent-challenge-repository";
+import { verifyOAuthConsentToken } from "@/lib/server/oauth-consent-token";
 import { portalLoginUrl, portalSessionFromRequest } from "@/lib/server/portal-auth-gate";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ function redirectToCallback(redirectUri: string, params: Record<string, string>)
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const form = await request.formData();
   const challengeId = String(form.get("challenge_id") ?? "");
+  const consentToken = String(form.get("consent_token") ?? "");
   const decision = String(form.get("decision") ?? "");
 
   const session = await portalSessionFromRequest(request);
@@ -38,35 +40,38 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const challenge = await getOAuthConsentChallengeRepository().consume({
+  const consumedChallenge = await getOAuthConsentChallengeRepository().consume({
     challengeId,
     platformUserId: session.user.id,
   });
-  if (!challenge.ok) {
+  const challenge = consumedChallenge.ok
+    ? consumedChallenge.record
+    : verifyOAuthConsentToken(consentToken, session.user.id);
+  if (!challenge) {
     return jsonError("invalid_consent_challenge", 400);
   }
 
-  const client = findOAuthClient(challenge.record.clientId);
+  const client = findOAuthClient(challenge.clientId);
   if (!client) {
     return jsonError("invalid_client", 400);
   }
-  if (!isAllowedOAuthRedirectUri(client.clientId, challenge.record.redirectUri)) {
+  if (!isAllowedOAuthRedirectUri(client.clientId, challenge.redirectUri)) {
     return jsonError("invalid_redirect_uri", 400);
   }
 
   if (decision !== "approve") {
-    return redirectToCallback(challenge.record.redirectUri, { error: "access_denied", state: challenge.record.state });
+    return redirectToCallback(challenge.redirectUri, { error: "access_denied", state: challenge.state });
   }
 
   const issued = await getOAuthAuthorizationCodeRepository().issue({
     clientId: client.clientId,
-    nonce: challenge.record.nonce,
+    nonce: challenge.nonce,
     platformUserId: session.user.id,
-    redirectUri: challenge.record.redirectUri,
-    scopes: challenge.record.scopes,
-    state: challenge.record.state,
+    redirectUri: challenge.redirectUri,
+    scopes: challenge.scopes,
+    state: challenge.state,
     ttlSeconds: 120,
   });
 
-  return redirectToCallback(challenge.record.redirectUri, { code: issued.code, state: challenge.record.state });
+  return redirectToCallback(challenge.redirectUri, { code: issued.code, state: challenge.state });
 }
