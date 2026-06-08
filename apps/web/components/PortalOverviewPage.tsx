@@ -13,6 +13,8 @@ const overviewCopy = {
   en: {
     adminRequests: "Requests",
     adminRequestsNote: "Login attempts, rate limits and public scans.",
+    adminHome: "Administration",
+    adminHomeNote: "Users, security and platform management sections.",
     adminUsers: "Users",
     adminUsersNote: "Accounts, roles and access risks.",
     description: "Portal experiments: habit tracker, task tracker and streamer portal.",
@@ -28,6 +30,8 @@ const overviewCopy = {
   ru: {
     adminRequests: "Запросы",
     adminRequestsNote: "Входы, rate-limit и публичные сканы.",
+    adminHome: "Администрирование",
+    adminHomeNote: "Пользователи, безопасность и разделы управления платформой.",
     adminUsers: "Пользователи",
     adminUsersNote: "Аккаунты, роли и риски доступа.",
     description: "Портал экспериментов Te'An'ore. Трекер привычек, Трекер задач, Портал стримера.",
@@ -41,11 +45,6 @@ const overviewCopy = {
     systemStatus: "Статус сервисов",
   },
 } as const;
-
-const adminLinks = [
-  { href: "/admin/security", key: "admin-requests" },
-  { href: "/admin/users", key: "admin-users" },
-] as const;
 
 function canSeeAdminLinks(session?: ForgePortalSession): boolean {
   const roleName = session?.user?.role?.name;
@@ -166,19 +165,12 @@ export function PortalOverviewPage({ initialSession }: { initialSession?: ForgeP
             ))}
           </div>
           {showAdminLinks ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {adminLinks.map((link) => {
-                const title = link.key === "admin-requests" ? copy.adminRequests : copy.adminUsers;
-                const note = link.key === "admin-requests" ? copy.adminRequestsNote : copy.adminUsersNote;
-
-                return (
-                  <Link key={link.key} className="rounded-sm border border-forge-line bg-forge-surface p-3 transition hover:border-forge-accent" href={link.href}>
-                    <p className="tech-label text-[10px] text-forge-accent">Администрирование</p>
-                    <p className="mt-1 text-sm font-bold text-forge-ink">{title}</p>
-                    <p className="mt-1 text-xs text-forge-muted">{note}</p>
-                  </Link>
-                );
-              })}
+            <div className="mt-4">
+              <Link className="block rounded-sm border border-forge-line bg-forge-surface p-3 transition hover:border-forge-accent" href="/admin">
+                <p className="tech-label text-[10px] text-forge-accent">{copy.adminHome}</p>
+                <p className="mt-1 text-sm font-bold text-forge-ink">{copy.adminHome}</p>
+                <p className="mt-1 text-xs text-forge-muted">{copy.adminHomeNote}</p>
+              </Link>
             </div>
           ) : null}
         </article>

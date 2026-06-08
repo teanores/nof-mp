@@ -31,7 +31,7 @@ describe("platform overview page", () => {
     });
   });
 
-  it("renders the platform overview and admin cards for admins", async () => {
+  it("renders the platform overview and a single admin entry for admins", async () => {
     render(await OverviewPage());
 
     expect(screen.getByRole("heading", { name: "Narag'Othal Forgath" })).toBeInTheDocument();
@@ -43,8 +43,10 @@ describe("platform overview page", () => {
     expect(screen.getByText("Стримы")).toBeInTheDocument();
     expect(screen.queryByText("tracker")).not.toBeInTheDocument();
     expect(screen.queryByText("habits")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Запросы/ })).toHaveAttribute("href", "/admin/security");
-    expect(screen.getByRole("link", { name: /Пользователи/ })).toHaveAttribute("href", "/admin/users");
+    expect(screen.getByRole("link", { name: /Администрирование/ })).toHaveAttribute("href", "/admin");
+    const links = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
+    expect(links).not.toContain("/admin/security");
+    expect(links).not.toContain("/admin/users");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
     expect(screen.queryByRole("link", { name: "Профиль" })).not.toBeInTheDocument();
   });
