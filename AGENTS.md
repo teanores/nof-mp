@@ -56,7 +56,7 @@ For release-bound work, run the full set above and record results in the tracker
 ## Delivery Rules
 
 - Use owner-facing project names with separated prefixes, for example `NOF-MP Sprint 3`.
-- Existing MCP/tracker internal ids such as `NOFMP-*`, `NOFTT-SPRINT-*` and `MANUAL-*` may remain until tracker key migration is implemented.
+- Existing MCP/tracker legacy ids may appear only as migration evidence. New nof-mp sprint keys must use `NOF-MP-SPRINT-*`; new nof-mp epics must use `NOF-MP-EPIC-*`; nof-mp work must not be planned under `NOFTT-SPRINT-*`.
 - Work on task branches; do not implement directly on `main`.
 - Record branch, commit, checks, smoke/UAT evidence and rollback notes for release-bound work.
 - P0/P1 technical debt blocks stable release unless closed or explicitly accepted as HOLD by the owner.
