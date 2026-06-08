@@ -1,6 +1,19 @@
+import crypto from "node:crypto";
+
 import { Pool, type QueryResultRow } from "pg";
 
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
+import {
+  classifyEdgeRequest,
+  maskLoginIdentifier,
+  sanitizePath,
+  summarizeUserAgent,
+} from "@/lib/server/security-audit-sanitize";
+import type {
+  EdgeEventClassification,
+  SecurityAuditEventInput,
+  SecurityAuditEventType,
+} from "@/lib/server/security-audit-types";
 
 export type SecurityAuditRecommendation = "Наблюдать" | "Проверить пользователя" | "Усилить лимиты" | "Проверить инцидент";
 
@@ -37,9 +50,24 @@ export interface SecurityAuditDashboard {
 interface SecurityAuditRow extends QueryResultRow {
   actor_user_id: string | null;
   actor_username: string | null;
-  classification: string;
+  classification: EdgeEventClassification | "auth";
   created_at: Date;
-  event_type: string;
+  event_type: SecurityAuditEventType;
+  id: string;
+  ip: string;
+  login_identifier: string | null;
+  method: string;
+  path: string;
+  status_code: number;
+  user_agent: string;
+}
+
+interface NormalizedSecurityAuditEvent {
+  actor_user_id: string | null;
+  actor_username: string | null;
+  classification: EdgeEventClassification | "auth";
+  created_at: string;
+  event_type: SecurityAuditEventType;
   id: string;
   ip: string;
   login_identifier: string | null;
@@ -57,6 +85,44 @@ const emptySummary = {
   successfulLogins: 0,
   suspiciousScans: 0,
 };
+
+export function securityAuditSchemaName(): string {
+  return process.env.NOF_PLATFORM_SECURITY_AUDIT_DB_SCHEMA ?? process.env.NOF_PLATFORM_DB_SCHEMA ?? "forge_tasks";
+}
+
+function safeSqlIdentifier(identifier: string): string {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)) {
+    throw new Error("Invalid SQL identifier for NOF Platform security audit");
+  }
+  return identifier;
+}
+
+function classificationFor(input: SecurityAuditEventInput): EdgeEventClassification | "auth" {
+  if (input.eventType === "app_authenticated_request") {
+    return "normal";
+  }
+  if (input.eventType.startsWith("login_")) {
+    return "auth";
+  }
+  return classifyEdgeRequest({ path: input.path, status: input.statusCode });
+}
+
+function normalizeEvent(input: SecurityAuditEventInput, now = new Date()): NormalizedSecurityAuditEvent {
+  return {
+    actor_user_id: input.actorUserId ? input.actorUserId.slice(0, 80) : null,
+    actor_username: input.actorUsername ? input.actorUsername.slice(0, 120) : null,
+    classification: classificationFor(input),
+    created_at: now.toISOString(),
+    event_type: input.eventType,
+    id: crypto.randomUUID(),
+    ip: input.ip?.slice(0, 80) || "unknown",
+    login_identifier: input.loginIdentifier ? maskLoginIdentifier(input.loginIdentifier) ?? null : null,
+    method: input.method?.slice(0, 12) || "GET",
+    path: sanitizePath(input.path),
+    status_code: input.statusCode ?? 0,
+    user_agent: summarizeUserAgent(input.userAgent),
+  };
+}
 
 function activityLabelFor(eventType: string, path: string): string {
   if (eventType === "login_success") {
@@ -197,22 +263,79 @@ function toDashboard(rows: SecurityAuditRow[]): SecurityAuditDashboard {
 }
 
 export class SecurityAuditDashboardRepository {
+  private initialized = false;
   private readonly pool: Pool;
+  private readonly schema: string;
 
-  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("platform security dashboard"), max: 2 })) {
+  constructor(
+    pool = new Pool({ connectionString: platformDatabaseUrl("platform security dashboard"), max: 2 }),
+    schema = securityAuditSchemaName(),
+  ) {
     this.pool = pool;
+    this.schema = safeSqlIdentifier(schema);
   }
 
   async dashboard(): Promise<SecurityAuditDashboard> {
+    await this.initialize();
     const result = await this.pool.query<SecurityAuditRow>(
       `SELECT id::text, event_type, classification, ip, login_identifier, method, path, status_code, user_agent, actor_user_id, actor_username, created_at
-       FROM forge_tasks.security_audit_event
+       FROM ${this.schema}.security_audit_event
        WHERE created_at >= NOW() - INTERVAL '24 hours'
        ORDER BY created_at DESC
        LIMIT 1000`,
     );
 
     return toDashboard(result.rows);
+  }
+
+  async record(input: SecurityAuditEventInput): Promise<void> {
+    const event = normalizeEvent(input);
+    await this.initialize();
+    await this.pool.query(
+      `INSERT INTO ${this.schema}.security_audit_event
+       (id, event_type, classification, ip, login_identifier, method, path, status_code, user_agent, actor_user_id, actor_username, created_at)
+       VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::timestamptz)`,
+      [
+        event.id,
+        event.event_type,
+        event.classification,
+        event.ip,
+        event.login_identifier,
+        event.method,
+        event.path,
+        event.status_code,
+        event.user_agent,
+        event.actor_user_id,
+        event.actor_username,
+        event.created_at,
+      ],
+    );
+  }
+
+  private async initialize(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+
+    await this.pool.query(`CREATE SCHEMA IF NOT EXISTS ${this.schema}`);
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS ${this.schema}.security_audit_event (
+        id uuid PRIMARY KEY,
+        event_type text NOT NULL,
+        classification text NOT NULL,
+        ip text NOT NULL,
+        login_identifier text,
+        method text NOT NULL,
+        path text NOT NULL,
+        status_code integer NOT NULL,
+        user_agent text NOT NULL,
+        actor_user_id text,
+        actor_username text,
+        created_at timestamptz NOT NULL DEFAULT NOW()
+      )
+    `);
+    await this.pool.query(`CREATE INDEX IF NOT EXISTS security_audit_event_created_at_idx ON ${this.schema}.security_audit_event (created_at DESC)`);
+    this.initialized = true;
   }
 }
 
@@ -221,4 +344,12 @@ let repository: SecurityAuditDashboardRepository | undefined;
 export function getSecurityAuditDashboardRepository(): SecurityAuditDashboardRepository {
   repository ??= new SecurityAuditDashboardRepository();
   return repository;
+}
+
+export async function recordSecurityAuditEvent(input: SecurityAuditEventInput): Promise<void> {
+  try {
+    await getSecurityAuditDashboardRepository().record(input);
+  } catch (error) {
+    console.warn("Security audit write failed", error instanceof Error ? error.message : "unknown error");
+  }
 }

@@ -105,4 +105,39 @@ describe("admin security page", () => {
     expect(document.body).not.toHaveTextContent("token");
     expect(document.body).not.toHaveTextContent("password");
   });
+
+  it("explains empty security data instead of showing silent zero-only state", () => {
+    render(
+      <AdminSecurityPage
+        dashboard={{
+          generatedAt: "2026-06-08T10:00:00.000Z",
+          recentEvents: [],
+          recommendation: "Наблюдать",
+          summary: {
+            failedLogins: 0,
+            forbidden: 0,
+            notFound: 0,
+            rateLimited: 0,
+            successfulLogins: 0,
+            suspiciousScans: 0,
+          },
+          topPaths: [],
+          topSources: [],
+        }}
+        session={{
+          authenticated: true,
+          loginUrl: "/login",
+          user: {
+            experience: 0,
+            id: "admin-1",
+            role: { id: 1, name: "admin" },
+            username: "teanore",
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/За последние 24 часа событий безопасности не найдено/)).toBeInTheDocument();
+    expect(screen.getByText(/проверьте доставку edge-логов/)).toBeInTheDocument();
+  });
 });

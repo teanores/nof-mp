@@ -44,6 +44,8 @@ export function AdminSecurityPage({
   dashboard: SecurityAuditDashboard;
   session: ForgePortalSession;
 }) {
+  const hasEvents = dashboard.recentEvents.length > 0;
+
   return (
     <PortalPageShell>
       <PortalHeader
@@ -62,8 +64,9 @@ export function AdminSecurityPage({
           <p className="tech-label text-xs text-forge-accent">Рекомендация</p>
           <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">{dashboard.recommendation}</h2>
           <p className="mt-3 text-sm leading-6 text-forge-muted">
-            Сводка построена по очищенным событиям за последние 24 часа. Сырые логи, секреты, cookie и чувствительные
-            значения не отображаются.
+            {hasEvents
+              ? "Сводка построена по очищенным событиям за последние 24 часа. Сырые логи, секреты, cookie и чувствительные значения не отображаются."
+              : "За последние 24 часа событий безопасности не найдено. Если на портале был трафик, проверьте доставку edge-логов и платформенных audit-событий."}
           </p>
         </article>
 
