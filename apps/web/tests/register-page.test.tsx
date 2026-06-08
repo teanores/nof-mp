@@ -11,8 +11,9 @@ describe("register page", () => {
     expect(screen.getByRole("heading", { name: "Стойка регистрации" })).toBeInTheDocument();
     expect(screen.getByText("Narag'Othal Forgath")).toBeInTheDocument();
     expect(screen.getByLabelText("Логин")).toHaveAttribute("name", "username");
-    expect(screen.getByLabelText("Email")).toHaveAttribute("name", "email");
+    expect(screen.getByLabelText("Электронная почта")).toHaveAttribute("name", "email");
     expect(screen.getByLabelText("Пароль")).toHaveAttribute("name", "password");
+    expect(screen.getByText("Правила регистрации")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Получить код" })).toBeInTheDocument();
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/request");
     expect(document.body.textContent).not.toContain("Dragon Forge");
@@ -20,6 +21,7 @@ describe("register page", () => {
     expect(document.body.textContent).not.toContain("OAuth");
     expect(document.body.textContent).not.toContain("SMTP");
     expect(document.body.textContent).not.toContain("backend");
+    expect(document.body.textContent).not.toContain("Registration rules");
   });
 
   it("shows the confirmation form when email is pending", () => {

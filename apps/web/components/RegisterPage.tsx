@@ -52,7 +52,7 @@ function RequestForm({ error }: { error: RegisterError }) {
         />
       </label>
       <label className="grid gap-2">
-        <span className="tech-label text-[10px] text-forge-muted">Email</span>
+        <span className="tech-label text-[10px] text-forge-muted">Электронная почта</span>
         <input
           autoComplete="email"
           className="rounded-sm border border-forge-line bg-forge-surface px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
@@ -157,7 +157,7 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
         </div>
 
         <aside className="border-t border-forge-line bg-forge-surface p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="tech-label text-xs text-forge-accent">Registration rules</p>
+          <p className="tech-label text-xs text-forge-accent">Правила регистрации</p>
           <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Как это работает</h2>
           <div className="mt-5 grid gap-3">
             {registrationPrinciples.map((item) => (
