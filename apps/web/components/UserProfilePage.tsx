@@ -59,7 +59,7 @@ const profileCopy = {
     hideToken: "Hide",
     issueMcpKey: "ISSUE MCP KEY",
     labelCreated: "CREATED",
-    labelEmail: "EMAIL",
+    labelEmail: "email:",
     labelLastSeen: "LAST SEEN",
     labelLevel: "LEVEL",
     labelRank: "RANK",
@@ -98,7 +98,7 @@ const profileCopy = {
     hideToken: "Скрыть",
     issueMcpKey: "ВЫПУСТИТЬ MCP-КЛЮЧ",
     labelCreated: "Создан",
-    labelEmail: "Электронная почта",
+    labelEmail: "email:",
     labelLastSeen: "Последний вход",
     labelLevel: "Уровень",
     labelRank: "Ранг",
@@ -396,7 +396,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
 
                   <div className="mt-3 space-y-2">
                     <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
-                    <DataRow label="TG" value={telegramLabel} />
+                    <DataRow label="telegram:" value={telegramLabel} />
                     <DataRow label={copy.labelSource} value={user.registrationSource ?? "-"} />
                   </div>
                 </div>
