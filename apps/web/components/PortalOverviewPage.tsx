@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
-import { portalModules, portalModuleStatusLabel, systemHealthCards, type PortalModule } from "@/lib/portal-shell";
+import { portalModules, systemHealthCards, type PortalModule } from "@/lib/portal-shell";
 import { fetchPortalSession } from "@/lib/platform-api";
 import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 import { usePortalLanguage } from "@/lib/use-portal-language";
@@ -23,9 +23,9 @@ const overviewCopy = {
     portalStateNote: "The platform is the entry point for account, profile, product discovery and access.",
     portalTitle: "NOF Platform",
     profile: "Profile",
-    modules: "Разделы кузницы",
-    modulesEyebrow: "Сервисы платформы",
-    systemStatus: "Статус сервисов",
+    modules: "Platform Sections",
+    modulesEyebrow: "Platform Services",
+    systemStatus: "Service Status",
   },
   ru: {
     adminRequests: "Запросы",
@@ -46,24 +46,87 @@ const overviewCopy = {
   },
 } as const;
 
+const moduleCopy = {
+  en: {
+    tracker: {
+      description: "Task, epic, sprint and working plan tracker.",
+      eyebrowLabel: "Tasks",
+      title: "Task Tracker",
+    },
+    habits: {
+      description: "Habit, goal and regular practice tracker.",
+      eyebrowLabel: "Habits",
+      title: "Habit Tracker",
+    },
+    streamer: {
+      description: "Incubation service for stream planning, publishing preparation and future public workflow automation.",
+      eyebrowLabel: "Streams",
+      title: "Streamer Portal",
+    },
+  },
+  ru: {
+    tracker: {
+      description: "Трекер задач, эпиков, спринтов и рабочих планов.",
+      eyebrowLabel: "Задачи",
+      title: "Task Tracker",
+    },
+    habits: {
+      description: "Трекер привычек, целей и регулярных практик.",
+      eyebrowLabel: "Привычки",
+      title: "Habit Tracker",
+    },
+    streamer: {
+      description: "Инкубационный сервис для планирования стримов, подготовки публикаций и будущей автоматизации публичных активностей.",
+      eyebrowLabel: "Стримы",
+      title: "Портал стримера",
+    },
+  },
+} as const;
+
+const statusCopy = {
+  en: {
+    available: "Available",
+    legacy: "Archive",
+    planned: "Planned",
+    preview: "Preview",
+  },
+  ru: {
+    available: "Доступен",
+    legacy: "Архив",
+    planned: "Запланирован",
+    preview: "Предпросмотр",
+  },
+} as const;
+
+const healthCardsCopy = {
+  en: [
+    { label: "Public address", value: "forgath.ru", note: "entry point" },
+    { label: "Account", value: "NOF Main Platform", note: "unified profile" },
+    { label: "Workspace", value: "Task Tracker", note: "tasks and Wiki" },
+  ],
+  ru: systemHealthCards,
+} as const;
+
 function canSeeAdminLinks(session?: ForgePortalSession): boolean {
   const roleName = session?.user?.role?.name;
   return roleName === "owner" || roleName === "admin";
 }
 
 function ModuleCard({ module }: { module: PortalModule }) {
-  const copy = overviewCopy[usePortalLanguage()];
+  const language = usePortalLanguage();
+  const copy = overviewCopy[language];
+  const localizedModule = moduleCopy[language][module.key as keyof typeof moduleCopy.ru];
 
   return (
     <Link className="panel block min-h-[190px] p-4 transition hover:border-forge-accent" href={module.href}>
       <div className="flex items-start justify-between gap-3">
-        <p className="tech-label text-xs text-forge-accent">{module.eyebrowLabel}</p>
+        <p className="tech-label text-xs text-forge-accent">{localizedModule.eyebrowLabel}</p>
         <span className="tech-label rounded-sm border border-forge-line bg-forge-surface px-2 py-1 text-[10px] text-forge-muted">
-          {portalModuleStatusLabel(module.status)}
+          {statusCopy[language][module.status]}
         </span>
       </div>
-      <h3 className="heading-tech mt-3 text-xl font-bold text-forge-ink">{module.title}</h3>
-      <p className="mt-3 text-sm leading-6 text-forge-muted">{module.description}</p>
+      <h3 className="heading-tech mt-3 text-xl font-bold text-forge-ink">{localizedModule.title}</h3>
+      <p className="mt-3 text-sm leading-6 text-forge-muted">{localizedModule.description}</p>
       <span className="tech-label mt-5 inline-flex text-xs text-forge-accent">{copy.open} {">"}</span>
     </Link>
   );
@@ -135,7 +198,9 @@ function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession
 }
 
 export function PortalOverviewPage({ initialSession }: { initialSession?: ForgePortalSession }) {
-  const copy = overviewCopy[usePortalLanguage()];
+  const language = usePortalLanguage();
+  const copy = overviewCopy[language];
+  const healthCards = healthCardsCopy[language];
   const showAdminLinks = canSeeAdminLinks(initialSession);
 
   return (
@@ -156,7 +221,7 @@ export function PortalOverviewPage({ initialSession }: { initialSession?: ForgeP
         <article className="panel p-5">
           <p className="tech-label text-xs text-forge-accent">{copy.systemStatus}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {systemHealthCards.map(({ label, note, value }) => (
+            {healthCards.map(({ label, note, value }) => (
               <div key={label} className="rounded-sm border border-forge-line bg-forge-surface p-3">
                 <p className="tech-label text-[10px] text-forge-muted">{label}</p>
                 <p className="mt-1 text-sm font-bold text-forge-ink">{value}</p>

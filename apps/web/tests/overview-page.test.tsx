@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import OverviewPage from "@/app/overview/page";
+import { portalLanguageStorageKey } from "@/lib/portal-language";
 
 const auth = vi.hoisted(() => ({
   sessionFromCookie: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock("@/lib/platform-api", () => ({
 
 describe("platform overview page", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     auth.sessionFromCookie.mockResolvedValue({
       authenticated: true,
       loginUrl: "/login",
@@ -49,6 +51,26 @@ describe("platform overview page", () => {
     expect(links).not.toContain("/admin/users");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
     expect(screen.queryByRole("link", { name: "Профиль" })).not.toBeInTheDocument();
+  });
+
+  it("keeps overview labels and module statuses in English when English is selected", async () => {
+    window.localStorage.setItem(portalLanguageStorageKey, "en");
+
+    render(await OverviewPage());
+
+    expect(await screen.findByText("Platform Services")).toBeInTheDocument();
+    expect(screen.getByText("Platform Sections")).toBeInTheDocument();
+    expect(screen.getByText("Service Status")).toBeInTheDocument();
+    expect(screen.getByText("Tasks")).toBeInTheDocument();
+    expect(screen.getByText("Habits")).toBeInTheDocument();
+    expect(screen.getByText("Streams")).toBeInTheDocument();
+    expect(screen.getByText("Available")).toBeInTheDocument();
+    expect(screen.getByText("Preview")).toBeInTheDocument();
+    expect(screen.getByText("Planned")).toBeInTheDocument();
+    expect(screen.getByText("Streamer Portal")).toBeInTheDocument();
+    expect(screen.getByText("Public address")).toBeInTheDocument();
+    expect(screen.queryByText("Разделы кузницы")).not.toBeInTheDocument();
+    expect(screen.queryByText("Статус сервисов")).not.toBeInTheDocument();
   });
 
   it("hides admin cards for moderators", async () => {
