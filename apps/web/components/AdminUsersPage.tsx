@@ -5,7 +5,7 @@ import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/Por
 import type { AdminUserListItem, AdminUserRisk } from "@/lib/server/admin-users-repository";
 
 const riskLabels: Record<AdminUserRisk, string> = {
-  "external-email": "внешний email",
+  "external-email": "внешняя почта",
   "missing-password": "нет пароля",
   "telegram-placeholder-email": "telegram-почта",
 };
@@ -77,7 +77,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           { href: "/", label: "Портал" },
           { href: "/admin/users", label: "Пользователи" },
         ]}
-        description="Справочник аккаунтов платформы: роли, Telegram-связки, служебные email и парольные риски без отображения секретов."
+        description="Справочник аккаунтов платформы: роли, Telegram-связки, служебная почта и парольные риски без отображения секретов."
         title="Пользователи"
       />
 
@@ -115,7 +115,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
             <thead className="bg-forge-surface text-xs uppercase text-forge-muted">
               <tr>
                 <th className="px-4 py-3">Пользователь</th>
-                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Электронная почта</th>
                 <th className="px-4 py-3">Роль</th>
                 <th className="px-4 py-3">Telegram</th>
                 <th className="px-4 py-3">Последняя активность</th>
@@ -138,7 +138,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-forge-muted">{user.email ?? "нет email"}</td>
+                  <td className="px-4 py-4 text-forge-muted">{user.email ?? "почта не указана"}</td>
                   <td className="px-4 py-4 text-forge-muted">{user.role?.displayName ?? user.role?.name ?? "без роли"}</td>
                   <td className="px-4 py-4 text-forge-muted">
                     {user.telegram?.username ? `@${user.telegram.username}` : user.telegram?.id ? `id ${user.telegram.id}` : "нет"}

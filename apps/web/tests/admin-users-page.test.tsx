@@ -26,12 +26,23 @@ const users: AdminUserListItem[] = [
     hasPassword: true,
     id: "u-2",
     lastSeen: "2026-06-02T11:00:00.000Z",
-    risks: [],
+    risks: ["external-email"],
     username: "owner",
   },
 ];
 
 describe("admin users page", () => {
+  it("uses Russian email copy on the admin account table", () => {
+    render(<AdminUsersPage users={users} />);
+
+    expect(screen.getByText("Электронная почта")).toBeInTheDocument();
+    expect(screen.getByText("внешняя почта")).toBeInTheDocument();
+    expect(screen.getByText(/служебная почта/)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Email");
+    expect(document.body).not.toHaveTextContent("внешний email");
+    expect(document.body).not.toHaveTextContent("служебные email");
+  });
+
   it("keeps short account and risk labels on one readable badge line", () => {
     render(<AdminUsersPage users={users} />);
 
