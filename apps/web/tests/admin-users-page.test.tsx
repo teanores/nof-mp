@@ -36,9 +36,11 @@ describe("admin users page", () => {
     render(<AdminUsersPage users={users} />);
 
     expect(screen.getByText("Электронная почта")).toBeInTheDocument();
-    expect(screen.getByText("внешняя почта")).toBeInTheDocument();
-    expect(screen.getByText(/служебная почта/)).toBeInTheDocument();
+    expect(screen.getByText("почта вне домена")).toBeInTheDocument();
+    expect(screen.getByText("Признаки")).toBeInTheDocument();
+    expect(screen.getAllByText(/признаки риска доступа/)).toHaveLength(2);
     expect(document.body).not.toHaveTextContent("Email");
+    expect(document.body).not.toHaveTextContent("внешняя почта");
     expect(document.body).not.toHaveTextContent("внешний email");
     expect(document.body).not.toHaveTextContent("служебные email");
   });
@@ -46,7 +48,7 @@ describe("admin users page", () => {
   it("keeps short account and risk labels on one readable badge line", () => {
     render(<AdminUsersPage users={users} />);
 
-    for (const label of ["пароль не задан", "нет пароля", "telegram-почта"]) {
+    for (const label of ["пароль не задан", "нет пароля", "служебная telegram-почта"]) {
       expect(screen.getByText(label)).toHaveClass("whitespace-nowrap");
     }
     for (const label of screen.getAllByText("блокировка готовится")) {

@@ -5,9 +5,9 @@ import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/Por
 import type { AdminUserListItem, AdminUserRisk } from "@/lib/server/admin-users-repository";
 
 const riskLabels: Record<AdminUserRisk, string> = {
-  "external-email": "внешняя почта",
+  "external-email": "почта вне домена",
   "missing-password": "нет пароля",
-  "telegram-placeholder-email": "telegram-почта",
+  "telegram-placeholder-email": "служебная telegram-почта",
 };
 const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
 
@@ -77,7 +77,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           { href: "/", label: "Портал" },
           { href: "/admin/users", label: "Пользователи" },
         ]}
-        description="Справочник аккаунтов платформы: роли, Telegram-связки, служебная почта и парольные риски без отображения секретов."
+        description="Справочник аккаунтов платформы: роли, Telegram-связки, почта и признаки риска доступа без отображения секретов."
         title="Пользователи"
       />
 
@@ -101,7 +101,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
       <section className="panel grid gap-3 p-4 text-sm text-forge-muted md:grid-cols-2">
         <div>
           <p className="tech-label text-xs text-forge-ink">Что уже можно контролировать</p>
-          <p className="mt-2">Видны роли, доменная почта, Telegram-связки, наличие пароля и последняя активность.</p>
+          <p className="mt-2">Видны роли, почта, Telegram-связки, наличие пароля, последняя активность и признаки риска доступа.</p>
         </div>
         <div>
           <p className="tech-label text-xs text-forge-ink">Что нельзя имитировать</p>
@@ -120,7 +120,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                 <th className="px-4 py-3">Telegram</th>
                 <th className="px-4 py-3">Последняя активность</th>
                 <th className="px-4 py-3">Доступ</th>
-                <th className="px-4 py-3">Статус</th>
+                <th className="px-4 py-3">Признаки</th>
                 <th className="px-4 py-3">Действия</th>
               </tr>
             </thead>
