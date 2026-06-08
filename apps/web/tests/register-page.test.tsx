@@ -37,8 +37,9 @@ describe("register page", () => {
   it("shows a controlled unavailable state before backend rollout", () => {
     render(<RegisterPage error="unavailable" />);
 
-    expect(screen.getByText(/Регистратор ушёл на обЭд кушать технические шоколадки/)).toBeInTheDocument();
-    expect(screen.getByText(/Сейчас можно только войти в уже созданный аккаунт/)).toBeInTheDocument();
+    expect(screen.getByText(/Регистрация временно недоступна/)).toBeInTheDocument();
+    expect(screen.getByText(/войти в уже созданную учётную запись/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("технические шоколадки");
     expect(document.body.textContent).not.toContain("Python");
     expect(document.body.textContent).not.toContain("SMTP");
     expect(document.body.textContent).not.toContain("backend");
