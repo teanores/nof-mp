@@ -59,6 +59,7 @@ const profileCopy = {
     hideToken: "Hide",
     issueMcpKey: "ISSUE MCP KEY",
     labelCreated: "CREATED",
+    labelEmail: "EMAIL",
     labelLastSeen: "LAST SEEN",
     labelLevel: "LEVEL",
     labelRank: "RANK",
@@ -97,6 +98,7 @@ const profileCopy = {
     hideToken: "Скрыть",
     issueMcpKey: "ВЫПУСТИТЬ MCP-КЛЮЧ",
     labelCreated: "Создан",
+    labelEmail: "Электронная почта",
     labelLastSeen: "Последний вход",
     labelLevel: "Уровень",
     labelRank: "Ранг",
@@ -393,7 +395,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   <p className="mt-1 text-xs leading-5 text-forge-muted">{user.aboutMe || copy.aboutFallback}</p>
 
                   <div className="mt-3 space-y-2">
-                    <DataRow label="EMAIL" value={user.email ?? "-"} />
+                    <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
                     <DataRow label="TG" value={telegramLabel} />
                     <DataRow label={copy.labelSource} value={user.registrationSource ?? "-"} />
                   </div>

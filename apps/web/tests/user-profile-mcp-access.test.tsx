@@ -83,6 +83,7 @@ describe("user profile MCP access", () => {
     expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
     expect(screen.getByText("Источник")).toBeInTheDocument();
+    expect(screen.getByText("Электронная почта")).toBeInTheDocument();
     expect(screen.getByText("Уровень")).toBeInTheDocument();
     expect(screen.getByText("Ранг")).toBeInTheDocument();
     expect(screen.getByText("ID пользователя")).toBeInTheDocument();
@@ -90,6 +91,7 @@ describe("user profile MCP access", () => {
     expect(screen.getByText("Последний вход")).toBeInTheDocument();
     expect(screen.getByText(NOF_MP_FOOTER_MARKER)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("SOURCE");
+    expect(document.body).not.toHaveTextContent("EMAIL");
     expect(document.body).not.toHaveTextContent("LEVEL");
     expect(document.body).not.toHaveTextContent("RANK");
     expect(document.body).not.toHaveTextContent("USER ID");
