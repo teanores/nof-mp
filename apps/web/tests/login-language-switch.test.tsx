@@ -16,8 +16,13 @@ describe("login language switch", () => {
 
     expect(screen.getByRole("heading", { name: "Проходная Кузни" })).toBeInTheDocument();
     expect(screen.getByText("«Покажите жетон гильдии!»")).toBeInTheDocument();
+    expect(screen.getByText("Электронная почта")).toBeInTheDocument();
     expect(screen.getByTestId("login-copy-block")).toHaveClass("text-center");
     expect(screen.getByRole("link", { name: "Создать аккаунт" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign in" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Email")).not.toBeInTheDocument();
+    expect(screen.queryByText("Password")).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("Use the account");
     expect(document.body.textContent).not.toContain("Dragon Forge");
     expect(document.body.textContent).not.toContain("Python");
     expect(document.body.textContent).not.toContain("OAuth");
