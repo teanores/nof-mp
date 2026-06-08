@@ -76,7 +76,7 @@ export default async function OAuthConsentPage({ searchParams }: OAuthConsentPag
       <PortalHeader
         breadcrumbs={[{ href: "/overview", label: "Разделы кузницы" }, { label: client.displayName }]}
         description={`NOF Platform передаст ${client.displayName} только подтверждённые данные текущей учётной записи.`}
-        eyebrow="Platform identity"
+        eyebrow="Идентичность платформы"
         title={`Подключение ${client.displayName}`}
       />
       <section className="panel grid gap-6 p-6 sm:p-8">

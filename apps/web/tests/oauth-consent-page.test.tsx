@@ -90,10 +90,12 @@ describe("oauth consent page", () => {
     render(await OAuthConsentPage({ searchParams: Promise.resolve(validParams) }));
 
     expect(screen.getByRole("heading", { name: "Подключение Task Tracker" })).toBeInTheDocument();
+    expect(screen.getByText("Идентичность платформы")).toBeInTheDocument();
     expect(screen.getByText(/teanore/)).toBeInTheDocument();
     expect(screen.getByText(/owner@forgath.ru/)).toBeInTheDocument();
     expect(screen.getByText("openid")).toBeInTheDocument();
     expect(screen.getByText("email")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Platform identity");
 
     const approveForm = screen.getByTestId("oauth-approve-form");
     expect(approveForm).toHaveAttribute("action", "/oauth/consent/approve");
