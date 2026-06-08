@@ -80,6 +80,23 @@ export function AdminSecurityPage({
         </article>
       </section>
 
+      <section className="panel p-5">
+        <p className="tech-label text-xs text-forge-accent">Мониторинг периметра</p>
+        <h2 className="heading-tech mt-2 text-xl font-bold text-forge-ink">CrowdSec: режим наблюдения</h2>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {[
+            ["Сигналы", "Caddy и SSH события читаются отдельным VPS-мониторингом."],
+            ["Блокировки", "Автоматическая блокировка выключена: bouncer не установлен."],
+            ["Дашборд", "Эта страница показывает очищенные platform/app/edge audit-события, а не полную консоль CrowdSec."],
+          ].map(([title, text]) => (
+            <article key={title} className="rounded-sm border border-forge-line bg-forge-surface p-3">
+              <h3 className="heading-tech text-sm font-bold text-forge-ink">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-forge-muted">{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="panel p-5">
           <h2 className="heading-tech text-xl font-bold text-forge-ink">Источники</h2>

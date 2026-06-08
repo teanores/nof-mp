@@ -94,6 +94,12 @@ describe("admin security page", () => {
     expect(screen.getByText("MCP-запрос")).toBeInTheDocument();
     expect(screen.getByText("Поисковый робот")).toBeInTheDocument();
     expect(screen.getByText("Проверка служебного файла")).toBeInTheDocument();
+    expect(screen.getByText("Мониторинг периметра")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "CrowdSec: режим наблюдения" })).toBeInTheDocument();
+    expect(screen.getByText(/Caddy и SSH события читаются/)).toBeInTheDocument();
+    expect(screen.getByText(/Автоматическая блокировка выключена/)).toBeInTheDocument();
+    expect(screen.getByText(/bouncer не установлен/)).toBeInTheDocument();
+    expect(screen.getByText(/не полную консоль CrowdSec/)).toBeInTheDocument();
     expect(screen.getAllByText("203.0.113.10")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
@@ -104,6 +110,9 @@ describe("admin security page", () => {
     expect(document.body).not.toHaveTextContent("30510");
     expect(document.body).not.toHaveTextContent("token");
     expect(document.body).not.toHaveTextContent("password");
+    expect(document.body).not.toHaveTextContent("NOF_SECURITY_AUDIT_INGEST_TOKEN");
+    expect(document.body).not.toHaveTextContent("cscli");
+    expect(document.body).not.toHaveTextContent("sudo");
   });
 
   it("explains empty security data instead of showing silent zero-only state", () => {
