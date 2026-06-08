@@ -1,6 +1,6 @@
 {
   "name": "@nof/nof-mp",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "private": true,
   "description": "NOF Main Platform portal, authentication, profile and global access management",
   "workspaces": [
