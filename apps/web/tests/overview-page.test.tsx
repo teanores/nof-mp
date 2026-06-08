@@ -25,13 +25,13 @@ vi.mock("@/lib/platform-api", () => ({
 describe("platform overview page", () => {
   beforeEach(() => {
     auth.sessionFromCookie.mockResolvedValue({
-    authenticated: true,
-    loginUrl: "/login",
-    user: { experience: 0, id: "u-1", username: "teanore" },
+      authenticated: true,
+      loginUrl: "/login",
+      user: { experience: 0, id: "u-1", role: { id: 1, name: "admin" }, username: "teanore" },
     });
   });
 
-  it("renders the platform overview instead of redirecting to the landing page", async () => {
+  it("renders the platform overview and admin cards for admins", async () => {
     render(await OverviewPage());
 
     expect(screen.getByRole("heading", { name: "Narag'Othal Forgath" })).toBeInTheDocument();
@@ -47,5 +47,20 @@ describe("platform overview page", () => {
     expect(screen.getByRole("link", { name: /Пользователи/ })).toHaveAttribute("href", "/admin/users");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
     expect(screen.queryByRole("link", { name: "Профиль" })).not.toBeInTheDocument();
+  });
+
+  it("hides admin cards for moderators", async () => {
+    auth.sessionFromCookie.mockResolvedValue({
+      authenticated: true,
+      loginUrl: "/login",
+      user: { experience: 0, id: "u-2", role: { id: 2, name: "moderator" }, username: "moderator" },
+    });
+
+    render(await OverviewPage());
+
+    expect(screen.getByRole("heading", { name: "Narag'Othal Forgath" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Запросы/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Пользователи/ })).not.toBeInTheDocument();
+    expect(screen.queryByText("Администрирование")).not.toBeInTheDocument();
   });
 });

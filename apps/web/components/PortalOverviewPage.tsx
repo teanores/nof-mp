@@ -47,6 +47,11 @@ const adminLinks = [
   { href: "/admin/users", key: "admin-users" },
 ] as const;
 
+function canSeeAdminLinks(session?: ForgePortalSession): boolean {
+  const roleName = session?.user?.role?.name;
+  return roleName === "owner" || roleName === "admin";
+}
+
 function ModuleCard({ module }: { module: PortalModule }) {
   const copy = overviewCopy[usePortalLanguage()];
 
@@ -132,6 +137,7 @@ function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession
 
 export function PortalOverviewPage({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = overviewCopy[usePortalLanguage()];
+  const showAdminLinks = canSeeAdminLinks(initialSession);
 
   return (
     <PortalPageShell>
@@ -159,20 +165,22 @@ export function PortalOverviewPage({ initialSession }: { initialSession?: ForgeP
               </div>
             ))}
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {adminLinks.map((link) => {
-              const title = link.key === "admin-requests" ? copy.adminRequests : copy.adminUsers;
-              const note = link.key === "admin-requests" ? copy.adminRequestsNote : copy.adminUsersNote;
+          {showAdminLinks ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {adminLinks.map((link) => {
+                const title = link.key === "admin-requests" ? copy.adminRequests : copy.adminUsers;
+                const note = link.key === "admin-requests" ? copy.adminRequestsNote : copy.adminUsersNote;
 
-              return (
-                <Link key={link.key} className="rounded-sm border border-forge-line bg-forge-surface p-3 transition hover:border-forge-accent" href={link.href}>
-                  <p className="tech-label text-[10px] text-forge-accent">Администрирование</p>
-                  <p className="mt-1 text-sm font-bold text-forge-ink">{title}</p>
-                  <p className="mt-1 text-xs text-forge-muted">{note}</p>
-                </Link>
-              );
-            })}
-          </div>
+                return (
+                  <Link key={link.key} className="rounded-sm border border-forge-line bg-forge-surface p-3 transition hover:border-forge-accent" href={link.href}>
+                    <p className="tech-label text-[10px] text-forge-accent">Администрирование</p>
+                    <p className="mt-1 text-sm font-bold text-forge-ink">{title}</p>
+                    <p className="mt-1 text-xs text-forge-muted">{note}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null}
         </article>
       </section>
 
