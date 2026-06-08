@@ -15,6 +15,7 @@ const copy = {
   en: {
     accountHint: "Use the account registered for Narag'Othal Forgath services.",
     createAccount: "Create account",
+    email: "Email",
     forgeName: "Narag'Othal Forgath",
     invalidCredentials: "Invalid email or password.",
     language: "LANGUAGE",
@@ -27,6 +28,7 @@ const copy = {
   ru: {
     accountHint: "Используй аккаунт, зарегистрированный для сервисов Narag'Othal Forgath.",
     createAccount: "Создать аккаунт",
+    email: "Электронная почта",
     forgeName: "Narag'Othal Forgath",
     invalidCredentials: "Неверный email или пароль.",
     language: "ЯЗЫК",
@@ -70,7 +72,7 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
         <form id="portal-login-form" action="/api/login" className="mt-8 grid gap-3" method="post">
           <input name="next" type="hidden" value={safeNext} />
           <label className="grid gap-2">
-            <span className="tech-label text-[10px] text-forge-muted">Email</span>
+            <span className="tech-label text-[10px] text-forge-muted">{text.email}</span>
             <input
               autoComplete="email"
               className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
