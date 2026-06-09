@@ -4,12 +4,19 @@
 
 ## Platform Responsibilities
 
-- Authenticate users through current Dragon Forge credentials and future OAuth providers.
+- Authenticate users through the platform account and approved first-party NOF identity flows.
 - Register users and verify email codes.
 - Render the global portal overview and route users to available products.
 - Render the user profile and personal settings.
 - Issue, rotate and revoke MCP tokens scoped to projects/products.
 - Become the future home of subscription and entitlement rules.
+
+## Auth Compliance Boundary
+
+- NOF MP does not expose Telegram, foreign social networks, or external email providers as standalone login or registration methods.
+- Telegram may be used only as a post-login notification, community, or account-linking channel after the user has authenticated through an approved NOF account flow.
+- Cross-service authorization uses first-party NOF OAuth between NOF services.
+- New external identity providers require an explicit legal/compliance decision before implementation.
 
 ## Product Integration Contract
 

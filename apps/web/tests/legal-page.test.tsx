@@ -14,6 +14,9 @@ describe("legal draft page", () => {
     expect(screen.getByText(/не является публичной офертой/)).toBeInTheDocument();
     expect(screen.getByText(/не создаёт прав и обязанностей/)).toBeInTheDocument();
     expect(screen.getByText(/Настоящие условия использования/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Compliance hardening авторизации" })).toBeInTheDocument();
+    expect(screen.getByText(/Telegram может использоваться как канал сообщества/)).toBeInTheDocument();
+    expect(screen.getByText(/собственный NOF OAuth/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "К разделам кузницы" })).toHaveAttribute("href", "/overview");
     expect(document.body).not.toHaveTextContent("Настоящая страница является публичной офертой");
     expect(document.body).not.toHaveTextContent("финальное пользовательское соглашение");
