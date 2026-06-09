@@ -16,6 +16,7 @@ describe("oauth client registry", () => {
       expect(client.displayName.length).toBeGreaterThan(0);
       expect(client.redirectUris.length).toBeGreaterThan(0);
       expect(client.scopes).toContain("openid");
+      expect(client.cancelReturnPath).toMatch(/^\/services\/[a-z-]+\?oauth=cancelled$/);
       expect(client).not.toHaveProperty("clientSecret");
       expect(client).not.toHaveProperty("secret");
       expect(client).not.toHaveProperty("token");

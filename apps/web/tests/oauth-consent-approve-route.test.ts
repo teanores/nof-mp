@@ -213,7 +213,7 @@ describe("oauth consent approve route", () => {
     expect(issuedCodes.calls).toHaveLength(1);
   });
 
-  it("returns access denied to the product callback when consent is declined", async () => {
+  it("returns nof-tt users to the platform service page when consent is declined", async () => {
     const response = await approveConsent(
       approveRequest(
         new URLSearchParams({
@@ -224,9 +224,38 @@ describe("oauth consent approve route", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe(
-      "https://task-tracker.forgath.ru/auth/platform/callback?error=access_denied&state=s",
+    expect(response.headers.get("location")).toBe("/services/task-tracker?oauth=cancelled");
+    expect(consumedChallenges.calls).toEqual([{ challengeId: "oauth_consent_test", platformUserId: "platform-user-1" }]);
+    expect(issuedCodes.calls).toEqual([]);
+  });
+
+  it("returns nof-ht users to the platform service page when consent is declined", async () => {
+    consumedChallenges.result = {
+      ok: true,
+      record: {
+        challengeId: "oauth_consent_test",
+        clientId: "nof-ht",
+        expiresAt: "2026-06-04T15:02:00.000Z",
+        nonce: "n",
+        platformUserId: "platform-user-1",
+        redirectUri: "https://habit-tracker.forgath.ru/api/auth/platform/callback",
+        scopes: ["openid", "email"],
+        state: "s",
+        usedAt: "2026-06-04T15:00:00.000Z",
+      },
+    };
+
+    const response = await approveConsent(
+      approveRequest(
+        new URLSearchParams({
+          challenge_id: "oauth_consent_test",
+          decision: "deny",
+        }),
+      ),
     );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/services/habit-tracker?oauth=cancelled");
     expect(consumedChallenges.calls).toEqual([{ challengeId: "oauth_consent_test", platformUserId: "platform-user-1" }]);
     expect(issuedCodes.calls).toEqual([]);
   });
