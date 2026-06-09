@@ -1,6 +1,8 @@
 import Link from "next/link";
 import React from "react";
 
+import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
+
 type RegisterStep = "request" | "confirm";
 type RegisterError = "unavailable" | "invalid" | "conflict" | undefined;
 
@@ -38,7 +40,7 @@ function ErrorPanel({ error }: { error: RegisterError }) {
 
 function RequestForm({ error }: { error: RegisterError }) {
   return (
-    <form action="/api/portal/registration/request" className="grid max-w-md gap-3" method="post">
+    <form id="portal-registration-form" action="/api/portal/registration/request" className="grid max-w-md gap-3" method="post">
       <ErrorPanel error={error} />
       <label className="grid gap-2">
         <span className="tech-label text-[10px] text-forge-muted">Логин</span>
@@ -71,6 +73,23 @@ function RequestForm({ error }: { error: RegisterError }) {
           required
           type="password"
         />
+      </label>
+      <label className="flex items-start gap-3 rounded-sm border border-forge-line bg-forge-surface p-3 text-sm leading-6 text-forge-muted">
+        <input
+          checked={false}
+          className="mt-1 h-4 w-4 rounded-sm border-forge-line bg-forge-panel"
+          disabled
+          readOnly
+          type="checkbox"
+        />
+        <span>
+          Согласие с условиями появится после публикации настоящего соглашения. Сейчас это неактивный пример для
+          проверки дизайна. Черновик страницы:{" "}
+          <Link className="font-semibold text-forge-accent transition hover:text-forge-ink" href="/legal">
+            Юридические аспекты
+          </Link>
+          .
+        </span>
       </label>
       <button
         className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110"
@@ -128,7 +147,13 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
       <section className="panel grid w-full max-w-5xl overflow-hidden lg:grid-cols-[1.05fr_0.95fr]">
         <div className="flex min-h-[560px] flex-col justify-between gap-8 p-6 sm:p-8">
           <div>
-            <p className="tech-label text-xs text-forge-accent">{"Narag'Othal Forgath"}</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="tech-label text-xs text-forge-accent">{"Narag'Othal Forgath"}</p>
+              <div className="flex items-center gap-2">
+                <span className="tech-label text-[10px] text-forge-muted">ЯЗЫК</span>
+                <PortalLanguageSelect formId="portal-registration-form" name="language" />
+              </div>
+            </div>
             <h1 className="heading-tech mt-3 text-4xl font-bold text-forge-ink sm:text-5xl">
               {isConfirmStep ? "Введите код подтверждения" : "Стойка регистрации"}
             </h1>
