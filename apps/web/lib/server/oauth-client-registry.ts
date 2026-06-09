@@ -4,6 +4,7 @@ export interface OAuthClientRegistration {
   productKey: "nof-ht" | "nof-tt";
   redirectUris: string[];
   scopes: string[];
+  cancelReturnPath?: string;
 }
 
 export const oauthClientRegistry: OAuthClientRegistration[] = [
@@ -13,6 +14,7 @@ export const oauthClientRegistry: OAuthClientRegistration[] = [
     productKey: "nof-tt",
     redirectUris: ["https://task-tracker.forgath.ru/auth/platform/callback"],
     scopes: ["openid", "profile", "email"],
+    cancelReturnPath: "/services/task-tracker?oauth=cancelled",
   },
   {
     clientId: "nof-ht",
@@ -20,6 +22,7 @@ export const oauthClientRegistry: OAuthClientRegistration[] = [
     productKey: "nof-ht",
     redirectUris: ["https://habit-tracker.forgath.ru/api/auth/platform/callback"],
     scopes: ["openid", "profile", "email"],
+    cancelReturnPath: "/services/habit-tracker?oauth=cancelled",
   },
 ];
 

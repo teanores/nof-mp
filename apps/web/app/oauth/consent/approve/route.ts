@@ -26,6 +26,13 @@ function redirectToCallback(redirectUri: string, params: Record<string, string>)
   });
 }
 
+function redirectToPlatformPath(path: string): NextResponse {
+  return new NextResponse(null, {
+    headers: { location: path },
+    status: 303,
+  });
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const form = await request.formData();
   const challengeId = String(form.get("challenge_id") ?? "");
@@ -60,6 +67,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   if (decision !== "approve") {
+    if (client.cancelReturnPath) {
+      return redirectToPlatformPath(client.cancelReturnPath);
+    }
     return redirectToCallback(challenge.redirectUri, { error: "access_denied", state: challenge.state });
   }
 
