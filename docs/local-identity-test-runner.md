@@ -23,6 +23,12 @@ just test-identity
 
 ## Local identity fixtures
 
+Start a reproducible Docker PostgreSQL instance:
+
+```powershell
+just db-up
+```
+
 Print a safe local-only environment template:
 
 ```powershell
@@ -42,21 +48,33 @@ $env:NOF_LOCAL_POSTGRES_ADMIN_URL="postgresql://postgres:<local-admin-password>@
 npm run local:bootstrap-db
 ```
 
+This is only needed for an already installed local PostgreSQL. The Docker path does not need it.
+
 Seed a dedicated local database:
 
 ```powershell
-$env:NOF_LOCAL_DATABASE_URL="postgresql://nof_local:nof_local@localhost:5432/nof_local"
-npm run local:seed-identity
+just seed-identity
 ```
 
 Reset and reseed the same local users:
 
 ```powershell
-$env:NOF_LOCAL_DATABASE_URL="postgresql://nof_local:nof_local@localhost:5432/nof_local"
-npm run local:reset-identity
+just reset-identity
 ```
 
 The seed script refuses non-local database hosts and database names without a `local` or `test` marker.
+
+Run the current local identity readiness bundle:
+
+```powershell
+just local-ready
+```
+
+Stop the Docker database:
+
+```powershell
+just db-down
+```
 
 ## Covered scenarios
 

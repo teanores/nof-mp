@@ -25,14 +25,31 @@ local-env:
 local-users:
   npm run local:identity-users
 
+db-up:
+  npm run local:db-up
+
+db-down:
+  npm run local:db-down
+
+db-reset:
+  npm run local:db-reset
+
+db-logs:
+  npm run local:db-logs
+
 bootstrap-db:
   npm run local:bootstrap-db
 
 seed-identity:
-  npm run local:seed-identity
+  $env:NOF_LOCAL_DATABASE_URL='postgresql://nof_local:nof_local@localhost:15432/nof_local'; npm run local:seed-identity
 
 reset-identity:
-  npm run local:reset-identity
+  $env:NOF_LOCAL_DATABASE_URL='postgresql://nof_local:nof_local@localhost:15432/nof_local'; npm run local:reset-identity
+
+local-ready:
+  just db-up
+  $env:NOF_LOCAL_DATABASE_URL='postgresql://nof_local:nof_local@localhost:15432/nof_local'; npm run local:seed-identity
+  npm run test:identity
 
 check:
   npm run check

@@ -1,0 +1,22 @@
+name: nof-mp-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nof-mp-local-postgres
+    environment:
+      POSTGRES_DB: nof_local
+      POSTGRES_USER: nof_local
+      POSTGRES_PASSWORD: nof_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nof_local -d nof_local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "15432:5432"
+    volumes:
+      - nof_mp_local_postgres:/var/lib/postgresql/data
+
+volumes:
+  nof_mp_local_postgres:
