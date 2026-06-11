@@ -71,3 +71,14 @@ export interface CreateMcpTokenInput {
   projectKey?: string;
   scopes?: string[];
 }
+
+export interface ForgeServiceLink {
+  serviceKey: "nof-ht" | "nof-tt";
+  serviceName: string;
+  status: "connected" | "not_connected" | "unavailable";
+  accountEmail?: string;
+  accountLabel?: string;
+  linkedAt?: string;
+  canUnlink: boolean;
+  openHref: string;
+}

@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,9 +9,11 @@ import type { ForgeMcpToken, ForgeProject } from "@/lib/types";
 
 const platformApi = vi.hoisted(() => ({
   createMcpToken: vi.fn(),
+  fetchProfileServiceLinks: vi.fn(),
   fetchMcpTokens: vi.fn(),
   fetchPlatformProjects: vi.fn(),
   fetchPortalSession: vi.fn(),
+  unlinkProfileService: vi.fn(),
   revokeMcpToken: vi.fn(),
 }));
 
@@ -61,6 +64,14 @@ describe("user profile MCP access", () => {
     platformApi.fetchPortalSession.mockResolvedValue(session);
     platformApi.fetchMcpTokens.mockResolvedValue([]);
     platformApi.fetchPlatformProjects.mockResolvedValue([]);
+    platformApi.fetchProfileServiceLinks.mockResolvedValue([]);
+    platformApi.unlinkProfileService.mockResolvedValue({
+      serviceKey: "nof-ht",
+      serviceName: "Habit Tracker",
+      status: "not_connected",
+      canUnlink: false,
+      openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+    });
   });
 
   it("hides MCP setup when the user has no accessible projects and no active tokens", async () => {
@@ -177,5 +188,37 @@ describe("user profile MCP access", () => {
     expect(document.body).not.toHaveTextContent("HTTP MCP server");
     expect(document.body).not.toHaveTextContent("project-scoped");
     expect(screen.queryByRole("heading", { name: "Сервисы платформы" })).not.toBeInTheDocument();
+  });
+
+  it("shows connected NOF services and allows unlinking a service account", async () => {
+    platformApi.fetchProfileServiceLinks.mockResolvedValue([
+      {
+        serviceKey: "nof-ht",
+        serviceName: "Habit Tracker",
+        status: "connected",
+        accountEmail: "habit@example.com",
+        accountLabel: "Habit User",
+        linkedAt: "2026-06-11T10:00:00.000Z",
+        canUnlink: true,
+        openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+      },
+    ]);
+
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByRole("heading", { name: "Подключённые сервисы" });
+
+    expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
+    expect(screen.getByText("Подключён")).toBeInTheDocument();
+    expect(screen.getByText("habit@example.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Открыть Habit Tracker" })).toHaveAttribute(
+      "href",
+      "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Отключить Habit Tracker" }));
+
+    await waitFor(() => expect(platformApi.unlinkProfileService).toHaveBeenCalledWith("nof-ht"));
+    expect(screen.getByText("Не подключён")).toBeInTheDocument();
   });
 });

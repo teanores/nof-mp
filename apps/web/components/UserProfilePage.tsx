@@ -7,8 +7,16 @@ import { PortalPageShell } from "@/components/PortalLayout";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePortalLanguage } from "@/lib/use-portal-language";
-import { createMcpToken, fetchMcpTokens, fetchPlatformProjects, fetchPortalSession, revokeMcpToken } from "@/lib/platform-api";
-import type { ForgeMcpToken, ForgePortalSession, ForgePortalUser, ForgeProject } from "@/lib/types";
+import {
+  createMcpToken,
+  fetchMcpTokens,
+  fetchPlatformProjects,
+  fetchPortalSession,
+  fetchProfileServiceLinks,
+  revokeMcpToken,
+  unlinkProfileService,
+} from "@/lib/platform-api";
+import type { ForgeMcpToken, ForgePortalSession, ForgePortalUser, ForgeProject, ForgeServiceLink } from "@/lib/types";
 
 function avatarInitials(user?: ForgePortalUser): string {
   const username = user?.username?.trim();
@@ -51,6 +59,8 @@ const profileCopy = {
     identity: "Portal identity",
     language: "Portal language",
     languageNote: "The interface language is saved in your profile and applied to portal shell labels.",
+    linkedServices: "Connected services",
+    linkedServicesNote: "These services are linked to your NOF Platform account through platform OAuth.",
     loading: "Loading profile...",
     close: "Done / close",
     copyJson: "Copy JSON",
@@ -84,12 +94,19 @@ const profileCopy = {
     title: "Profile",
     tokenName: "Key name",
     logout: "Log out",
+    openService: "Open",
+    serviceConnected: "Connected",
+    serviceNotConnected: "Not connected",
+    serviceUnavailable: "Check unavailable",
+    unlinkService: "Disconnect",
   },
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
     identity: "Идентичность портала",
     language: "Язык портала",
     languageNote: "Язык интерфейса сохраняется в профиле и применяется к системным названиям портала.",
+    linkedServices: "Подключённые сервисы",
+    linkedServicesNote: "Эти сервисы связаны с твоей учётной записью NOF Platform через платформенный OAuth.",
     loading: "Загружаю профиль...",
     close: "Готово / закрыть",
     copyJson: "Копировать JSON",
@@ -123,6 +140,11 @@ const profileCopy = {
     title: "Профиль",
     tokenName: "Имя ключа",
     logout: "Выйти",
+    openService: "Открыть",
+    serviceConnected: "Подключён",
+    serviceNotConnected: "Не подключён",
+    serviceUnavailable: "Проверка недоступна",
+    unlinkService: "Отключить связь",
   },
 } as const;
 
@@ -191,6 +213,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [isTokenBusy, setIsTokenBusy] = useState(false);
   const [mcpTokens, setMcpTokens] = useState<ForgeMcpToken[]>([]);
   const [projects, setProjects] = useState<ForgeProject[]>([]);
+  const [serviceLinks, setServiceLinks] = useState<ForgeServiceLink[]>([]);
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
@@ -208,9 +231,10 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
         if (isMounted) {
           setSession(nextSession);
           if (nextSession.user) {
-            const [tokens, nextProjects] = await Promise.all([fetchMcpTokens(), fetchPlatformProjects()]);
+            const [tokens, nextProjects, links] = await Promise.all([fetchMcpTokens(), fetchPlatformProjects(), fetchProfileServiceLinks()]);
             setMcpTokens(tokens);
             setProjects(nextProjects);
+            setServiceLinks(links);
           }
         }
       } catch (loadError) {
@@ -346,6 +370,22 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     }
   }
 
+  async function handleUnlinkService(serviceKey: ForgeServiceLink["serviceKey"]) {
+    setError(undefined);
+    try {
+      const nextLink = await unlinkProfileService(serviceKey);
+      setServiceLinks((current) => current.map((link) => (link.serviceKey === serviceKey ? nextLink : link)));
+    } catch (unlinkError) {
+      setError(unlinkError instanceof Error ? unlinkError.message : "Связь сервиса не была отключена");
+    }
+  }
+
+  function serviceStatusLabel(status: ForgeServiceLink["status"]): string {
+    if (status === "connected") return copy.serviceConnected;
+    if (status === "not_connected") return copy.serviceNotConnected;
+    return copy.serviceUnavailable;
+  }
+
   return (
     <PortalPageShell maxWidthClassName="max-w-[1180px]">
         <header className="panel flex items-center justify-between gap-3 p-4">
@@ -415,6 +455,59 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 <DataRow label={copy.labelUserId} value={user.id} />
                 <DataRow label={copy.labelCreated} value={formatDate(user.createdAt)} />
                 <DataRow label={copy.labelLastSeen} value={formatDate(user.lastSeen)} />
+              </div>
+            </section>
+
+            <section className="panel p-5">
+              <p className="tech-label text-xs text-forge-accent">{copy.linkedServices}</p>
+              <h2 className="heading-tech mt-2 text-lg font-bold text-forge-ink">{copy.linkedServices}</h2>
+              <p className="mt-2 text-sm leading-6 text-forge-muted">{copy.linkedServicesNote}</p>
+              <div className="mt-4 grid gap-3">
+                {serviceLinks.map((link) => (
+                  <article key={link.serviceKey} className="rounded-sm border border-forge-line bg-forge-surface p-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-semibold text-forge-ink">{link.serviceName}</h3>
+                          <span className="tech-label rounded-sm border border-forge-line bg-forge-panel px-2 py-1 text-[9px] text-forge-accent">
+                            {serviceStatusLabel(link.status)}
+                          </span>
+                        </div>
+                        {link.status === "connected" ? (
+                          <div className="mt-2 text-xs leading-5 text-forge-muted">
+                            <p>{link.accountEmail ?? link.accountLabel ?? "-"}</p>
+                            {link.linkedAt ? <p>Связано: {formatDate(link.linkedAt)}</p> : null}
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-xs leading-5 text-forge-muted">
+                            {link.status === "not_connected"
+                              ? "Связь с этим сервисом пока не создана."
+                              : "Не удалось проверить связь с сервисом."}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <a
+                          className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-accent bg-forge-accent px-3 py-2 text-center text-[10px] font-bold text-black transition"
+                          href={link.openHref}
+                        >
+                          {copy.openService} {link.serviceName}
+                        </a>
+                        {link.canUnlink ? (
+                          <button
+                            aria-label={`Отключить ${link.serviceName}`}
+                            className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-center text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+                            type="button"
+                            onClick={() => void handleUnlinkService(link.serviceKey)}
+                          >
+                            {copy.unlinkService} {link.serviceName}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+                {serviceLinks.length === 0 ? <p className="text-sm text-forge-muted">{copy.serviceNotConnected}</p> : null}
               </div>
             </section>
 

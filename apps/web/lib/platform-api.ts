@@ -1,4 +1,4 @@
-import type { ForgeMcpToken, ForgePortalSession, ForgeProject } from "@/lib/types";
+import type { ForgeMcpToken, ForgePortalSession, ForgeProject, ForgeServiceLink } from "@/lib/types";
 import type { PortalLanguage } from "@/lib/portal-language";
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -51,4 +51,16 @@ export async function revokeMcpToken(tokenId: string): Promise<void> {
 export async function fetchPlatformProjects(): Promise<ForgeProject[]> {
   const data = await readJson<{ projects: ForgeProject[] }>(await fetch("/api/platform/projects", { cache: "no-store" }));
   return data.projects;
+}
+
+export async function fetchProfileServiceLinks(): Promise<ForgeServiceLink[]> {
+  const data = await readJson<{ links: ForgeServiceLink[] }>(await fetch("/api/profile/service-links", { cache: "no-store" }));
+  return data.links;
+}
+
+export async function unlinkProfileService(serviceKey: ForgeServiceLink["serviceKey"]): Promise<ForgeServiceLink> {
+  const data = await readJson<{ link: ForgeServiceLink }>(
+    await fetch(`/api/profile/service-links?serviceKey=${encodeURIComponent(serviceKey)}`, { method: "DELETE" }),
+  );
+  return data.link;
 }
