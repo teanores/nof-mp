@@ -83,3 +83,5 @@ The target scoped release-builder service is `nof-mp`. If production still uses 
 - Auth and registration pages must not reveal internal architecture, old service names, private routes, secret names with values, internal IPs or NodePorts.
 - Platform pages must not show the old Forge Tasks marker `NOF.TT // v0.1.8`.
 - Footer/version marker must come from the shared platform version source, not duplicated strings.
+- Footer shape is a stable platform UI contract: left side is the shared `NOF.MP // vX.Y.Z` marker, right side is `Narag'Othal Forgath`. Do not change footer layout, copy, casing, placement or version source in feature/ops tasks unless the owner explicitly approves a shell/footer task.
+- Authenticated overview/profile navigation uses the compact avatar/initials profile affordance, not a text button. Text profile/login actions are allowed only on explicit login-required states and must not appear on authenticated overview.
