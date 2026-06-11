@@ -71,6 +71,12 @@ const profileCopy = {
     passwordChanged: "Password changed. Use the new password on your next sign-in.",
     passwordMismatch: "New passwords do not match.",
     passwordPolicyHint: "At least 12 characters, lowercase, uppercase, digit and symbol. Do not include your username or email.",
+    passwordFieldsRequired: "Fill in the current password and the new password.",
+    passwordInvalidCurrent: "The current password is incorrect.",
+    passwordPolicyError: "The new password does not match the password rules.",
+    passwordUnavailable: "This account does not have password login enabled yet.",
+    passwordUserNotFound: "The account was not found. Sign in again and retry.",
+    passwordChangeFailed: "Password was not changed. Check the fields and retry.",
     loading: "Loading profile...",
     close: "Done / close",
     copyJson: "Copy JSON",
@@ -126,6 +132,12 @@ const profileCopy = {
     passwordChanged: "Пароль изменён. При следующем входе используй новый пароль.",
     passwordMismatch: "Новые пароли не совпадают.",
     passwordPolicyHint: "Минимум 12 символов, строчная и заглавная буква, цифра и символ. Не используй логин или email.",
+    passwordFieldsRequired: "Заполни текущий пароль и новый пароль.",
+    passwordInvalidCurrent: "Текущий пароль указан неверно.",
+    passwordPolicyError: "Новый пароль не соответствует правилам безопасности.",
+    passwordUnavailable: "Для этой учётной записи вход по паролю пока не включён.",
+    passwordUserNotFound: "Учётная запись не найдена. Войди заново и повтори попытку.",
+    passwordChangeFailed: "Пароль не был изменён. Проверь поля и повтори попытку.",
     loading: "Загружаю профиль...",
     close: "Готово / закрыть",
     copyJson: "Копировать JSON",
@@ -237,6 +249,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
+  const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordNotice, setPasswordNotice] = useState<string | undefined>();
   const [createdToken, setCreatedToken] = useState<{ fullToken: string; token: ForgeMcpToken } | undefined>();
   const [isCreatedTokenVisible, setIsCreatedTokenVisible] = useState(false);
@@ -405,6 +418,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     event.preventDefault();
     const form = event.currentTarget;
     setError(undefined);
+    setPasswordError(undefined);
     setPasswordNotice(undefined);
 
     const formData = new FormData(form);
@@ -412,7 +426,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     const newPassword = String(formData.get("newPassword") ?? "");
     const repeatedPassword = String(formData.get("repeatedPassword") ?? "");
     if (newPassword !== repeatedPassword) {
-      setError(copy.passwordMismatch);
+      setPasswordError(copy.passwordMismatch);
       return;
     }
 
@@ -422,7 +436,15 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       form.reset();
       setPasswordNotice(copy.passwordChanged);
     } catch (changeError) {
-      setError(changeError instanceof Error ? changeError.message : "Пароль не был изменён");
+      const reason = changeError instanceof Error ? changeError.message : "";
+      const messageByReason: Record<string, string> = {
+        invalid_current_password: copy.passwordInvalidCurrent,
+        password_fields_required: copy.passwordFieldsRequired,
+        password_policy: copy.passwordPolicyError,
+        password_unavailable: copy.passwordUnavailable,
+        user_not_found: copy.passwordUserNotFound,
+      };
+      setPasswordError(messageByReason[reason] ?? copy.passwordChangeFailed);
     } finally {
       setIsPasswordBusy(false);
     }
@@ -622,6 +644,11 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   >
                     {copy.changePassword}
                   </button>
+                  {passwordError ? (
+                    <p className="text-xs font-semibold leading-5 text-forge-amber" role="alert">
+                      {passwordError}
+                    </p>
+                  ) : null}
                   {passwordNotice ? <p className="text-xs leading-5 text-forge-muted">{passwordNotice}</p> : null}
                 </div>
               </form>

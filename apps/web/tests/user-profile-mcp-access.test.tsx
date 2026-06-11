@@ -260,4 +260,19 @@ describe("user profile MCP access", () => {
     expect(await screen.findByText("Новые пароли не совпадают.")).toBeInTheDocument();
     expect(platformApi.changeProfilePassword).not.toHaveBeenCalled();
   });
+
+  it("shows a local password form error when the password API rejects the change", async () => {
+    platformApi.changeProfilePassword.mockRejectedValue(new Error("invalid_current_password"));
+
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByText("Безопасность аккаунта");
+
+    await userEvent.type(screen.getByLabelText("Текущий пароль"), "WrongHorse1!");
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
+    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Текущий пароль указан неверно.");
+  });
 });
