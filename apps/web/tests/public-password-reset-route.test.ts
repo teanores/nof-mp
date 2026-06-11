@@ -1,0 +1,79 @@
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const passwordResetRepository = vi.hoisted(() => ({
+  confirmReset: vi.fn(),
+  requestReset: vi.fn(),
+}));
+
+vi.mock("@/lib/server/platform-password-reset-repository", () => ({
+  getPlatformPasswordResetRepository: vi.fn(() => passwordResetRepository),
+}));
+
+import { POST as confirmReset } from "@/app/api/public/password-reset/confirm/route";
+import { POST as requestReset } from "@/app/api/public/password-reset/request/route";
+
+function request(url: string, body: unknown): NextRequest {
+  return new NextRequest(url, {
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+}
+
+describe("public password reset routes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    passwordResetRepository.requestReset.mockResolvedValue({ ok: true, reason: "missing_or_unresettable" });
+    passwordResetRepository.confirmReset.mockResolvedValue({ ok: true });
+  });
+
+  it("returns a uniform request response without exposing account state or reset tokens", async () => {
+    passwordResetRepository.requestReset.mockResolvedValue({
+      expiresAt: new Date("2026-06-11T11:00:00.000Z"),
+      ok: true,
+      reason: "token_created",
+      resetToken: "raw-reset-token",
+      userId: "user-1",
+    });
+
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      message: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
+    });
+    expect(passwordResetRepository.requestReset).toHaveBeenCalledWith({ email: "owner@example.com" });
+  });
+
+  it("confirms a reset token without returning sensitive data", async () => {
+    const response = await confirmReset(
+      request("http://localhost/api/public/password-reset/confirm", {
+        newPassword: "NextHorse22!",
+        token: "raw-reset-token",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(passwordResetRepository.confirmReset).toHaveBeenCalledWith({
+      newPassword: "NextHorse22!",
+      token: "raw-reset-token",
+    });
+  });
+
+  it("returns a safe error for invalid or expired tokens", async () => {
+    passwordResetRepository.confirmReset.mockResolvedValue({ ok: false, reason: "invalid_or_expired_token" });
+
+    const response = await confirmReset(
+      request("http://localhost/api/public/password-reset/confirm", {
+        newPassword: "NextHorse22!",
+        token: "stale-token",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_or_expired_token" });
+  });
+});
