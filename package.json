@@ -20,6 +20,7 @@
     "local:db-down": "docker compose -f compose.local.yml down",
     "local:db-reset": "docker compose -f compose.local.yml down -v && docker compose -f compose.local.yml up -d postgres",
     "local:db-logs": "docker compose -f compose.local.yml logs postgres",
+    "smoke:identity": "npm --workspace @nof/nof-mp-web run smoke:identity",
     "test:identity": "npm --workspace @nof/nof-mp-web run test:identity",
     "typecheck": "npm --workspace @nof/nof-mp-web run typecheck",
     "test": "npm --workspace @nof/nof-mp-web run test:run",
@@ -31,5 +32,8 @@
       "postcss": "8.5.10"
     },
     "postcss": "8.5.10"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
   }
 }

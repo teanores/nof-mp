@@ -70,6 +70,15 @@ Run the current local identity readiness bundle:
 just local-ready
 ```
 
+Run browser smoke for the current profile/password/service-link surface:
+
+```powershell
+just smoke-identity
+```
+
+The smoke uses local Docker PostgreSQL, fake users and a local Next.js server on `127.0.0.1:3300`.
+It does not call production domains; Habit Tracker link status is expected to be unavailable until the multi-service harness is added.
+
 Stop the Docker database:
 
 ```powershell

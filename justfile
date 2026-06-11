@@ -51,6 +51,11 @@ local-ready:
   $env:NOF_LOCAL_DATABASE_URL='postgresql://nof_local:nof_local@localhost:15432/nof_local'; npm run local:seed-identity
   npm run test:identity
 
+smoke-identity:
+  just db-up
+  $env:NOF_LOCAL_DATABASE_URL='postgresql://nof_local:nof_local@localhost:15432/nof_local'; npm run local:reset-identity
+  $env:NOF_LOCAL_DATABASE_URL='postgresql://nof_local:nof_local@localhost:15432/nof_local'; npm run smoke:identity
+
 check:
   npm run check
 
