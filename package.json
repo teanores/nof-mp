@@ -11,6 +11,7 @@
     "dev": "npm --workspace @nof/nof-mp-web run dev",
     "build": "npm --workspace @nof/nof-mp-web run build",
     "lint": "npm --workspace @nof/nof-mp-web run lint",
+    "test:identity": "npm --workspace @nof/nof-mp-web run test:identity",
     "typecheck": "npm --workspace @nof/nof-mp-web run typecheck",
     "test": "npm --workspace @nof/nof-mp-web run test:run",
     "test:watch": "npm --workspace @nof/nof-mp-web run test",
