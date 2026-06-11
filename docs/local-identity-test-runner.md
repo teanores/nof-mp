@@ -15,6 +15,49 @@ Run from `C:\Users\User\Documents\dev\NOF\nof-mp`:
 npm run test:identity
 ```
 
+The same command is available through Just:
+
+```powershell
+just test-identity
+```
+
+## Local identity fixtures
+
+Print a safe local-only environment template:
+
+```powershell
+npm run local:identity-env
+```
+
+Show deterministic local test users:
+
+```powershell
+npm run local:identity-users
+```
+
+Prepare local PostgreSQL role/database once, using a local admin connection string:
+
+```powershell
+$env:NOF_LOCAL_POSTGRES_ADMIN_URL="postgresql://postgres:<local-admin-password>@localhost:5432/postgres"
+npm run local:bootstrap-db
+```
+
+Seed a dedicated local database:
+
+```powershell
+$env:NOF_LOCAL_DATABASE_URL="postgresql://nof_local:nof_local@localhost:5432/nof_local"
+npm run local:seed-identity
+```
+
+Reset and reseed the same local users:
+
+```powershell
+$env:NOF_LOCAL_DATABASE_URL="postgresql://nof_local:nof_local@localhost:5432/nof_local"
+npm run local:reset-identity
+```
+
+The seed script refuses non-local database hosts and database names without a `local` or `test` marker.
+
 ## Covered scenarios
 
 - platform auth cookie decoding;

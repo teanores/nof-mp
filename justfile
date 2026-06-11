@@ -19,6 +19,21 @@ test:
 test-identity:
   npm run test:identity
 
+local-env:
+  npm run local:identity-env
+
+local-users:
+  npm run local:identity-users
+
+bootstrap-db:
+  npm run local:bootstrap-db
+
+seed-identity:
+  npm run local:seed-identity
+
+reset-identity:
+  npm run local:reset-identity
+
 check:
   npm run check
 
