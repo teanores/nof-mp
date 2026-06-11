@@ -1,6 +1,6 @@
 {
   "name": "@nof/nof-mp-web",
-  "version": "0.2.26",
+  "version": "0.2.27",
   "private": true,
   "scripts": {
     "dev": "next dev",
