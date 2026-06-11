@@ -77,6 +77,13 @@ const profileCopy = {
     passwordUnavailable: "This account does not have password login enabled yet.",
     passwordUserNotFound: "The account was not found. Sign in again and retry.",
     passwordChangeFailed: "Password was not changed. Check the fields and retry.",
+    passwordRulesTitle: "Password rules",
+    passwordRuleLength: "At least 12 characters",
+    passwordRuleLowercase: "Lowercase letter",
+    passwordRuleUppercase: "Uppercase letter",
+    passwordRuleDigit: "Digit",
+    passwordRuleSymbol: "Special symbol",
+    passwordRuleSafeChars: "No spaces or backtick character",
     loading: "Loading profile...",
     close: "Done / close",
     copyJson: "Copy JSON",
@@ -138,6 +145,13 @@ const profileCopy = {
     passwordUnavailable: "Для этой учётной записи вход по паролю пока не включён.",
     passwordUserNotFound: "Учётная запись не найдена. Войди заново и повтори попытку.",
     passwordChangeFailed: "Пароль не был изменён. Проверь поля и повтори попытку.",
+    passwordRulesTitle: "Правила пароля",
+    passwordRuleLength: "Минимум 12 символов",
+    passwordRuleLowercase: "Есть строчная буква",
+    passwordRuleUppercase: "Есть заглавная буква",
+    passwordRuleDigit: "Есть цифра",
+    passwordRuleSymbol: "Есть спецсимвол",
+    passwordRuleSafeChars: "Нет пробелов и обратной кавычки",
     loading: "Загружаю профиль...",
     close: "Готово / закрыть",
     copyJson: "Копировать JSON",
@@ -248,6 +262,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [serviceLinks, setServiceLinks] = useState<ForgeServiceLink[]>([]);
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
+  const [newPasswordDraft, setNewPasswordDraft] = useState("");
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordNotice, setPasswordNotice] = useState<string | undefined>();
@@ -434,6 +449,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     try {
       await changeProfilePassword({ currentPassword, newPassword });
       form.reset();
+      setNewPasswordDraft("");
       setPasswordNotice(copy.passwordChanged);
     } catch (changeError) {
       const reason = changeError instanceof Error ? changeError.message : "";
@@ -455,6 +471,15 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     if (status === "not_connected") return copy.serviceNotConnected;
     return copy.serviceUnavailable;
   }
+
+  const passwordRules = [
+    { isMet: newPasswordDraft.length >= 12, label: copy.passwordRuleLength },
+    { isMet: /[a-z]/.test(newPasswordDraft), label: copy.passwordRuleLowercase },
+    { isMet: /[A-Z]/.test(newPasswordDraft), label: copy.passwordRuleUppercase },
+    { isMet: /\d/.test(newPasswordDraft), label: copy.passwordRuleDigit },
+    { isMet: /[^A-Za-z0-9]/.test(newPasswordDraft), label: copy.passwordRuleSymbol },
+    { isMet: !/[\s`]/.test(newPasswordDraft), label: copy.passwordRuleSafeChars },
+  ];
 
   return (
     <PortalPageShell maxWidthClassName="max-w-[1180px]">
@@ -623,6 +648,8 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                       name="newPassword"
                       required
                       type="password"
+                      value={newPasswordDraft}
+                      onChange={(event) => setNewPasswordDraft(event.target.value)}
                     />
                   </label>
                   <label className="grid gap-2">
@@ -635,6 +662,27 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                       type="password"
                     />
                   </label>
+                </div>
+                <div className="rounded-sm border border-forge-line bg-forge-panel p-3" aria-live="polite">
+                  <p className="tech-label text-[10px] text-forge-muted">{copy.passwordRulesTitle}</p>
+                  <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {passwordRules.map((rule) => (
+                      <li
+                        key={rule.label}
+                        className={`flex items-center gap-2 text-xs leading-5 ${rule.isMet ? "text-forge-accent" : "text-forge-muted"}`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`grid h-5 w-5 shrink-0 place-items-center rounded-sm border text-[10px] ${
+                            rule.isMet ? "border-forge-accent bg-forge-accent text-black" : "border-forge-line bg-forge-surface text-forge-muted"
+                          }`}
+                        >
+                          {rule.isMet ? "+" : "-"}
+                        </span>
+                        <span>{rule.label}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <button

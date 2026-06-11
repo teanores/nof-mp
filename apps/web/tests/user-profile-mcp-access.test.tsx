@@ -233,6 +233,14 @@ describe("user profile MCP access", () => {
 
     await screen.findByText("Безопасность аккаунта");
 
+    expect(screen.getByText("Правила пароля")).toBeInTheDocument();
+    expect(screen.getByText("Минимум 12 символов")).toBeInTheDocument();
+    expect(screen.getByText("Есть строчная буква")).toBeInTheDocument();
+    expect(screen.getByText("Есть заглавная буква")).toBeInTheDocument();
+    expect(screen.getByText("Есть цифра")).toBeInTheDocument();
+    expect(screen.getByText("Есть спецсимвол")).toBeInTheDocument();
+    expect(screen.getByText("Нет пробелов и обратной кавычки")).toBeInTheDocument();
+
     await userEvent.type(screen.getByLabelText("Текущий пароль"), "CurrentHorse1!");
     await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
@@ -245,6 +253,31 @@ describe("user profile MCP access", () => {
       }),
     );
     expect(screen.getByText("Пароль изменён. При следующем входе используй новый пароль.")).toBeInTheDocument();
+  });
+
+  it("updates the password checklist while the user types a new password", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByText("Безопасность аккаунта");
+
+    const lengthRule = screen.getByText("Минимум 12 символов").closest("li");
+    const digitRule = screen.getByText("Есть цифра").closest("li");
+    const safeCharsRule = screen.getByText("Нет пробелов и обратной кавычки").closest("li");
+
+    expect(lengthRule).toHaveTextContent("-Минимум 12 символов");
+    expect(digitRule).toHaveTextContent("-Есть цифра");
+    expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
+
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+
+    expect(lengthRule).toHaveTextContent("+Минимум 12 символов");
+    expect(digitRule).toHaveTextContent("+Есть цифра");
+    expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
+
+    await userEvent.clear(screen.getByLabelText("Новый пароль"));
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "Next Horse22!");
+
+    expect(safeCharsRule).toHaveTextContent("-Нет пробелов и обратной кавычки");
   });
 
   it("does not call the password API when new passwords do not match", async () => {

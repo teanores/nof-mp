@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 export type PlatformPasswordPolicyError =
   | "password_common"
   | "password_contains_identity"
+  | "password_disallowed_character"
   | "password_digit"
   | "password_lowercase"
   | "password_min_length"
@@ -57,11 +58,12 @@ export function platformPasswordPolicyErrors(
   password: string,
   identity: { email?: string | null; username?: string | null } = {},
 ): PlatformPasswordPolicyError[] {
-  const normalizedPassword = password.trim();
+  const normalizedPassword = password;
   const lowerPassword = normalizedPassword.toLowerCase();
   const errors: PlatformPasswordPolicyError[] = [];
 
   if (normalizedPassword.length < minPasswordLength) errors.push("password_min_length");
+  if (/[\s`]/.test(normalizedPassword)) errors.push("password_disallowed_character");
   if (commonPasswords.has(lowerPassword)) errors.push("password_common");
   if (!/[a-z]/.test(normalizedPassword)) errors.push("password_lowercase");
   if (!/[A-Z]/.test(normalizedPassword)) errors.push("password_uppercase");

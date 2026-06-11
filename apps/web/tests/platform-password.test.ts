@@ -35,6 +35,12 @@ describe("platform password", () => {
     expect(platformPasswordPolicyErrors("TeanoreStrong1!", { email: "teanore@example.com", username: "teanore" })).toContain(
       "password_contains_identity",
     );
+    expect(platformPasswordPolicyErrors("Correct Horse1!", { email: "teanore@example.com", username: "teanore" })).toContain(
+      "password_disallowed_character",
+    );
+    expect(platformPasswordPolicyErrors("Correct`Horse1!", { email: "teanore@example.com", username: "teanore" })).toContain(
+      "password_disallowed_character",
+    );
     expect(platformPasswordPolicyErrors("CorrectHorse1!", { email: "teanore@example.com", username: "teanore" })).toEqual([]);
   });
 });
