@@ -8,6 +8,7 @@ import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
 import type { ForgeMcpToken, ForgeProject } from "@/lib/types";
 
 const platformApi = vi.hoisted(() => ({
+  changeProfilePassword: vi.fn(),
   createMcpToken: vi.fn(),
   fetchProfileServiceLinks: vi.fn(),
   fetchMcpTokens: vi.fn(),
@@ -62,6 +63,7 @@ describe("user profile MCP access", () => {
       })),
     });
     platformApi.fetchPortalSession.mockResolvedValue(session);
+    platformApi.changeProfilePassword.mockResolvedValue(undefined);
     platformApi.fetchMcpTokens.mockResolvedValue([]);
     platformApi.fetchPlatformProjects.mockResolvedValue([]);
     platformApi.fetchProfileServiceLinks.mockResolvedValue([]);
@@ -93,6 +95,10 @@ describe("user profile MCP access", () => {
     expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
     expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
+    expect(screen.getByText("Безопасность аккаунта")).toBeInTheDocument();
+    expect(screen.getByLabelText("Текущий пароль")).toHaveAttribute("name", "currentPassword");
+    expect(screen.getByLabelText("Новый пароль")).toHaveAttribute("name", "newPassword");
+    expect(screen.getByLabelText("Повтори новый пароль")).toHaveAttribute("name", "repeatedPassword");
     expect(screen.getByText("Источник")).toBeInTheDocument();
     expect(screen.getByText("email:")).toBeInTheDocument();
     expect(screen.getByText("telegram:")).toBeInTheDocument();
@@ -220,5 +226,38 @@ describe("user profile MCP access", () => {
 
     await waitFor(() => expect(platformApi.unlinkProfileService).toHaveBeenCalledWith("nof-ht"));
     expect(screen.getByText("Не подключён")).toBeInTheDocument();
+  });
+
+  it("lets the signed-in user change the platform password from profile", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByText("Безопасность аккаунта");
+
+    await userEvent.type(screen.getByLabelText("Текущий пароль"), "CurrentHorse1!");
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
+    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
+
+    await waitFor(() =>
+      expect(platformApi.changeProfilePassword).toHaveBeenCalledWith({
+        currentPassword: "CurrentHorse1!",
+        newPassword: "NextHorse22!",
+      }),
+    );
+    expect(screen.getByText("Пароль изменён. При следующем входе используй новый пароль.")).toBeInTheDocument();
+  });
+
+  it("does not call the password API when new passwords do not match", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByText("Безопасность аккаунта");
+
+    await userEvent.type(screen.getByLabelText("Текущий пароль"), "CurrentHorse1!");
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "OtherHorse22!");
+    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
+
+    expect(await screen.findByText("Новые пароли не совпадают.")).toBeInTheDocument();
+    expect(platformApi.changeProfilePassword).not.toHaveBeenCalled();
   });
 });

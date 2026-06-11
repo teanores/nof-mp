@@ -8,6 +8,7 @@ import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 import {
+  changeProfilePassword,
   createMcpToken,
   fetchMcpTokens,
   fetchPlatformProjects,
@@ -61,6 +62,15 @@ const profileCopy = {
     languageNote: "The interface language is saved in your profile and applied to portal shell labels.",
     linkedServices: "Connected services",
     linkedServicesNote: "These services are linked to your NOF Platform account through platform OAuth.",
+    accountSecurity: "Account security",
+    accountSecurityNote: "Change the password for your NOF Platform account. Linked services keep their links.",
+    currentPassword: "Current password",
+    newPassword: "New password",
+    repeatNewPassword: "Repeat new password",
+    changePassword: "Change password",
+    passwordChanged: "Password changed. Use the new password on your next sign-in.",
+    passwordMismatch: "New passwords do not match.",
+    passwordPolicyHint: "At least 12 characters, lowercase, uppercase, digit and symbol. Do not include your username or email.",
     loading: "Loading profile...",
     close: "Done / close",
     copyJson: "Copy JSON",
@@ -107,6 +117,15 @@ const profileCopy = {
     languageNote: "Язык интерфейса сохраняется в профиле и применяется к системным названиям портала.",
     linkedServices: "Подключённые сервисы",
     linkedServicesNote: "Эти сервисы связаны с твоей учётной записью NOF Platform через платформенный OAuth.",
+    accountSecurity: "Безопасность аккаунта",
+    accountSecurityNote: "Смени пароль учётной записи NOF Platform. Связи с сервисами останутся на месте.",
+    currentPassword: "Текущий пароль",
+    newPassword: "Новый пароль",
+    repeatNewPassword: "Повтори новый пароль",
+    changePassword: "Сменить пароль",
+    passwordChanged: "Пароль изменён. При следующем входе используй новый пароль.",
+    passwordMismatch: "Новые пароли не совпадают.",
+    passwordPolicyHint: "Минимум 12 символов, строчная и заглавная буква, цифра и символ. Не используй логин или email.",
     loading: "Загружаю профиль...",
     close: "Готово / закрыть",
     copyJson: "Копировать JSON",
@@ -211,12 +230,14 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [error, setError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(!initialSession);
   const [isTokenBusy, setIsTokenBusy] = useState(false);
+  const [isPasswordBusy, setIsPasswordBusy] = useState(false);
   const [mcpTokens, setMcpTokens] = useState<ForgeMcpToken[]>([]);
   const [projects, setProjects] = useState<ForgeProject[]>([]);
   const [serviceLinks, setServiceLinks] = useState<ForgeServiceLink[]>([]);
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
+  const [passwordNotice, setPasswordNotice] = useState<string | undefined>();
   const [createdToken, setCreatedToken] = useState<{ fullToken: string; token: ForgeMcpToken } | undefined>();
   const [isCreatedTokenVisible, setIsCreatedTokenVisible] = useState(false);
   const [session, setSession] = useState<ForgePortalSession | undefined>(initialSession);
@@ -380,6 +401,33 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     }
   }
 
+  async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setError(undefined);
+    setPasswordNotice(undefined);
+
+    const formData = new FormData(form);
+    const currentPassword = String(formData.get("currentPassword") ?? "");
+    const newPassword = String(formData.get("newPassword") ?? "");
+    const repeatedPassword = String(formData.get("repeatedPassword") ?? "");
+    if (newPassword !== repeatedPassword) {
+      setError(copy.passwordMismatch);
+      return;
+    }
+
+    setIsPasswordBusy(true);
+    try {
+      await changeProfilePassword({ currentPassword, newPassword });
+      form.reset();
+      setPasswordNotice(copy.passwordChanged);
+    } catch (changeError) {
+      setError(changeError instanceof Error ? changeError.message : "Пароль не был изменён");
+    } finally {
+      setIsPasswordBusy(false);
+    }
+  }
+
   function serviceStatusLabel(status: ForgeServiceLink["status"]): string {
     if (status === "connected") return copy.serviceConnected;
     if (status === "not_connected") return copy.serviceNotConnected;
@@ -528,6 +576,55 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 </div>
                 <ThemeToggle />
               </div>
+              <form className="mt-4 grid gap-3 rounded-sm border border-forge-line bg-forge-surface p-3" onSubmit={(event) => void handlePasswordSubmit(event)}>
+                <div>
+                  <p className="tech-label text-[10px] text-forge-muted">{copy.accountSecurity}</p>
+                  <p className="mt-1 text-sm leading-5 text-forge-muted">{copy.accountSecurityNote}</p>
+                  <p className="mt-1 text-xs leading-5 text-forge-muted">{copy.passwordPolicyHint}</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <label className="grid gap-2">
+                    <span className="tech-label text-[10px] text-forge-muted">{copy.currentPassword}</span>
+                    <input
+                      autoComplete="current-password"
+                      className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                      name="currentPassword"
+                      required
+                      type="password"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="tech-label text-[10px] text-forge-muted">{copy.newPassword}</span>
+                    <input
+                      autoComplete="new-password"
+                      className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                      name="newPassword"
+                      required
+                      type="password"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="tech-label text-[10px] text-forge-muted">{copy.repeatNewPassword}</span>
+                    <input
+                      autoComplete="new-password"
+                      className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                      name="repeatedPassword"
+                      required
+                      type="password"
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    className="tech-label min-h-10 min-w-[160px] rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-center text-[10px] font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isPasswordBusy}
+                    type="submit"
+                  >
+                    {copy.changePassword}
+                  </button>
+                  {passwordNotice ? <p className="text-xs leading-5 text-forge-muted">{passwordNotice}</p> : null}
+                </div>
+              </form>
             </section>
 
             {hasMcpAccess ? (

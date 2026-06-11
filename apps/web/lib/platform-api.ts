@@ -64,3 +64,13 @@ export async function unlinkProfileService(serviceKey: ForgeServiceLink["service
   );
   return data.link;
 }
+
+export async function changeProfilePassword(input: { currentPassword: string; newPassword: string }): Promise<void> {
+  await readJson<{ ok: true }>(
+    await fetch("/api/profile/password", {
+      body: JSON.stringify(input),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }),
+  );
+}
