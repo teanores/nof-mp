@@ -29,7 +29,10 @@ describe("service preview pages", () => {
 
     expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
     expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Перейти в Habit Tracker" })).toHaveAttribute("href", "https://habit-tracker.forgath.ru");
+    expect(screen.getByRole("link", { name: "Перейти в Habit Tracker" })).toHaveAttribute(
+      "href",
+      "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+    );
     expect(screen.getByText(/помогает удерживать регулярные практики/i)).toBeInTheDocument();
     expect(screen.getByText(/личных целей и командных ритуалов/i)).toBeInTheDocument();
     expect(screen.getByText(/ценность видна каждый день/i)).toBeInTheDocument();

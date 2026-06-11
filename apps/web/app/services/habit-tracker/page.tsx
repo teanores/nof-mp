@@ -4,7 +4,10 @@ import React from "react";
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 
 function habitTrackerHref(): string {
-  return process.env.NOF_HT_ORIGIN ?? process.env.NEXT_PUBLIC_NOF_HT_ORIGIN ?? "https://habit-tracker.forgath.ru";
+  const origin = process.env.NOF_HT_ORIGIN ?? process.env.NEXT_PUBLIC_NOF_HT_ORIGIN ?? "https://habit-tracker.forgath.ru";
+  const url = new URL("/api/auth/platform/authorize", origin);
+  url.searchParams.set("callbackUrl", "/");
+  return url.toString();
 }
 
 export default function HabitTrackerServicePage() {
