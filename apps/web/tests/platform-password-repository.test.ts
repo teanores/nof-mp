@@ -69,4 +69,19 @@ describe("platform password repository", () => {
 
     expect(pool.queries).toHaveLength(1);
   });
+
+  it("rejects unchanged passwords without updating the user row", async () => {
+    const pool = new FakePool([{ email: "user@example.com", password_hash: hashPlatformPassword("CurrentHorse1!"), username: "teanore" }]);
+    const repository = new PlatformPasswordRepository(pool as never);
+
+    await expect(
+      repository.changePassword({
+        currentPassword: "CurrentHorse1!",
+        newPassword: "CurrentHorse1!",
+        userId: "user-1",
+      }),
+    ).resolves.toEqual({ ok: false, reason: "password_unchanged" });
+
+    expect(pool.queries).toHaveLength(1);
+  });
 });

@@ -75,6 +75,7 @@ const profileCopy = {
     passwordInvalidCurrent: "The current password is incorrect.",
     passwordPolicyError: "The new password does not match the password rules.",
     passwordUnavailable: "This account does not have password login enabled yet.",
+    passwordUnchanged: "The new password must be different from the current password.",
     passwordUserNotFound: "The account was not found. Sign in again and retry.",
     passwordChangeFailed: "Password was not changed. Check the fields and retry.",
     passwordRulesTitle: "Password rules",
@@ -84,6 +85,8 @@ const profileCopy = {
     passwordRuleDigit: "Digit",
     passwordRuleSymbol: "Special symbol",
     passwordRuleSafeChars: "No spaces or backtick character",
+    passwordRuleDifferentFromCurrent: "Different from current password",
+    passwordRuleRepeatedMatch: "Repeated password matches",
     loading: "Loading profile...",
     close: "Done / close",
     copyJson: "Copy JSON",
@@ -143,6 +146,7 @@ const profileCopy = {
     passwordInvalidCurrent: "Текущий пароль указан неверно.",
     passwordPolicyError: "Новый пароль не соответствует правилам безопасности.",
     passwordUnavailable: "Для этой учётной записи вход по паролю пока не включён.",
+    passwordUnchanged: "Новый пароль должен отличаться от текущего.",
     passwordUserNotFound: "Учётная запись не найдена. Войди заново и повтори попытку.",
     passwordChangeFailed: "Пароль не был изменён. Проверь поля и повтори попытку.",
     passwordRulesTitle: "Правила пароля",
@@ -152,6 +156,8 @@ const profileCopy = {
     passwordRuleDigit: "Есть цифра",
     passwordRuleSymbol: "Есть спецсимвол",
     passwordRuleSafeChars: "Нет пробелов и обратной кавычки",
+    passwordRuleDifferentFromCurrent: "Отличается от текущего пароля",
+    passwordRuleRepeatedMatch: "Повтор пароля совпадает",
     loading: "Загружаю профиль...",
     close: "Готово / закрыть",
     copyJson: "Копировать JSON",
@@ -262,7 +268,9 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [serviceLinks, setServiceLinks] = useState<ForgeServiceLink[]>([]);
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
+  const [currentPasswordDraft, setCurrentPasswordDraft] = useState("");
   const [newPasswordDraft, setNewPasswordDraft] = useState("");
+  const [repeatedPasswordDraft, setRepeatedPasswordDraft] = useState("");
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordNotice, setPasswordNotice] = useState<string | undefined>();
@@ -444,12 +452,18 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       setPasswordError(copy.passwordMismatch);
       return;
     }
+    if (currentPassword === newPassword) {
+      setPasswordError(copy.passwordUnchanged);
+      return;
+    }
 
     setIsPasswordBusy(true);
     try {
       await changeProfilePassword({ currentPassword, newPassword });
       form.reset();
+      setCurrentPasswordDraft("");
       setNewPasswordDraft("");
+      setRepeatedPasswordDraft("");
       setPasswordNotice(copy.passwordChanged);
     } catch (changeError) {
       const reason = changeError instanceof Error ? changeError.message : "";
@@ -458,6 +472,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
         password_fields_required: copy.passwordFieldsRequired,
         password_policy: copy.passwordPolicyError,
         password_unavailable: copy.passwordUnavailable,
+        password_unchanged: copy.passwordUnchanged,
         user_not_found: copy.passwordUserNotFound,
       };
       setPasswordError(messageByReason[reason] ?? copy.passwordChangeFailed);
@@ -479,6 +494,14 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     { isMet: /\d/.test(newPasswordDraft), label: copy.passwordRuleDigit },
     { isMet: /[^A-Za-z0-9]/.test(newPasswordDraft), label: copy.passwordRuleSymbol },
     { isMet: !/[\s`]/.test(newPasswordDraft), label: copy.passwordRuleSafeChars },
+    {
+      isMet: currentPasswordDraft.length === 0 || newPasswordDraft.length === 0 || currentPasswordDraft !== newPasswordDraft,
+      label: copy.passwordRuleDifferentFromCurrent,
+    },
+    {
+      isMet: repeatedPasswordDraft.length === 0 || newPasswordDraft === repeatedPasswordDraft,
+      label: copy.passwordRuleRepeatedMatch,
+    },
   ];
 
   return (
@@ -638,6 +661,8 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                       name="currentPassword"
                       required
                       type="password"
+                      value={currentPasswordDraft}
+                      onChange={(event) => setCurrentPasswordDraft(event.target.value)}
                     />
                   </label>
                   <label className="grid gap-2">
@@ -660,6 +685,8 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                       name="repeatedPassword"
                       required
                       type="password"
+                      value={repeatedPasswordDraft}
+                      onChange={(event) => setRepeatedPasswordDraft(event.target.value)}
                     />
                   </label>
                 </div>

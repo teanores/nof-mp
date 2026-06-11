@@ -11,7 +11,7 @@ interface PlatformPasswordUserRow extends QueryResultRow {
 
 export type ChangePlatformPasswordResult =
   | { ok: true }
-  | { errors?: PlatformPasswordPolicyError[]; ok: false; reason: "invalid_current_password" | "password_policy" | "password_unavailable" | "user_not_found" };
+  | { errors?: PlatformPasswordPolicyError[]; ok: false; reason: "invalid_current_password" | "password_policy" | "password_unavailable" | "password_unchanged" | "user_not_found" };
 
 export class PlatformPasswordRepository {
   private readonly pool: Pool;
@@ -33,6 +33,7 @@ export class PlatformPasswordRepository {
     if (!user) return { ok: false, reason: "user_not_found" };
     if (!user.password_hash) return { ok: false, reason: "password_unavailable" };
     if (!verifyPlatformPassword(input.currentPassword, user.password_hash)) return { ok: false, reason: "invalid_current_password" };
+    if (input.currentPassword === input.newPassword) return { ok: false, reason: "password_unchanged" };
 
     const errors = platformPasswordPolicyErrors(input.newPassword, { email: user.email, username: user.username });
     if (errors.length > 0) return { errors, ok: false, reason: "password_policy" };
