@@ -499,7 +499,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       label: copy.passwordRuleDifferentFromCurrent,
     },
     {
-      isMet: repeatedPasswordDraft.length === 0 || newPasswordDraft === repeatedPasswordDraft,
+      isMet: repeatedPasswordDraft.length > 0 && newPasswordDraft === repeatedPasswordDraft,
       label: copy.passwordRuleRepeatedMatch,
     },
   ];

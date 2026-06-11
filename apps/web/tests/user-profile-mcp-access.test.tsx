@@ -270,13 +270,16 @@ describe("user profile MCP access", () => {
     expect(lengthRule).toHaveTextContent("-Минимум 12 символов");
     expect(digitRule).toHaveTextContent("-Есть цифра");
     expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
-    expect(repeatedMatchRule).toHaveTextContent("+Повтор пароля совпадает");
+    expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
 
     await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
 
     expect(lengthRule).toHaveTextContent("+Минимум 12 символов");
     expect(digitRule).toHaveTextContent("+Есть цифра");
     expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
+    expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
+
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("+Повтор пароля совпадает");
 
     await userEvent.clear(screen.getByLabelText("Новый пароль"));
@@ -284,6 +287,7 @@ describe("user profile MCP access", () => {
 
     expect(safeCharsRule).toHaveTextContent("-Нет пробелов и обратной кавычки");
 
+    await userEvent.clear(screen.getByLabelText("Повтори новый пароль"));
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "OtherHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
   });
