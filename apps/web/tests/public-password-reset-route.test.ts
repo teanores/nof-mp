@@ -6,8 +6,16 @@ const passwordResetRepository = vi.hoisted(() => ({
   requestReset: vi.fn(),
 }));
 
+const passwordResetDelivery = vi.hoisted(() => ({
+  sendResetLink: vi.fn(),
+}));
+
 vi.mock("@/lib/server/platform-password-reset-repository", () => ({
   getPlatformPasswordResetRepository: vi.fn(() => passwordResetRepository),
+}));
+
+vi.mock("@/lib/server/password-reset-delivery", () => ({
+  getPasswordResetDelivery: vi.fn(() => passwordResetDelivery),
 }));
 
 import { POST as confirmReset } from "@/app/api/public/password-reset/confirm/route";
@@ -26,6 +34,7 @@ describe("public password reset routes", () => {
     vi.clearAllMocks();
     passwordResetRepository.requestReset.mockResolvedValue({ ok: true, reason: "missing_or_unresettable" });
     passwordResetRepository.confirmReset.mockResolvedValue({ ok: true });
+    passwordResetDelivery.sendResetLink.mockResolvedValue({ mode: "not_configured", ok: true });
   });
 
   it("returns a uniform request response without exposing account state or reset tokens", async () => {
@@ -45,6 +54,19 @@ describe("public password reset routes", () => {
       message: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
     });
     expect(passwordResetRepository.requestReset).toHaveBeenCalledWith({ email: "owner@example.com" });
+    expect(passwordResetDelivery.sendResetLink).toHaveBeenCalledWith({
+      email: "owner@example.com",
+      expiresAt: new Date("2026-06-11T11:00:00.000Z"),
+      resetToken: "raw-reset-token",
+      userId: "user-1",
+    });
+  });
+
+  it("does not call delivery when the email is missing or unresettable", async () => {
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "missing@example.com" }));
+
+    expect(response.status).toBe(200);
+    expect(passwordResetDelivery.sendResetLink).not.toHaveBeenCalled();
   });
 
   it("confirms a reset token without returning sensitive data", async () => {

@@ -19,6 +19,7 @@ describe("login language switch", () => {
     expect(screen.getByText("Электронная почта")).toBeInTheDocument();
     expect(screen.getByTestId("login-copy-block")).toHaveClass("text-center");
     expect(screen.getByRole("link", { name: "Создать аккаунт" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Забыли пароль?" })).toHaveAttribute("href", "/password-reset");
     expect(screen.queryByRole("button", { name: "Sign in" })).not.toBeInTheDocument();
     expect(screen.queryByText("Email")).not.toBeInTheDocument();
     expect(screen.queryByText("Password")).not.toBeInTheDocument();
@@ -35,6 +36,7 @@ describe("login language switch", () => {
     expect(screen.getByText('"Show your guild badge!"')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create account" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/password-reset");
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 });
