@@ -69,6 +69,25 @@ describe("public password reset routes", () => {
     expect(passwordResetDelivery.sendResetLink).not.toHaveBeenCalled();
   });
 
+  it("keeps the public request response uniform when delivery fails", async () => {
+    passwordResetRepository.requestReset.mockResolvedValue({
+      expiresAt: new Date("2026-06-11T11:00:00.000Z"),
+      ok: true,
+      reason: "token_created",
+      resetToken: "raw-reset-token",
+      userId: "user-1",
+    });
+    passwordResetDelivery.sendResetLink.mockRejectedValue(new Error("password_reset_delivery_failed"));
+
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      message: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
+    });
+  });
+
   it("confirms a reset token without returning sensitive data", async () => {
     const response = await confirmReset(
       request("http://localhost/api/public/password-reset/confirm", {

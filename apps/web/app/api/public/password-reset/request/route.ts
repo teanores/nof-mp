@@ -12,12 +12,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (email) {
     const result = await getPlatformPasswordResetRepository().requestReset({ email });
     if (result.reason === "token_created") {
-      await getPasswordResetDelivery().sendResetLink({
-        email,
-        expiresAt: result.expiresAt,
-        resetToken: result.resetToken,
-        userId: result.userId,
-      });
+      await getPasswordResetDelivery()
+        .sendResetLink({
+          email,
+          expiresAt: result.expiresAt,
+          resetToken: result.resetToken,
+          userId: result.userId,
+        })
+        .catch(() => undefined);
     }
   }
 
