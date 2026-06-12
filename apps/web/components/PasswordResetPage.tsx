@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
@@ -229,6 +230,7 @@ function RequestResetForm({ language }: { language: PortalLanguage }) {
 }
 
 function ConfirmResetForm({ language, token }: { language: PortalLanguage; token: string }) {
+  const router = useRouter();
   const text = copy[language];
   const [newPassword, setNewPassword] = useState("");
   const [repeatedPassword, setRepeatedPassword] = useState("");
@@ -259,6 +261,7 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
       setStatus("success");
       setNewPassword("");
       setRepeatedPassword("");
+      router.push("/");
     } catch (caught) {
       setError(resetErrorMessage(caught, language));
       setStatus("idle");

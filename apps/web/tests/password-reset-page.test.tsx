@@ -7,9 +7,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PasswordResetPage } from "@/components/PasswordResetPage";
 
+const routerPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: routerPush,
+  }),
+}));
+
 describe("password reset page", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    routerPush.mockClear();
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       json: async () => ({ ok: true }),
       ok: true,
@@ -102,6 +111,16 @@ describe("password reset page", () => {
       ),
     );
     expect(await screen.findByText("Пароль изменён. Теперь можно войти с новым паролем.")).toBeInTheDocument();
+  });
+
+  it("redirects to the main portal after a successful reset confirmation", async () => {
+    render(<PasswordResetPage token="reset-token" />);
+
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
+    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
+
+    await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/"));
   });
 
   it("shows server-side password policy details for reset confirmation", async () => {
