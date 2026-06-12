@@ -4,19 +4,21 @@ import Link from "next/link";
 import React, { useMemo, useState } from "react";
 
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
+import type { PortalLanguage } from "@/lib/portal-language";
+import { usePortalLanguage } from "@/lib/use-portal-language";
 
 interface PasswordResetPageProps {
   token?: string;
 }
 
 const passwordRules = [
-  { label: "Минимум 12 символов", test: (value: string) => value.length >= 12 },
-  { label: "Есть строчная буква", test: (value: string) => /[a-z]/.test(value) },
-  { label: "Есть заглавная буква", test: (value: string) => /[A-Z]/.test(value) },
-  { label: "Есть цифра", test: (value: string) => /\d/.test(value) },
-  { label: "Есть спецсимвол", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
-  { label: "Нет пробелов и обратной кавычки", test: (value: string) => !/[\s`]/.test(value) },
-];
+  { key: "minLength", test: (value: string) => value.length >= 12 },
+  { key: "lowercase", test: (value: string) => /[a-z]/.test(value) },
+  { key: "uppercase", test: (value: string) => /[A-Z]/.test(value) },
+  { key: "digit", test: (value: string) => /\d/.test(value) },
+  { key: "symbol", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+  { key: "noWhitespace", test: (value: string) => !/[\s`]/.test(value) },
+] as const;
 
 interface ApiResponse {
   error?: string;
@@ -33,15 +35,112 @@ class ApiError extends Error {
   }
 }
 
-const policyErrorCopy: Record<string, string> = {
-  password_common: "Пароль слишком простой.",
-  password_contains_identity: "Пароль не должен содержать логин или email.",
-  password_digit: "Добавь цифру.",
-  password_disallowed_character: "Убери пробелы и обратную кавычку.",
-  password_lowercase: "Добавь строчную букву.",
-  password_min_length: "Минимум 12 символов.",
-  password_symbol: "Добавь спецсимвол.",
-  password_uppercase: "Добавь заглавную букву.",
+const copy = {
+  en: {
+    backToPortal: "Portal",
+    confirmButton: "Change password",
+    confirmIntro: "Enter a new platform account password. The link is single-use and expires after a limited time.",
+    confirmTitle: "New password",
+    email: "Email",
+    forgeName: "Narag'Othal Forgath",
+    genericError: "Request failed. Try again later.",
+    guideTitle: "How recovery works",
+    invalidToken: "This link is invalid or expired.",
+    language: "LANGUAGE",
+    login: "Sign in",
+    newPassword: "New password",
+    passwordChanged: "Password changed. You can now sign in with the new password.",
+    passwordMismatch: "New passwords do not match.",
+    policyGeneric: "The new password does not meet security rules.",
+    policyPrefix: "The new password does not meet security rules:",
+    repeatMatches: "Repeated password matches",
+    repeatPassword: "Repeat new password",
+    requestButton: "Get link",
+    requestIntro: "Enter the account email. The response is the same even if the account is not found, so user data is not exposed.",
+    requestSent: "If such an account exists and can receive email, we will send a password recovery link.",
+    requestTitle: "Password recovery",
+    security: "Security",
+    rules: {
+      digit: "Contains a digit",
+      lowercase: "Contains a lowercase letter",
+      minLength: "At least 12 characters",
+      noWhitespace: "No spaces or backticks",
+      symbol: "Contains a special character",
+      uppercase: "Contains an uppercase letter",
+    },
+    securityItems: [
+      "The link is sent only to the confirmed account email.",
+      "The form response does not reveal whether a user with this email exists.",
+      "The link is single-use and stops working after the password is changed.",
+      "Service and synthetic addresses are not used for self-service recovery.",
+    ],
+    submittingConfirm: "Saving",
+    submittingRequest: "Sending",
+  },
+  ru: {
+    backToPortal: "На портал",
+    confirmButton: "Сменить пароль",
+    confirmIntro: "Введите новый пароль для аккаунта платформы. Ссылка одноразовая и действует ограниченное время.",
+    confirmTitle: "Новый пароль",
+    email: "Электронная почта",
+    forgeName: "Narag'Othal Forgath",
+    genericError: "Не удалось выполнить запрос. Попробуйте позже.",
+    guideTitle: "Как работает восстановление",
+    invalidToken: "Ссылка недействительна или срок действия истёк.",
+    language: "ЯЗЫК",
+    login: "Войти",
+    newPassword: "Новый пароль",
+    passwordChanged: "Пароль изменён. Теперь можно войти с новым паролем.",
+    passwordMismatch: "Новые пароли не совпадают.",
+    policyGeneric: "Новый пароль не соответствует правилам безопасности.",
+    policyPrefix: "Новый пароль не соответствует правилам безопасности:",
+    repeatMatches: "Повтор пароля совпадает",
+    repeatPassword: "Повтори новый пароль",
+    requestButton: "Получить ссылку",
+    requestIntro: "Укажи почту аккаунта. Ответ будет одинаковым даже если аккаунт не найден, чтобы не раскрывать данные пользователей.",
+    requestSent: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
+    requestTitle: "Восстановление пароля",
+    security: "Безопасность",
+    rules: {
+      digit: "Есть цифра",
+      lowercase: "Есть строчная буква",
+      minLength: "Минимум 12 символов",
+      noWhitespace: "Нет пробелов и обратной кавычки",
+      symbol: "Есть спецсимвол",
+      uppercase: "Есть заглавная буква",
+    },
+    securityItems: [
+      "Ссылка отправляется только на подтверждённую почту аккаунта.",
+      "Ответ формы не раскрывает, существует ли пользователь с таким email.",
+      "Ссылка одноразовая и перестаёт работать после смены пароля.",
+      "Служебные и синтетические адреса не используются для самостоятельного восстановления.",
+    ],
+    submittingConfirm: "Сохраняем",
+    submittingRequest: "Отправляем",
+  },
+};
+
+const policyErrorCopy: Record<PortalLanguage, Record<string, string>> = {
+  en: {
+    password_common: "The password is too simple.",
+    password_contains_identity: "The password must not contain login or email.",
+    password_digit: "Add a digit.",
+    password_disallowed_character: "Remove spaces and backticks.",
+    password_lowercase: "Add a lowercase letter.",
+    password_min_length: "Use at least 12 characters.",
+    password_symbol: "Add a special character.",
+    password_uppercase: "Add an uppercase letter.",
+  },
+  ru: {
+    password_common: "Пароль слишком простой.",
+    password_contains_identity: "Пароль не должен содержать логин или email.",
+    password_digit: "Добавь цифру.",
+    password_disallowed_character: "Убери пробелы и обратную кавычку.",
+    password_lowercase: "Добавь строчную букву.",
+    password_min_length: "Минимум 12 символов.",
+    password_symbol: "Добавь спецсимвол.",
+    password_uppercase: "Добавь заглавную букву.",
+  },
 };
 
 async function postJson(url: string, body: unknown): Promise<ApiResponse> {
@@ -57,26 +156,26 @@ async function postJson(url: string, body: unknown): Promise<ApiResponse> {
   return data;
 }
 
-function resetErrorMessage(error: unknown): string {
+function resetErrorMessage(error: unknown, language: PortalLanguage): string {
+  const text = copy[language];
   if (!(error instanceof Error)) {
-    return "Не удалось выполнить запрос. Попробуйте позже.";
+    return text.genericError;
   }
   if (error.message === "password_policy") {
-    const details = error instanceof ApiError ? error.errors.map((item) => policyErrorCopy[item]).filter(Boolean) : [];
-    return details.length > 0
-      ? `Новый пароль не соответствует правилам безопасности: ${details.join(" ")}`
-      : "Новый пароль не соответствует правилам безопасности.";
+    const details = error instanceof ApiError ? error.errors.map((item) => policyErrorCopy[language][item]).filter(Boolean) : [];
+    return details.length > 0 ? `${text.policyPrefix} ${details.join(" ")}` : text.policyGeneric;
   }
   if (error.message === "password_reset_fields_required") {
-    return "Заполните все поля восстановления пароля.";
+    return language === "ru" ? "Заполните все поля восстановления пароля." : "Fill in all password recovery fields.";
   }
   if (error.message === "invalid_or_expired_token") {
-    return "Ссылка недействительна или срок действия истёк.";
+    return text.invalidToken;
   }
-  return "Не удалось выполнить запрос. Попробуйте позже.";
+  return text.genericError;
 }
 
-function RequestResetForm() {
+function RequestResetForm({ language }: { language: PortalLanguage }) {
+  const text = copy[language];
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sent" | "submitting">("idle");
   const [error, setError] = useState<string | undefined>();
@@ -89,7 +188,7 @@ function RequestResetForm() {
       await postJson("/api/public/password-reset/request", { email });
       setStatus("sent");
     } catch (caught) {
-      setError(resetErrorMessage(caught));
+      setError(resetErrorMessage(caught, language));
       setStatus("idle");
     }
   }
@@ -97,7 +196,7 @@ function RequestResetForm() {
   return (
     <form className="grid gap-3" onSubmit={submit}>
       <label className="grid gap-2">
-        <span className="tech-label text-[10px] text-forge-muted">Электронная почта</span>
+        <span className="tech-label text-[10px] text-forge-muted">{text.email}</span>
         <input
           autoComplete="email"
           className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
@@ -113,11 +212,11 @@ function RequestResetForm() {
         disabled={status === "submitting"}
         type="submit"
       >
-        {status === "submitting" ? "Отправляем" : "Получить ссылку"}
+        {status === "submitting" ? text.submittingRequest : text.requestButton}
       </button>
       {status === "sent" ? (
         <p className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm leading-6 text-forge-muted">
-          Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.
+          {text.requestSent}
         </p>
       ) : null}
       {error ? (
@@ -129,7 +228,8 @@ function RequestResetForm() {
   );
 }
 
-function ConfirmResetForm({ token }: { token: string }) {
+function ConfirmResetForm({ language, token }: { language: PortalLanguage; token: string }) {
+  const text = copy[language];
   const [newPassword, setNewPassword] = useState("");
   const [repeatedPassword, setRepeatedPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
@@ -137,20 +237,20 @@ function ConfirmResetForm({ token }: { token: string }) {
 
   const checks = useMemo(
     () => [
-      ...passwordRules.map((rule) => ({ isMet: rule.test(newPassword), label: rule.label })),
+      ...passwordRules.map((rule) => ({ isMet: rule.test(newPassword), label: text.rules[rule.key] })),
       {
         isMet: repeatedPassword.length > 0 && repeatedPassword === newPassword,
-        label: "Повтор пароля совпадает",
+        label: text.repeatMatches,
       },
     ],
-    [newPassword, repeatedPassword],
+    [newPassword, repeatedPassword, text],
   );
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(undefined);
     if (newPassword !== repeatedPassword) {
-      setError("Новые пароли не совпадают.");
+      setError(text.passwordMismatch);
       return;
     }
     setStatus("submitting");
@@ -160,7 +260,7 @@ function ConfirmResetForm({ token }: { token: string }) {
       setNewPassword("");
       setRepeatedPassword("");
     } catch (caught) {
-      setError(resetErrorMessage(caught));
+      setError(resetErrorMessage(caught, language));
       setStatus("idle");
     }
   }
@@ -168,7 +268,7 @@ function ConfirmResetForm({ token }: { token: string }) {
   return (
     <form className="grid gap-3" onSubmit={submit}>
       <label className="grid gap-2">
-        <span className="tech-label text-[10px] text-forge-muted">Новый пароль</span>
+        <span className="tech-label text-[10px] text-forge-muted">{text.newPassword}</span>
         <input
           autoComplete="new-password"
           className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
@@ -180,7 +280,7 @@ function ConfirmResetForm({ token }: { token: string }) {
         />
       </label>
       <label className="grid gap-2">
-        <span className="tech-label text-[10px] text-forge-muted">Повтори новый пароль</span>
+        <span className="tech-label text-[10px] text-forge-muted">{text.repeatPassword}</span>
         <input
           autoComplete="new-password"
           className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
@@ -205,7 +305,7 @@ function ConfirmResetForm({ token }: { token: string }) {
       ) : null}
       {status === "success" ? (
         <p className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm leading-6 text-forge-muted">
-          Пароль изменён. Теперь можно войти с новым паролем.
+          {text.passwordChanged}
         </p>
       ) : null}
       <button
@@ -213,7 +313,7 @@ function ConfirmResetForm({ token }: { token: string }) {
         disabled={status === "submitting"}
         type="submit"
       >
-        {status === "submitting" ? "Сохраняем" : "Сменить пароль"}
+        {status === "submitting" ? text.submittingConfirm : text.confirmButton}
       </button>
     </form>
   );
@@ -221,6 +321,8 @@ function ConfirmResetForm({ token }: { token: string }) {
 
 export function PasswordResetPage({ token = "" }: PasswordResetPageProps) {
   const hasToken = token.trim().length > 0;
+  const language = usePortalLanguage();
+  const text = copy[language];
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-8">
@@ -228,50 +330,43 @@ export function PasswordResetPage({ token = "" }: PasswordResetPageProps) {
         <div className="flex min-h-[560px] flex-col justify-between gap-8 p-6 sm:p-8">
           <div>
             <div className="flex items-center justify-between gap-3">
-              <p className="tech-label text-xs text-forge-accent">{"Narag'Othal Forgath"}</p>
+              <p className="tech-label text-xs text-forge-accent">{text.forgeName}</p>
               <div className="flex items-center gap-2">
-                <span className="tech-label text-[10px] text-forge-muted">ЯЗЫК</span>
+                <span className="tech-label text-[10px] text-forge-muted">{text.language}</span>
                 <PortalLanguageSelect name="language" />
               </div>
             </div>
             <h1 className="heading-tech mt-3 text-4xl font-bold text-forge-ink sm:text-5xl">
-              {hasToken ? "Новый пароль" : "Восстановление пароля"}
+              {hasToken ? text.confirmTitle : text.requestTitle}
             </h1>
             <p className="mt-4 text-sm leading-7 text-forge-muted">
-              {hasToken
-                ? "Введите новый пароль для аккаунта платформы. Ссылка одноразовая и действует ограниченное время."
-                : "Укажи почту аккаунта. Ответ будет одинаковым даже если аккаунт не найден, чтобы не раскрывать данные пользователей."}
+              {hasToken ? text.confirmIntro : text.requestIntro}
             </p>
           </div>
 
-          <div>{hasToken ? <ConfirmResetForm token={token} /> : <RequestResetForm />}</div>
+          <div>{hasToken ? <ConfirmResetForm language={language} token={token} /> : <RequestResetForm language={language} />}</div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
               href="/login"
             >
-              Войти
+              {text.login}
             </Link>
             <Link
               className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
               href="/"
             >
-              На портал
+              {text.backToPortal}
             </Link>
           </div>
         </div>
 
         <aside className="border-t border-forge-line bg-forge-surface p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="tech-label text-xs text-forge-accent">Безопасность</p>
-          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Как работает восстановление</h2>
+          <p className="tech-label text-xs text-forge-accent">{text.security}</p>
+          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">{text.guideTitle}</h2>
           <div className="mt-5 grid gap-3">
-            {[
-              "Ссылка отправляется только на подтверждённую почту аккаунта.",
-              "Ответ формы не раскрывает, существует ли пользователь с таким email.",
-              "Ссылка одноразовая и перестаёт работать после смены пароля.",
-              "Служебные и синтетические адреса не используются для самостоятельного восстановления.",
-            ].map((item) => (
+            {text.securityItems.map((item) => (
               <article key={item} className="rounded-sm border border-forge-line bg-forge-panel p-3">
                 <p className="text-sm leading-6 text-forge-muted">{item}</p>
               </article>

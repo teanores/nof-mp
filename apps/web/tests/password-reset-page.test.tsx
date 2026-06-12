@@ -9,6 +9,7 @@ import { PasswordResetPage } from "@/components/PasswordResetPage";
 
 describe("password reset page", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       json: async () => ({ ok: true }),
       ok: true,
@@ -49,6 +50,17 @@ describe("password reset page", () => {
     expect(document.body).not.toHaveTextContent("request_failed");
   });
 
+  it("switches request reset copy to English", async () => {
+    render(<PasswordResetPage />);
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "" }), "en");
+
+    expect(screen.getByRole("heading", { name: "Password recovery" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Get link" })).toBeInTheDocument();
+    expect(screen.getByText(/The form response does not reveal/)).toBeInTheDocument();
+  });
+
   it("keeps repeat-password checklist failed until the repeat field is filled", async () => {
     render(<PasswordResetPage token="reset-token" />);
 
@@ -60,6 +72,18 @@ describe("password reset page", () => {
 
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("+ Повтор пароля совпадает");
+  });
+
+  it("switches confirm reset copy to English", async () => {
+    render(<PasswordResetPage token="reset-token" />);
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "" }), "en");
+
+    expect(screen.getByRole("heading", { name: "New password" })).toBeInTheDocument();
+    expect(screen.getByLabelText("New password")).toBeInTheDocument();
+    expect(screen.getByLabelText("Repeat new password")).toBeInTheDocument();
+    expect(screen.getByText("Repeated password matches")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change password" })).toBeInTheDocument();
   });
 
   it("confirms a reset token and shows a success state", async () => {
