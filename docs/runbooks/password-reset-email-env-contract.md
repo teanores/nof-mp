@@ -89,10 +89,24 @@ Headers:
 - Store only SHA-256 reset token hashes in nof-mp database.
 - The raw token may appear only in the generated reset URL passed to the email delivery boundary.
 - Do not log the raw token or reset URL.
+- Do not log email addresses, SMTP usernames, SMTP passwords, provider response bodies or webhook tokens.
 - Public reset request response must be uniform for existing, missing and unresettable accounts.
 - Synthetic placeholder emails such as `*@telegram.forgath.ru` must not receive reset links.
 - Phase 1 uses current Google/Gmail SMTP only behind the internal boundary.
 - Do not self-host SMTP for Phase 1; own NOF mail infrastructure is a future development track.
+
+## Delivery Outcome Recording
+
+The public password reset request stays non-enumerating. Internally, nof-mp records a safe delivery outcome for diagnostics:
+
+| Outcome | Meaning |
+|---|---|
+| `delivered` | Webhook/provider accepted the password reset delivery request. |
+| `not_configured` | Email webhook is not configured; the public response still stays successful and uniform. |
+| `failed` | Delivery boundary rejected or failed the request; the public response still stays successful and uniform. |
+| `not_requested` | The account is missing or cannot receive reset email, so no token/delivery was created. |
+
+Allowed diagnostic fields are outcome and platform user id when a reset token was created. Do not include raw tokens, reset URLs, email addresses, SMTP configuration, provider response bodies, passwords or webhook tokens.
 
 ## Current Phase 1 Architecture
 
@@ -109,6 +123,20 @@ The public password reset route stays non-enumerating. SMTP provider details sta
 ## Local Testing
 
 Use fake/mocked `fetch` in unit tests. Do not call a real provider from local automated tests.
+
+Focused account recovery check:
+
+```powershell
+just test-password-reset
+```
+
+Local Docker Postgres fixture check:
+
+```powershell
+just local-ready
+```
+
+If `just local-ready` fails with an unavailable `dockerDesktopLinuxEngine` pipe, Docker Desktop/daemon is not running. This is an environment HOLD, not an application failure.
 
 ## Production Gate
 
