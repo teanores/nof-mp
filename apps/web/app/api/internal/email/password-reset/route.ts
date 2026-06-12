@@ -28,13 +28,26 @@ function configuredToken(): string | undefined {
   return process.env.NOF_MP_EMAIL_WEBHOOK_TOKEN?.trim() || undefined;
 }
 
+function platformOrigin(): string {
+  return process.env.NEXT_PUBLIC_PLATFORM_ORIGIN?.trim() || "https://forgath.ru";
+}
+
+function isValidResetUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.origin === platformOrigin() && url.pathname === "/password-reset" && Boolean(url.searchParams.get("token"));
+  } catch {
+    return false;
+  }
+}
+
 function isValidPayload(payload: PasswordResetEmailPayload): payload is ValidPasswordResetEmailPayload {
   return (
     payload.kind === "password_reset" &&
     typeof payload.to === "string" &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.to) &&
     typeof payload.resetUrl === "string" &&
-    payload.resetUrl.startsWith("https://") &&
+    isValidResetUrl(payload.resetUrl) &&
     typeof payload.expiresAt === "string" &&
     typeof payload.userId === "string" &&
     payload.userId.length > 0

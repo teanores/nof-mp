@@ -34,6 +34,7 @@ describe("internal password reset email route", () => {
       ...originalEnv,
       NOF_MP_EMAIL_FROM: "accounts@example.com",
       NOF_MP_EMAIL_WEBHOOK_TOKEN: "delivery-token",
+      NEXT_PUBLIC_PLATFORM_ORIGIN: "https://forgath.ru",
       SMTP_HOST: "smtp.gmail.com",
       SMTP_PASS: "smtp-pass",
       SMTP_PORT: "587",
@@ -56,6 +57,42 @@ describe("internal password reset email route", () => {
 
   it("rejects invalid payloads before touching SMTP", async () => {
     const response = await POST(request({ kind: "password_reset", resetUrl: "http://example.com/reset", to: "bad" }, "delivery-token"));
+
+    expect(response.status).toBe(400);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it("rejects foreign reset links before touching SMTP", async () => {
+    const response = await POST(
+      request(
+        {
+          expiresAt: "2026-06-11T11:00:00.000Z",
+          kind: "password_reset",
+          resetUrl: "https://evil.example/password-reset?token=raw-token",
+          to: "owner@example.com",
+          userId: "user-1",
+        },
+        "delivery-token",
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-reset platform links before touching SMTP", async () => {
+    const response = await POST(
+      request(
+        {
+          expiresAt: "2026-06-11T11:00:00.000Z",
+          kind: "password_reset",
+          resetUrl: "https://forgath.ru/login?token=raw-token",
+          to: "owner@example.com",
+          userId: "user-1",
+        },
+        "delivery-token",
+      ),
+    );
 
     expect(response.status).toBe(400);
     expect(sendMail).not.toHaveBeenCalled();
