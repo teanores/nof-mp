@@ -32,6 +32,8 @@ function request(url: string, body: unknown): NextRequest {
 describe("public password reset routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     passwordResetRepository.requestReset.mockResolvedValue({ ok: true, reason: "missing_or_unresettable" });
     passwordResetRepository.confirmReset.mockResolvedValue({ ok: true });
     passwordResetDelivery.sendResetLink.mockResolvedValue({ mode: "not_configured", ok: true });
@@ -60,6 +62,31 @@ describe("public password reset routes", () => {
       resetToken: "raw-reset-token",
       userId: "user-1",
     });
+    expect(console.info).toHaveBeenCalledWith("NOF password reset delivery outcome", {
+      event: "password_reset_delivery",
+      outcome: "not_configured",
+      userId: "user-1",
+    });
+  });
+
+  it("records a delivered outcome when the email provider accepts the reset link", async () => {
+    passwordResetRepository.requestReset.mockResolvedValue({
+      expiresAt: new Date("2026-06-11T11:00:00.000Z"),
+      ok: true,
+      reason: "token_created",
+      resetToken: "raw-reset-token",
+      userId: "user-1",
+    });
+    passwordResetDelivery.sendResetLink.mockResolvedValue({ mode: "http_webhook", ok: true });
+
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+
+    expect(response.status).toBe(200);
+    expect(console.info).toHaveBeenCalledWith("NOF password reset delivery outcome", {
+      event: "password_reset_delivery",
+      outcome: "delivered",
+      userId: "user-1",
+    });
   });
 
   it("does not call delivery when the email is missing or unresettable", async () => {
@@ -67,6 +94,11 @@ describe("public password reset routes", () => {
 
     expect(response.status).toBe(200);
     expect(passwordResetDelivery.sendResetLink).not.toHaveBeenCalled();
+    expect(console.info).toHaveBeenCalledWith("NOF password reset delivery outcome", {
+      event: "password_reset_delivery",
+      outcome: "not_requested",
+      userId: undefined,
+    });
   });
 
   it("keeps the public request response uniform when delivery fails", async () => {
@@ -85,6 +117,11 @@ describe("public password reset routes", () => {
     expect(await response.json()).toEqual({
       ok: true,
       message: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
+    });
+    expect(console.warn).toHaveBeenCalledWith("NOF password reset delivery failed", {
+      event: "password_reset_delivery",
+      outcome: "failed",
+      userId: "user-1",
     });
   });
 

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getPasswordResetDelivery } from "@/lib/server/password-reset-delivery";
+import { recordPasswordResetDeliveryOutcome } from "@/lib/server/password-reset-delivery-outcome";
 import { getPlatformPasswordResetRepository } from "@/lib/server/platform-password-reset-repository";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +13,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (email) {
     const result = await getPlatformPasswordResetRepository().requestReset({ email });
     if (result.reason === "token_created") {
-      await getPasswordResetDelivery()
-        .sendResetLink({
+      try {
+        const delivery = await getPasswordResetDelivery().sendResetLink({
           email,
           expiresAt: result.expiresAt,
           resetToken: result.resetToken,
           userId: result.userId,
-        })
-        .catch(() => undefined);
+        });
+        recordPasswordResetDeliveryOutcome({ outcome: delivery.mode === "not_configured" ? "not_configured" : "delivered", userId: result.userId });
+      } catch {
+        recordPasswordResetDeliveryOutcome({ outcome: "failed", userId: result.userId });
+      }
+    } else {
+      recordPasswordResetDeliveryOutcome({ outcome: "not_requested" });
     }
   }
 
