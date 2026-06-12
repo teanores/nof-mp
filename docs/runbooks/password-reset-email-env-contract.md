@@ -84,6 +84,14 @@ Headers:
 - `Content-Type: application/json`
 - `Authorization: Bearer <NOF_MP_EMAIL_WEBHOOK_TOKEN>`
 
+The internal endpoint accepts `resetUrl` only when all of these are true:
+
+- URL origin matches `NEXT_PUBLIC_PLATFORM_ORIGIN` (`https://forgath.ru` in production).
+- Path is exactly `/password-reset`.
+- Query contains a non-empty `token`.
+
+Foreign HTTPS origins and non-reset platform paths are rejected before SMTP is touched.
+
 ## Safety Rules
 
 - Store only SHA-256 reset token hashes in nof-mp database.
