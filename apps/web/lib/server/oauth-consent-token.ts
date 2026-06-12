@@ -14,7 +14,7 @@ interface SignedConsentPayload {
 }
 
 function consentSecret(): string {
-  const secret = process.env.NOF_PLATFORM_OAUTH_JWT_SECRET ?? process.env.DRAGON_FORGE_SECRET_KEY ?? process.env.SECRET_KEY;
+  const secret = process.env.NOF_PLATFORM_OAUTH_JWT_SECRET ?? process.env.NOF_AUTH_SECRET_KEY ?? process.env.SECRET_KEY;
   if (!secret) {
     throw new Error("NOF Platform OAuth consent signing secret is not configured");
   }

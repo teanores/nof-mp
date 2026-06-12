@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 
-const defaultDragonForgeInternalUrl = "http://dragon-forge-internal:5000";
+const defaultNofServiceUrl = "http://dragon-forge-internal:5000";
 
 export function normalizeRegistrationEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
 export function buildPublicRegistrationRequestUrl(
-  baseUrl = process.env.DRAGON_FORGE_INTERNAL_URL ?? defaultDragonForgeInternalUrl,
+  baseUrl = process.env.NOF_SERVICE_INTERNAL_URL ?? defaultNofServiceUrl,
 ): string {
   return new URL("/api/public/registration/request", baseUrl).toString();
 }
 
 export function buildPublicRegistrationConfirmUrl(
-  baseUrl = process.env.DRAGON_FORGE_INTERNAL_URL ?? defaultDragonForgeInternalUrl,
+  baseUrl = process.env.NOF_SERVICE_INTERNAL_URL ?? defaultNofServiceUrl,
 ): string {
   return new URL("/api/public/registration/confirm", baseUrl).toString();
 }

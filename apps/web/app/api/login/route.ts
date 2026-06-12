@@ -5,9 +5,9 @@ import {
   buildPortalLoginFailedRedirect,
   buildPortalLoginRedirect,
   copyAuthCookies,
-  dragonForgeInternalLoginUrl,
-} from "@/lib/server/dragon-forge-login";
-import { decodeDragonForgeAuthToken } from "@/lib/server/dragon-forge-auth";
+  nofServiceLoginUrl,
+} from "@/lib/server/nof-service-client";
+import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
 import { normalizePortalLanguage } from "@/lib/portal-language";
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 import { summarizeUserAgent } from "@/lib/server/security-audit-sanitize";
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   upstreamForm.set("username", username);
   upstreamForm.set("password", password);
 
-  const upstream = await fetch(dragonForgeInternalLoginUrl(), {
+  const upstream = await fetch(nofServiceLoginUrl(), {
     body: upstreamForm,
     headers: { "content-type": "application/x-www-form-urlencoded" },
     method: "POST",
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   const response = buildPortalLoginRedirect(next);
   copyAuthCookies(upstream, response);
   const authCookieValue = authCookieValueFromResponse(upstream);
-  const userId = authCookieValue ? decodeDragonForgeAuthToken(authCookieValue)?.sub : undefined;
+  const userId = authCookieValue ? decodeNofAuthToken(authCookieValue)?.sub : undefined;
   await recordSecurityAuditEvent({
     ...auditContext,
     actorUserId: userId,

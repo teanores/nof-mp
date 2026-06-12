@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { decodeDragonForgeAuthToken } from "@/lib/server/dragon-forge-auth";
+import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
 
 function encodePart(value: object): string {
   return Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -15,33 +15,33 @@ function sign(payload: object, secret: string): string {
   return `${header}.${body}.${signature}`;
 }
 
-describe("dragon forge auth token", () => {
+describe("nof portal auth token", () => {
   afterEach(() => {
-    delete process.env.DRAGON_FORGE_SECRET_KEY;
-    delete process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL;
+    delete process.env.NOF_AUTH_SECRET_KEY;
+    delete process.env.NEXT_PUBLIC_NOF_LOGIN_URL;
     delete process.env.SECRET_KEY;
     vi.resetModules();
   });
 
   it("uses a platform-relative login URL by default", async () => {
-    const { dragonForgeLoginUrl } = await import("@/lib/server/dragon-forge-auth");
+    const { NOF_LOGIN_URL } = await import("@/lib/server/nof-portal-auth");
 
-    expect(dragonForgeLoginUrl).toBe("/login");
-    expect(dragonForgeLoginUrl).not.toContain("192.168.1.51");
-    expect(dragonForgeLoginUrl).not.toContain("30500");
+    expect(NOF_LOGIN_URL).toBe("/login");
+    expect(NOF_LOGIN_URL).not.toContain("192.168.1.51");
+    expect(NOF_LOGIN_URL).not.toContain("30500");
   });
 
-  it("keeps the configured Dragon Forge login URL override", async () => {
-    process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL = "https://forgath.ru/login";
-    const { dragonForgeLoginUrl } = await import("@/lib/server/dragon-forge-auth");
+  it("keeps the configured NOF login URL override", async () => {
+    process.env.NEXT_PUBLIC_NOF_LOGIN_URL = "https://forgath.ru/login";
+    const { NOF_LOGIN_URL } = await import("@/lib/server/nof-portal-auth");
 
-    expect(dragonForgeLoginUrl).toBe("https://forgath.ru/login");
+    expect(NOF_LOGIN_URL).toBe("https://forgath.ru/login");
   });
 
-  it("decodes the existing Dragon Forge HS256 auth_token shape", () => {
+  it("decodes the existing HS256 auth_token shape", () => {
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "test-secret");
 
-    expect(decodeDragonForgeAuthToken(token, "test-secret")).toMatchObject({
+    expect(decodeNofAuthToken(token, "test-secret")).toMatchObject({
       sub: "11111111-1111-1111-1111-111111111111",
       username: "teanore",
     });
@@ -50,15 +50,15 @@ describe("dragon forge auth token", () => {
   it("rejects tokens signed with another secret", () => {
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "right-secret");
 
-    expect(decodeDragonForgeAuthToken(token, "wrong-secret")).toBeUndefined();
+    expect(decodeNofAuthToken(token, "wrong-secret")).toBeUndefined();
   });
 
-  it("prefers DRAGON_FORGE_SECRET_KEY over the legacy SECRET_KEY fallback", () => {
-    process.env.DRAGON_FORGE_SECRET_KEY = "new-purpose-secret";
+  it("prefers NOF_AUTH_SECRET_KEY over the legacy SECRET_KEY fallback", () => {
+    process.env.NOF_AUTH_SECRET_KEY = "new-purpose-secret";
     process.env.SECRET_KEY = "legacy-shared-secret";
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "new-purpose-secret");
 
-    expect(decodeDragonForgeAuthToken(token)).toMatchObject({
+    expect(decodeNofAuthToken(token)).toMatchObject({
       sub: "11111111-1111-1111-1111-111111111111",
       username: "teanore",
     });
@@ -68,7 +68,7 @@ describe("dragon forge auth token", () => {
     process.env.SECRET_KEY = "legacy-shared-secret";
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "legacy-shared-secret");
 
-    expect(decodeDragonForgeAuthToken(token)).toMatchObject({
+    expect(decodeNofAuthToken(token)).toMatchObject({
       sub: "11111111-1111-1111-1111-111111111111",
       username: "teanore",
     });
