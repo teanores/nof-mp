@@ -7,7 +7,7 @@ import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 
 const cookieName = "auth_token";
 const algorithm = "HS256";
-const loginUrl = process.env.NEXT_PUBLIC_DRAGON_FORGE_LOGIN_URL ?? "/login";
+const loginUrl = process.env.NEXT_PUBLIC_NOF_LOGIN_URL ?? "/login";
 
 interface JwtPayload {
   exp?: number;
@@ -52,7 +52,7 @@ function safeEqual(left: string, right: string): boolean {
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function decodeDragonForgeAuthToken(token: string, secret = process.env.DRAGON_FORGE_SECRET_KEY ?? process.env.SECRET_KEY): JwtPayload | undefined {
+export function decodeNofAuthToken(token: string, secret = process.env.NOF_AUTH_SECRET_KEY ?? process.env.SECRET_KEY): JwtPayload | undefined {
   if (!secret) {
     return undefined;
   }
@@ -149,7 +149,7 @@ function toPortalUser(row: PortalUserRow): ForgePortalUser {
   };
 }
 
-export class DragonForgeAuthRepository {
+export class NofPortalAuthRepository {
   private readonly pool: Pool;
 
   constructor(pool = new Pool({ connectionString: platformDatabaseUrl("Dragon Forge portal users"), max: 3 })) {
@@ -165,7 +165,7 @@ export class DragonForgeAuthRepository {
       return { authenticated: false, loginUrl };
     }
 
-    const payload = decodeDragonForgeAuthToken(token);
+    const payload = decodeNofAuthToken(token);
     if (!payload?.sub) {
       return { authenticated: false, loginUrl };
     }
@@ -208,11 +208,11 @@ export class DragonForgeAuthRepository {
   }
 }
 
-let repository: DragonForgeAuthRepository | undefined;
+let repository: NofPortalAuthRepository | undefined;
 
-export function getDragonForgeAuthRepository(): DragonForgeAuthRepository {
-  repository ??= new DragonForgeAuthRepository();
+export function getNofPortalAuthRepository(): NofPortalAuthRepository {
+  repository ??= new NofPortalAuthRepository();
   return repository;
 }
 
-export { cookieName as dragonForgeAuthCookieName, loginUrl as dragonForgeLoginUrl };
+export { cookieName as AUTH_COOKIE_NAME, loginUrl as NOF_LOGIN_URL };

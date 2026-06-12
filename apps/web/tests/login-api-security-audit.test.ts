@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/login/route";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
 
-vi.mock("@/lib/server/dragon-forge-auth", () => ({
-  decodeDragonForgeAuthToken: vi.fn(() => ({ sub: "user-1" })),
+vi.mock("@/lib/server/nof-portal-auth", () => ({
+  decodeNofAuthToken: vi.fn(() => ({ sub: "user-1" })),
 }));
 
-vi.mock("@/lib/server/dragon-forge-login", () => ({
+vi.mock("@/lib/server/nof-service-client", () => ({
   authCookieValueFromResponse: vi.fn(() => "auth-token"),
   buildPortalLoginFailedRedirect: vi.fn(() => new Response(null, { headers: { location: "/login?error=1" }, status: 303 })),
   buildPortalLoginRedirect: vi.fn(() => new Response(null, { headers: { location: "/overview" }, status: 303 })),
   copyAuthCookies: vi.fn(),
-  dragonForgeInternalLoginUrl: vi.fn(() => "http://dragon-forge/login"),
+  nofServiceLoginUrl: vi.fn(() => "http://dragon-forge/login"),
 }));
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({

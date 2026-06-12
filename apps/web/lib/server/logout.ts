@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { dragonForgeAuthCookieName } from "@/lib/server/dragon-forge-auth";
+import { AUTH_COOKIE_NAME } from "@/lib/server/nof-portal-auth";
 
 const logoutCookieDomains = [undefined, "forgath.ru", ".forgath.ru"] as const;
 
 function expiredAuthCookie(domain?: string): string {
   return [
-    `${dragonForgeAuthCookieName}=`,
+    `${AUTH_COOKIE_NAME}=`,
     "Path=/",
     "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
     "Max-Age=0",

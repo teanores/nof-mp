@@ -23,7 +23,7 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
     env: {
-      DRAGON_FORGE_SECRET_KEY: "nof-local-dragon-forge-secret-change-me",
+      NOF_AUTH_SECRET_KEY: "nof-local-dragon-forge-secret-change-me",
       NEXT_PUBLIC_PLATFORM_ORIGIN: baseURL,
       NOF_HT_ORIGIN: "http://127.0.0.1:9",
       NOF_LOCAL_DATABASE_URL: localDatabaseUrl,

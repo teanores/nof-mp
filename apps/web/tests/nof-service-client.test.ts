@@ -5,12 +5,12 @@ import {
   buildPortalLoginFailedRedirect,
   buildPortalLoginRedirect,
   copyAuthCookies,
-  dragonForgeInternalLoginUrl,
-} from "@/lib/server/dragon-forge-login";
+  nofServiceLoginUrl,
+} from "@/lib/server/nof-service-client";
 
-describe("dragon forge login bridge", () => {
-  it("targets the internal Dragon Forge login endpoint", () => {
-    expect(dragonForgeInternalLoginUrl("http://dragon-forge-internal:5000")).toBe("http://dragon-forge-internal:5000/login");
+describe("nof service client", () => {
+  it("targets the internal NOF service login endpoint", () => {
+    expect(nofServiceLoginUrl("http://dragon-forge-internal:5000")).toBe("http://dragon-forge-internal:5000/login");
   });
 
   it("keeps successful redirects relative to the current portal", () => {
@@ -27,7 +27,7 @@ describe("dragon forge login bridge", () => {
     expect(response.headers.get("location")).toBe("/login?next=%2F&error=invalid_credentials");
   });
 
-  it("copies only the Dragon Forge auth cookie from upstream", () => {
+  it("copies only the auth cookie from upstream", () => {
     const upstream = new Response(null, {
       headers: {
         "set-cookie": "auth_token=abc; Path=/; HttpOnly; SameSite=strict",

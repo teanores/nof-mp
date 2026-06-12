@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 
-const defaultDragonForgeInternalUrl = "http://dragon-forge-internal:5000";
+const defaultNofServiceUrl = "http://dragon-forge-internal:5000";
 
-export function dragonForgeInternalLoginUrl(baseUrl = process.env.DRAGON_FORGE_INTERNAL_URL ?? defaultDragonForgeInternalUrl): string {
+export function nofServiceLoginUrl(baseUrl = process.env.NOF_SERVICE_INTERNAL_URL ?? defaultNofServiceUrl): string {
   return new URL("/login", baseUrl).toString();
 }
 
