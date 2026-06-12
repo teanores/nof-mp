@@ -18,28 +18,80 @@ const passwordRules = [
   { label: "Нет пробелов и обратной кавычки", test: (value: string) => !/[\s`]/.test(value) },
 ];
 
-async function postJson(url: string, body: unknown): Promise<{ error?: string; ok?: boolean }> {
+interface ApiResponse {
+  error?: string;
+  errors?: string[];
+  ok?: boolean;
+}
+
+class ApiError extends Error {
+  readonly errors: string[];
+
+  constructor(error: string, errors: string[] = []) {
+    super(error);
+    this.errors = errors;
+  }
+}
+
+const policyErrorCopy: Record<string, string> = {
+  password_common: "Пароль слишком простой.",
+  password_contains_identity: "Пароль не должен содержать логин или email.",
+  password_digit: "Добавь цифру.",
+  password_disallowed_character: "Убери пробелы и обратную кавычку.",
+  password_lowercase: "Добавь строчную букву.",
+  password_min_length: "Минимум 12 символов.",
+  password_symbol: "Добавь спецсимвол.",
+  password_uppercase: "Добавь заглавную букву.",
+};
+
+async function postJson(url: string, body: unknown): Promise<ApiResponse> {
   const response = await fetch(url, {
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
     method: "POST",
   });
-  const data = (await response.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+  const data = (await response.json().catch(() => ({}))) as ApiResponse;
   if (!response.ok) {
-    throw new Error(data.error ?? "request_failed");
+    throw new ApiError(data.error ?? "request_failed", data.errors ?? []);
   }
   return data;
+}
+
+function resetErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Не удалось выполнить запрос. Попробуйте позже.";
+  }
+  if (error.message === "password_policy") {
+    const details = error instanceof ApiError ? error.errors.map((item) => policyErrorCopy[item]).filter(Boolean) : [];
+    return details.length > 0
+      ? `Новый пароль не соответствует правилам безопасности: ${details.join(" ")}`
+      : "Новый пароль не соответствует правилам безопасности.";
+  }
+  if (error.message === "password_reset_fields_required") {
+    return "Заполните все поля восстановления пароля.";
+  }
+  if (error.message === "invalid_or_expired_token") {
+    return "Ссылка недействительна или срок действия истёк.";
+  }
+  return "Не удалось выполнить запрос. Попробуйте позже.";
 }
 
 function RequestResetForm() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sent" | "submitting">("idle");
+  const [error, setError] = useState<string | undefined>();
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(undefined);
     setStatus("submitting");
-    await postJson("/api/public/password-reset/request", { email });
-    setStatus("sent");
+    try {
+      await postJson("/api/public/password-reset/request", { email });
+      setStatus("sent");
+    } catch (caught) {
+      setError(resetErrorMessage(caught));
+      setStatus("idle");
+    }
   }
 
   return (
@@ -66,6 +118,11 @@ function RequestResetForm() {
       {status === "sent" ? (
         <p className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm leading-6 text-forge-muted">
           Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-sm border border-forge-accent bg-forge-panel px-3 py-2 text-sm font-semibold text-forge-accent">
+          {error}
         </p>
       ) : null}
     </form>
@@ -103,8 +160,7 @@ function ConfirmResetForm({ token }: { token: string }) {
       setNewPassword("");
       setRepeatedPassword("");
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "request_failed";
-      setError(message === "password_policy" ? "Новый пароль не соответствует правилам безопасности." : "Ссылка недействительна или срок действия истёк.");
+      setError(resetErrorMessage(caught));
       setStatus("idle");
     }
   }

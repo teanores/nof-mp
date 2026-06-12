@@ -32,6 +32,23 @@ describe("password reset page", () => {
     expect(await screen.findByText(/Если такой аккаунт существует/)).toBeInTheDocument();
   });
 
+  it("shows a safe request failure message without exposing account state", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => ({ error: "request_failed" }),
+      ok: false,
+    } as Response);
+
+    render(<PasswordResetPage />);
+
+    await userEvent.type(screen.getByLabelText("Электронная почта"), "owner@example.com");
+    await userEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
+
+    expect(await screen.findByText("Не удалось выполнить запрос. Попробуйте позже.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("owner@example.com");
+    expect(document.body).not.toHaveTextContent("SMTP");
+    expect(document.body).not.toHaveTextContent("request_failed");
+  });
+
   it("keeps repeat-password checklist failed until the repeat field is filled", async () => {
     render(<PasswordResetPage token="reset-token" />);
 
@@ -61,5 +78,42 @@ describe("password reset page", () => {
       ),
     );
     expect(await screen.findByText("Пароль изменён. Теперь можно войти с новым паролем.")).toBeInTheDocument();
+  });
+
+  it("shows server-side password policy details for reset confirmation", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => ({
+        error: "password_policy",
+        errors: ["password_min_length", "password_digit", "password_disallowed_character"],
+      }),
+      ok: false,
+    } as Response);
+
+    render(<PasswordResetPage token="reset-token" />);
+
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "Bad password!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "Bad password!");
+    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
+
+    expect(
+      await screen.findByText(
+        "Новый пароль не соответствует правилам безопасности: Минимум 12 символов. Добавь цифру. Убери пробелы и обратную кавычку.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an expired link message for invalid reset tokens", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => ({ error: "invalid_or_expired_token" }),
+      ok: false,
+    } as Response);
+
+    render(<PasswordResetPage token="reset-token" />);
+
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
+    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
+
+    expect(await screen.findByText("Ссылка недействительна или срок действия истёк.")).toBeInTheDocument();
   });
 });
