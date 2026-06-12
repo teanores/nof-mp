@@ -2,12 +2,17 @@ import Link from "next/link";
 import React from "react";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
-import type { AdminUserListItem, AdminUserRisk } from "@/lib/server/admin-users-repository";
+import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
 
 const riskLabels: Record<AdminUserRisk, string> = {
   "external-email": "почта вне домена",
   "missing-password": "нет пароля",
   "telegram-placeholder-email": "служебная telegram-почта",
+};
+const recoveryLabels: Record<AdminUserRecoveryState, string> = {
+  "email-reset-ready": "почтовое восстановление",
+  "missing-email": "почта не указана",
+  "service-email": "служебная почта",
 };
 const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
 
@@ -53,6 +58,15 @@ function AccountState({ hasPassword }: { hasPassword: boolean }) {
   );
 }
 
+function RecoveryState({ state }: { state: AdminUserRecoveryState }) {
+  const isReady = state === "email-reset-ready";
+  return (
+    <span className={`${badgeBaseClass} ${isReady ? "border-emerald-500/40 text-emerald-300" : "border-amber-400/50 text-amber-200"}`}>
+      {recoveryLabels[state]}
+    </span>
+  );
+}
+
 function AdminActionState() {
   return (
     <span className={`${badgeBaseClass} border-forge-line text-forge-muted`}>
@@ -64,6 +78,8 @@ function AdminActionState() {
 export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
   const riskyUsers = users.filter((user) => user.risks.length > 0).length;
   const passwordLoginUsers = users.filter((user) => user.hasPassword).length;
+  const emailRecoveryUsers = users.filter((user) => user.recoveryState === "email-reset-ready").length;
+  const recoveryAttentionUsers = users.length - emailRecoveryUsers;
 
   return (
     <PortalPageShell>
@@ -81,7 +97,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
         title="Пользователи"
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-4">
         <article className="panel p-4">
           <p className="tech-label text-xs text-forge-muted">Всего</p>
           <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{users.length}</p>
@@ -94,6 +110,11 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           <p className="tech-label text-xs text-forge-muted">Вход по паролю</p>
           <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{passwordLoginUsers}</p>
         </article>
+        <article className="panel p-4">
+          <p className="tech-label text-xs text-forge-muted">Восстановление по почте</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{emailRecoveryUsers}</p>
+          {recoveryAttentionUsers > 0 ? <p className="mt-1 text-xs text-amber-200">разобрать: {recoveryAttentionUsers}</p> : null}
+        </article>
       </section>
 
       <PortalActionBar eyebrow="Администрирование" title="Аккаунты платформы" />
@@ -101,7 +122,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
       <section className="panel grid gap-3 p-4 text-sm text-forge-muted md:grid-cols-2">
         <div>
           <p className="tech-label text-xs text-forge-ink">Что уже можно контролировать</p>
-          <p className="mt-2">Видны роли, почта, Telegram-связки, наличие пароля, последняя активность и признаки риска доступа.</p>
+          <p className="mt-2">Видны роли, почта, Telegram-связки, наличие пароля, готовность восстановления, последняя активность и признаки риска доступа.</p>
         </div>
         <div>
           <p className="tech-label text-xs text-forge-ink">Что нельзя имитировать</p>
@@ -120,6 +141,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                 <th className="px-4 py-3">Telegram</th>
                 <th className="px-4 py-3">Последняя активность</th>
                 <th className="px-4 py-3">Доступ</th>
+                <th className="px-4 py-3">Восстановление</th>
                 <th className="px-4 py-3">Признаки</th>
                 <th className="px-4 py-3">Действия</th>
               </tr>
@@ -146,6 +168,9 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   <td className="px-4 py-4 text-forge-muted">{formatDate(user.lastSeen)}</td>
                   <td className="px-4 py-4">
                     <AccountState hasPassword={user.hasPassword} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <RecoveryState state={user.recoveryState} />
                   </td>
                   <td className="px-4 py-4">
                     <UserRiskBadges risks={user.risks} />

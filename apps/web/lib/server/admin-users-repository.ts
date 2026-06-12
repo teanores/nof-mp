@@ -3,6 +3,7 @@ import { Pool, type QueryResultRow } from "pg";
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 
 export type AdminUserRisk = "missing-password" | "external-email" | "telegram-placeholder-email";
+export type AdminUserRecoveryState = "email-reset-ready" | "missing-email" | "service-email";
 
 export interface AdminUserListItem {
   accountState: "password-login" | "telegram-only";
@@ -11,6 +12,7 @@ export interface AdminUserListItem {
   hasPassword: boolean;
   id: string;
   lastSeen?: string;
+  recoveryState: AdminUserRecoveryState;
   registrationSource?: string;
   risks: AdminUserRisk[];
   role?: {
@@ -70,6 +72,21 @@ export function userRisks(row: Pick<AdminUserRow, "email" | "has_password">): Ad
   return risks;
 }
 
+function isServiceEmail(email: string): boolean {
+  return /^\d+@telegram\.forgath\.ru$/.test(email);
+}
+
+export function userRecoveryState(row: Pick<AdminUserRow, "email">): AdminUserRecoveryState {
+  const email = row.email?.toLowerCase() ?? "";
+  if (!email) {
+    return "missing-email";
+  }
+  if (isServiceEmail(email)) {
+    return "service-email";
+  }
+  return "email-reset-ready";
+}
+
 function toAdminUser(row: AdminUserRow): AdminUserListItem {
   const telegramId = toOptionalNumber(row.telegram_id);
 
@@ -79,6 +96,7 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
     accountState: row.has_password ? "password-login" : "telegram-only",
     ...(row.email ? { email: row.email } : {}),
     hasPassword: row.has_password,
+    recoveryState: userRecoveryState(row),
     risks: userRisks(row),
     ...(row.role_name
       ? {

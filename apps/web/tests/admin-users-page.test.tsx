@@ -13,6 +13,7 @@ const users: AdminUserListItem[] = [
     hasPassword: false,
     id: "u-1",
     lastSeen: "2026-06-01T11:00:00.000Z",
+    recoveryState: "service-email",
     registrationSource: "telegram",
     risks: ["missing-password", "telegram-placeholder-email"],
     role: { displayName: "Администратор", name: "admin" },
@@ -26,6 +27,7 @@ const users: AdminUserListItem[] = [
     hasPassword: true,
     id: "u-2",
     lastSeen: "2026-06-02T11:00:00.000Z",
+    recoveryState: "email-reset-ready",
     risks: ["external-email"],
     username: "owner",
   },
@@ -36,6 +38,10 @@ describe("admin users page", () => {
     render(<AdminUsersPage users={users} />);
 
     expect(screen.getByText("Электронная почта")).toBeInTheDocument();
+    expect(screen.getByText("Восстановление")).toBeInTheDocument();
+    expect(screen.getByText("Восстановление по почте")).toBeInTheDocument();
+    expect(screen.getByText("почтовое восстановление")).toBeInTheDocument();
+    expect(screen.getByText("служебная почта")).toBeInTheDocument();
     expect(screen.getByText("почта вне домена")).toBeInTheDocument();
     expect(screen.getByText("Признаки")).toBeInTheDocument();
     expect(screen.getAllByText(/признаки риска доступа/)).toHaveLength(2);
@@ -48,7 +54,7 @@ describe("admin users page", () => {
   it("keeps short account and risk labels on one readable badge line", () => {
     render(<AdminUsersPage users={users} />);
 
-    for (const label of ["пароль не задан", "нет пароля", "служебная telegram-почта"]) {
+    for (const label of ["пароль не задан", "нет пароля", "служебная telegram-почта", "служебная почта", "почтовое восстановление"]) {
       expect(screen.getByText(label)).toHaveClass("whitespace-nowrap");
     }
     for (const label of screen.getAllByText("блокировка готовится")) {
