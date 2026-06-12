@@ -2,13 +2,13 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { getPasswordResetDelivery } from "@/lib/server/password-reset-delivery";
 import { recordPasswordResetDeliveryOutcome } from "@/lib/server/password-reset-delivery-outcome";
-import { getPlatformPasswordResetRepository } from "@/lib/server/platform-password-reset-repository";
+import { getPlatformPasswordResetRepository, normalizePasswordResetEmail } from "@/lib/server/platform-password-reset-repository";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = (await request.json().catch(() => ({}))) as { email?: unknown };
-  const email = typeof body.email === "string" ? body.email : "";
+  const email = typeof body.email === "string" ? normalizePasswordResetEmail(body.email) : "";
 
   if (email) {
     const result = await getPlatformPasswordResetRepository().requestReset({ email });

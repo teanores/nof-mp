@@ -12,6 +12,7 @@ const passwordResetDelivery = vi.hoisted(() => ({
 
 vi.mock("@/lib/server/platform-password-reset-repository", () => ({
   getPlatformPasswordResetRepository: vi.fn(() => passwordResetRepository),
+  normalizePasswordResetEmail: (email: string) => email.trim().toLowerCase(),
 }));
 
 vi.mock("@/lib/server/password-reset-delivery", () => ({
@@ -48,7 +49,7 @@ describe("public password reset routes", () => {
       userId: "user-1",
     });
 
-    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: " Owner@Example.COM " }));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
