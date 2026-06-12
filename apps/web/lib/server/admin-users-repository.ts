@@ -150,6 +150,30 @@ export class AdminUsersRepository {
 
     return result.rows.map(toAdminUser);
   }
+
+  async getUserById(userId: string): Promise<AdminUserListItem | null> {
+    const result = await this.pool.query<AdminUserRow>(
+      `SELECT
+         u.id::text AS id,
+         u.username,
+         u.email,
+         COALESCE(length(u.password_hash) > 0, false) AS has_password,
+         u.telegram_id,
+         u.telegram_username,
+         u.registration_source,
+         u.user_created_at AS created_at,
+         u.last_seen,
+         role.name AS role_name,
+         role.display_name AS role_display_name
+       FROM dragon_forge."user" u
+       LEFT JOIN dragon_forge.role role ON role.id = u.role_id
+       WHERE u.id::text = $1
+       LIMIT 1`,
+      [userId],
+    );
+
+    return result.rows[0] ? toAdminUser(result.rows[0]) : null;
+  }
 }
 
 let repository: AdminUsersRepository | undefined;

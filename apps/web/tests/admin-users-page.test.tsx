@@ -57,7 +57,7 @@ describe("admin users page", () => {
     for (const label of ["пароль не задан", "нет пароля", "служебная telegram-почта", "служебная почта", "почтовое восстановление"]) {
       expect(screen.getByText(label)).toHaveClass("whitespace-nowrap");
     }
-    for (const label of screen.getAllByText("блокировка готовится")) {
+    for (const label of screen.getAllByText("Открыть")) {
       expect(label).toHaveClass("whitespace-nowrap");
     }
   });
@@ -68,5 +68,12 @@ describe("admin users page", () => {
     expect(screen.getByText("источник неизвестен")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("source unknown");
     expect(document.body).not.toHaveTextContent("telegram email");
+  });
+
+  it("links each user row to a read-only account detail page", () => {
+    render(<AdminUsersPage users={users} />);
+
+    expect(screen.getByRole("link", { name: "Открыть teanore" })).toHaveAttribute("href", "/admin/users/u-1");
+    expect(screen.getByRole("link", { name: "Открыть owner" })).toHaveAttribute("href", "/admin/users/u-2");
   });
 });

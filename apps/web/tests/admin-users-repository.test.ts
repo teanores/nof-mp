@@ -56,6 +56,42 @@ describe("admin users repository", () => {
     expect(pool.queries[0]?.values).toEqual([100]);
   });
 
+  it("loads one admin-safe user row by id without password hashes", async () => {
+    const pool = new FakePool([
+      {
+        created_at: "2026-06-01T10:00:00.000Z",
+        email: "owner@example.com",
+        has_password: true,
+        id: "u-2",
+        last_seen: null,
+        registration_source: "email",
+        role_display_name: "Администратор",
+        role_name: "admin",
+        telegram_id: null,
+        telegram_username: null,
+        username: "owner",
+      },
+    ]);
+    const repository = new AdminUsersRepository(pool as never);
+
+    await expect(repository.getUserById("u-2")).resolves.toMatchObject({
+      accountState: "password-login",
+      email: "owner@example.com",
+      id: "u-2",
+      username: "owner",
+    });
+    expect(pool.queries[0]?.sql).toContain("WHERE u.id::text = $1");
+    expect(pool.queries[0]?.sql).toContain("LIMIT 1");
+    expect(pool.queries[0]?.sql).not.toContain("password_hash AS");
+    expect(pool.queries[0]?.values).toEqual(["u-2"]);
+  });
+
+  it("returns null when an admin user detail row is missing", async () => {
+    const repository = new AdminUsersRepository(new FakePool([]) as never);
+
+    await expect(repository.getUserById("missing")).resolves.toBeNull();
+  });
+
   it("marks non-forgath domains as external emails", () => {
     expect(userRisks({ email: "elf@external.invalid", has_password: true })).toEqual(["external-email"]);
     expect(userRisks({ email: "elf@forgath.ru", has_password: true })).toEqual([]);

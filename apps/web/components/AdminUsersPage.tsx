@@ -67,11 +67,15 @@ function RecoveryState({ state }: { state: AdminUserRecoveryState }) {
   );
 }
 
-function AdminActionState() {
+function AdminActionState({ user }: { user: AdminUserListItem }) {
   return (
-    <span className={`${badgeBaseClass} border-forge-line text-forge-muted`}>
-      блокировка готовится
-    </span>
+    <Link
+      aria-label={`Открыть ${user.username}`}
+      className="tech-label inline-flex whitespace-nowrap rounded-sm border border-forge-line px-3 py-2 text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+      href={`/admin/users/${encodeURIComponent(user.id)}`}
+    >
+      Открыть
+    </Link>
   );
 }
 
@@ -176,7 +180,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                     <UserRiskBadges risks={user.risks} />
                   </td>
                   <td className="px-4 py-4">
-                    <AdminActionState />
+                    <AdminActionState user={user} />
                   </td>
                 </tr>
               ))}
