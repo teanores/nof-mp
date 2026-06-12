@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { sendPasswordResetEmail } from "@/lib/server/email-delivery";
+import { normalizePasswordResetEmail } from "@/lib/server/platform-password-reset-repository";
 
 export const dynamic = "force-dynamic";
 
@@ -41,11 +42,16 @@ function isValidResetUrl(value: string): boolean {
   }
 }
 
+function isResettableRecipient(value: string): boolean {
+  const email = normalizePasswordResetEmail(value);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !/^\d+@telegram\.forgath\.ru$/.test(email);
+}
+
 function isValidPayload(payload: PasswordResetEmailPayload): payload is ValidPasswordResetEmailPayload {
   return (
     payload.kind === "password_reset" &&
     typeof payload.to === "string" &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.to) &&
+    isResettableRecipient(payload.to) &&
     typeof payload.resetUrl === "string" &&
     isValidResetUrl(payload.resetUrl) &&
     typeof payload.expiresAt === "string" &&
@@ -69,7 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   await sendPasswordResetEmail({
     expiresAt: payload.expiresAt,
     resetUrl: payload.resetUrl,
-    to: payload.to,
+    to: normalizePasswordResetEmail(payload.to),
     userId: payload.userId,
   });
 

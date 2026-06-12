@@ -98,6 +98,24 @@ describe("internal password reset email route", () => {
     expect(sendMail).not.toHaveBeenCalled();
   });
 
+  it("rejects synthetic telegram recipients before touching SMTP", async () => {
+    const response = await POST(
+      request(
+        {
+          expiresAt: "2026-06-11T11:00:00.000Z",
+          kind: "password_reset",
+          resetUrl: "https://forgath.ru/password-reset?token=raw-token",
+          to: "251740038@telegram.forgath.ru",
+          userId: "user-1",
+        },
+        "delivery-token",
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
   it("sends a password reset email through the configured SMTP provider", async () => {
     const response = await POST(
       request(
@@ -105,7 +123,7 @@ describe("internal password reset email route", () => {
           expiresAt: "2026-06-11T11:00:00.000Z",
           kind: "password_reset",
           resetUrl: "https://forgath.ru/password-reset?token=raw-token",
-          to: "owner@example.com",
+          to: " Owner@Example.COM ",
           userId: "user-1",
         },
         "delivery-token",
