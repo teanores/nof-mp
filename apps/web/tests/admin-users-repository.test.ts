@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AdminUsersRepository, userRisks } from "@/lib/server/admin-users-repository";
+import { AdminUsersRepository, userRecoveryState, userRisks } from "@/lib/server/admin-users-repository";
 
 interface FakeQueryResult<T> {
   rows: T[];
@@ -44,6 +44,7 @@ describe("admin users repository", () => {
         hasPassword: false,
         id: "u-1",
         lastSeen: "2026-06-01T11:00:00.000Z",
+        recoveryState: "service-email",
         registrationSource: "telegram",
         risks: ["missing-password", "telegram-placeholder-email"],
         role: { displayName: "Администратор", name: "admin" },
@@ -58,5 +59,11 @@ describe("admin users repository", () => {
   it("marks non-forgath domains as external emails", () => {
     expect(userRisks({ email: "elf@external.invalid", has_password: true })).toEqual(["external-email"]);
     expect(userRisks({ email: "elf@forgath.ru", has_password: true })).toEqual([]);
+  });
+
+  it("derives password recovery readiness from email shape", () => {
+    expect(userRecoveryState({ email: "owner@example.com" })).toBe("email-reset-ready");
+    expect(userRecoveryState({ email: "251740038@telegram.forgath.ru" })).toBe("service-email");
+    expect(userRecoveryState({ email: null })).toBe("missing-email");
   });
 });

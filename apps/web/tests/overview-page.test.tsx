@@ -4,19 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import OverviewPage from "@/app/overview/page";
 import { portalLanguageStorageKey } from "@/lib/portal-language";
 
-const auth = vi.hoisted(() => ({
-  sessionFromCookie: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  requirePortalPageSession: vi.fn(),
 }));
 
-vi.mock("next/headers", () => ({
-  cookies: vi.fn().mockResolvedValue({
-    get: vi.fn().mockReturnValue({ value: "session-token" }),
-  }),
-}));
-
-vi.mock("@/lib/server/dragon-forge-auth", () => ({
-  dragonForgeAuthCookieName: "auth_token",
-  getDragonForgeAuthRepository: () => auth,
+vi.mock("@/lib/server/portal-auth-gate", () => ({
+  requirePortalPageSession: mocks.requirePortalPageSession,
 }));
 
 vi.mock("@/lib/platform-api", () => ({
@@ -26,7 +19,7 @@ vi.mock("@/lib/platform-api", () => ({
 describe("platform overview page", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    auth.sessionFromCookie.mockResolvedValue({
+    mocks.requirePortalPageSession.mockResolvedValue({
       authenticated: true,
       loginUrl: "/login",
       user: { experience: 0, id: "u-1", role: { id: 1, name: "admin" }, username: "teanore" },
@@ -36,6 +29,7 @@ describe("platform overview page", () => {
   it("renders the platform overview and a single admin entry for admins", async () => {
     render(await OverviewPage());
 
+    expect(mocks.requirePortalPageSession).toHaveBeenCalledWith("/overview");
     expect(screen.getByRole("heading", { name: "Narag'Othal Forgath" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Task Tracker" })).toBeInTheDocument();
     expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
@@ -74,7 +68,7 @@ describe("platform overview page", () => {
   });
 
   it("hides admin cards for moderators", async () => {
-    auth.sessionFromCookie.mockResolvedValue({
+    mocks.requirePortalPageSession.mockResolvedValue({
       authenticated: true,
       loginUrl: "/login",
       user: { experience: 0, id: "u-2", role: { id: 2, name: "moderator" }, username: "moderator" },

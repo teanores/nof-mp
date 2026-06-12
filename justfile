@@ -19,10 +19,19 @@ test:
 test-identity:
   npm run test:identity
 
+test-password-reset:
+  npm --workspace @nof/nof-mp-web run test -- public-password-reset-route.test.ts password-reset-delivery.test.ts platform-password-reset-repository.test.ts password-reset-page.test.tsx internal-email-password-reset-route.test.ts
+
 local-env:
   npm run local:identity-env
 
+identity-env:
+  npm run local:identity-env
+
 local-users:
+  npm run local:identity-users
+
+identity-users:
   npm run local:identity-users
 
 db-up:

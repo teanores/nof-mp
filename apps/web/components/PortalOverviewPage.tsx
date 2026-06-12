@@ -23,6 +23,7 @@ const overviewCopy = {
     portalStateNote: "The platform is the entry point for account, profile, product discovery and access.",
     portalTitle: "NOF Platform",
     profile: "Profile",
+    signIn: "Sign in",
     modules: "Platform Sections",
     modulesEyebrow: "Platform Services",
     systemStatus: "Service Status",
@@ -40,6 +41,7 @@ const overviewCopy = {
     portalStateNote: "Платформа является точкой входа для аккаунта, профиля, обзора сервисов и доступа.",
     portalTitle: "NOF Platform",
     profile: "Профиль",
+    signIn: "Войти",
     modules: "Разделы кузницы",
     modulesEyebrow: "Сервисы платформы",
     systemStatus: "Статус сервисов",
@@ -145,10 +147,12 @@ function avatarInitials(user?: ForgePortalUser): string {
 function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = overviewCopy[usePortalLanguage()];
   const [user, setUser] = useState<ForgePortalUser | undefined>(initialSession?.user);
+  const [loginUrl, setLoginUrl] = useState(initialSession?.loginUrl ?? "/login?next=%2Foverview");
 
   useEffect(() => {
     if (initialSession) {
       setUser(initialSession.user);
+      setLoginUrl(initialSession.loginUrl || "/login?next=%2Foverview");
       return;
     }
 
@@ -159,10 +163,12 @@ function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession
         const session = await fetchPortalSession();
         if (isMounted) {
           setUser(session.user);
+          setLoginUrl(session.loginUrl || "/login?next=%2Foverview");
         }
       } catch {
         if (isMounted) {
           setUser(undefined);
+          setLoginUrl("/login?next=%2Foverview");
         }
       }
     }
@@ -178,9 +184,9 @@ function ProfileAction({ initialSession }: { initialSession?: ForgePortalSession
     return (
       <Link
         className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-xs font-bold text-black transition"
-        href="/profile"
+        href={loginUrl}
       >
-        {copy.profile}
+        {copy.signIn}
       </Link>
     );
   }

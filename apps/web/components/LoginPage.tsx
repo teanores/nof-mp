@@ -21,6 +21,7 @@ const copy = {
     language: "LANGUAGE",
     loginButton: "Sign in",
     password: "Password",
+    resetPassword: "Forgot password?",
     tagline: '"Show your guild badge!"',
     subtitle: "Sign in to continue working with platform services.",
     title: "Forge checkpoint",
@@ -34,6 +35,7 @@ const copy = {
     language: "ЯЗЫК",
     loginButton: "Войти",
     password: "Пароль",
+    resetPassword: "Забыли пароль?",
     tagline: "«Покажите жетон гильдии!»",
     subtitle: "Войдите, чтобы продолжить работу с сервисами платформы.",
     title: "Проходная Кузни",
@@ -91,6 +93,9 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
               type="password"
             />
           </label>
+          <Link className="text-right text-xs font-semibold text-forge-muted transition hover:text-forge-accent" href="/password-reset">
+            {text.resetPassword}
+          </Link>
           {error === "invalid_credentials" ? (
             <p className="rounded-sm border border-forge-accent bg-forge-panel px-3 py-2 text-sm font-semibold text-forge-accent">
               {text.invalidCredentials}
