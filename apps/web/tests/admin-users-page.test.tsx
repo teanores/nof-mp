@@ -76,4 +76,11 @@ describe("admin users page", () => {
     expect(screen.getByRole("link", { name: "Открыть teanore" })).toHaveAttribute("href", "/admin/users/u-1");
     expect(screen.getByRole("link", { name: "Открыть owner" })).toHaveAttribute("href", "/admin/users/u-2");
   });
+
+  it("makes the first-column username itself a visible detail link", () => {
+    render(<AdminUsersPage users={users} />);
+
+    expect(screen.getByRole("link", { name: "teanore" })).toHaveAttribute("href", "/admin/users/u-1");
+    expect(screen.getByRole("link", { name: "owner" })).toHaveAttribute("href", "/admin/users/u-2");
+  });
 });

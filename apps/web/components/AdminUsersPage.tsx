@@ -159,7 +159,12 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                         {initials(user.username)}
                       </div>
                       <div>
-                        <p className="font-bold text-forge-ink">{user.username}</p>
+                        <Link
+                          className="font-bold text-forge-ink underline-offset-4 transition hover:text-forge-accent hover:underline"
+                          href={`/admin/users/${encodeURIComponent(user.id)}`}
+                        >
+                          {user.username}
+                        </Link>
                         <p className="text-xs text-forge-muted">{user.registrationSource ?? "источник неизвестен"}</p>
                       </div>
                     </div>
