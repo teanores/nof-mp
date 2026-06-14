@@ -152,7 +152,7 @@ function toPortalUser(row: PortalUserRow): ForgePortalUser {
 export class NofPortalAuthRepository {
   private readonly pool: Pool;
 
-  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("Dragon Forge portal users"), max: 3 })) {
+  constructor(pool = new Pool({ connectionString: platformDatabaseUrl("NOF portal users"), max: 3 })) {
     this.pool = pool;
   }
 

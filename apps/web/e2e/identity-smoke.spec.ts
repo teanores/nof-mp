@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 
 const localUserId = "10000000-0000-4000-8000-000000000003";
 const localUsername = "local_user";
-const authSecret = "nof-local-dragon-forge-secret-change-me";
+const authSecret = "nof-local-nof-service-secret-change-me";
 
 function encodePart(value: object): string {
   return Buffer.from(JSON.stringify(value)).toString("base64url");

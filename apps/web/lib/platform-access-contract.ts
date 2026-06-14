@@ -69,7 +69,7 @@ export interface PlatformTableSpec {
 export const platformTableSpecs: PlatformTableSpec[] = [
   {
     name: "nof_platform.users",
-    purpose: "Canonical platform account identity and profile linkage to existing Dragon Forge users during migration.",
+    purpose: "Canonical platform account identity and profile linkage to existing NOF portal users during migration.",
     owner: "nof-mp",
     storesSecrets: false,
   },

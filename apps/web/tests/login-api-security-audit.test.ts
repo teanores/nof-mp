@@ -13,7 +13,7 @@ vi.mock("@/lib/server/nof-service-client", () => ({
   buildPortalLoginFailedRedirect: vi.fn(() => new Response(null, { headers: { location: "/login?error=1" }, status: 303 })),
   buildPortalLoginRedirect: vi.fn(() => new Response(null, { headers: { location: "/overview" }, status: 303 })),
   copyAuthCookies: vi.fn(),
-  nofServiceLoginUrl: vi.fn(() => "http://dragon-forge/login"),
+  nofServiceLoginUrl: vi.fn(() => "http://nof-service/login"),
 }));
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({
