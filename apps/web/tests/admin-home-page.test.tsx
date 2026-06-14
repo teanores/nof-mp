@@ -23,6 +23,7 @@ describe("admin home page", () => {
     expect(screen.getByRole("heading", { name: "Администрирование" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Пользователи/ })).toHaveAttribute("href", "/admin/users");
     expect(screen.getByRole("link", { name: /Безопасность/ })).toHaveAttribute("href", "/admin/security");
+    expect(screen.getByRole("link", { name: /Ротация секретов/ })).toHaveAttribute("href", "/admin/secrets");
     expect(screen.getByText("Администратор")).toBeInTheDocument();
     expect(screen.getByText(/Вход разрешён только владельцу и администраторам платформы/i)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("192.168.1.51");
