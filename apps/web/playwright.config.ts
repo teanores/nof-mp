@@ -23,7 +23,7 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
     env: {
-      NOF_AUTH_SECRET_KEY: "nof-local-dragon-forge-secret-change-me",
+      NOF_AUTH_SECRET_KEY: "nof-local-nof-service-secret-change-me",
       NEXT_PUBLIC_PLATFORM_ORIGIN: baseURL,
       NOF_HT_ORIGIN: "http://127.0.0.1:9",
       NOF_LOCAL_DATABASE_URL: localDatabaseUrl,
@@ -31,7 +31,7 @@ export default defineConfig({
       NOF_PLATFORM_DB_SCHEMA: "nof_platform_e2e",
       NOF_PLATFORM_MCP_TOKEN_SECRET: "nof-local-mcp-token-secret-change-me",
       NOF_PLATFORM_OAUTH_JWT_SECRET: "nof-local-oauth-jwt-secret-change-me",
-      SECRET_KEY: "nof-local-dragon-forge-secret-change-me",
+      SECRET_KEY: "nof-local-nof-service-secret-change-me",
     },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+// Legacy hbl Kubernetes Service name. Rename the Service through nof-infra before changing this fallback.
 const defaultNofServiceUrl = "http://dragon-forge-internal:5000";
 
 export function normalizeRegistrationEmail(email: string): string {

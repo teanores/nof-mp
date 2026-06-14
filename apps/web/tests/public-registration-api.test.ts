@@ -8,7 +8,7 @@ import {
 } from "@/lib/server/public-registration";
 
 describe("public registration api helpers", () => {
-  it("builds Dragon Forge public registration URLs from the internal base URL", () => {
+  it("builds NOF service public registration URLs from the internal base URL", () => {
     const baseUrl = "http://dragon-forge-internal:5000";
 
     expect(buildPublicRegistrationRequestUrl(baseUrl)).toBe(

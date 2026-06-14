@@ -24,11 +24,11 @@ describe("portal auth gate urls", () => {
     expect(portalLoginUrl("/login?next=/tasks")).toBe("/login?next=%2F");
   });
 
-  it("preserves the requested page when linking to legacy Dragon Forge auth", () => {
+  it("preserves the requested page when linking to the legacy NOF service auth bridge", () => {
     expect(legacyLoginUrl("http://192.168.1.51:30500/login", "/tasks")).toBe("http://192.168.1.51:30500/login?next=%2Ftasks");
   });
 
-  it("sanitizes return targets when linking to legacy Dragon Forge auth", () => {
+  it("sanitizes return targets when linking to the legacy NOF service auth bridge", () => {
     expect(legacyLoginUrl("http://192.168.1.51:30500/login", "//evil.example/tasks")).toBe(
       "http://192.168.1.51:30500/login?next=%2F",
     );
