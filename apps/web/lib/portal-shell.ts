@@ -51,6 +51,7 @@ export const systemHealthCards: SystemHealthCard[] = [
 export const protectedPortalRoutes = [
   "/overview",
   "/profile",
+  "/admin/secrets",
   "/admin/users",
 ];
 

@@ -17,6 +17,12 @@ const adminSections = [
     metric: "События",
     title: "Безопасность",
   },
+  {
+    description: "Имена секретов, владельцы, потребители, статус ротации и UAT без хранения значений.",
+    href: "/admin/secrets",
+    metric: "Ротация",
+    title: "Ротация секретов",
+  },
 ];
 
 function displayRole(session: ForgePortalSession): string {
@@ -58,7 +64,7 @@ export function AdminHomePage({ session }: { session: ForgePortalSession }) {
 
       <PortalActionBar eyebrow="Администрирование" title="Рабочие разделы" />
 
-      <section className="grid gap-4 md:grid-cols-2">
+      <section className="grid gap-4 md:grid-cols-3">
         {adminSections.map((section) => (
           <Link
             key={section.href}
