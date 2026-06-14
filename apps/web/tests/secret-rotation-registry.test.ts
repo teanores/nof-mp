@@ -46,6 +46,10 @@ describe("secret rotation registry repository", () => {
 
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.secret_rotation_registry"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.secret_rotation_registry"))).toBe(true);
+    const seedKeys = pool.queries
+      .filter((query) => query.sql.includes("INSERT INTO nof_platform.secret_rotation_registry"))
+      .map((query) => `${query.values?.[0]}:${query.values?.[1]}`);
+    expect(seedKeys).toEqual(expect.arrayContaining(["nof-tt:NOF_TT_OAUTH_CLIENT_SECRET", "nof-ht:TELEGRAM_HABIT_BOT_TOKEN", "nof-service:SECRET_KEY", "nof-infra:NOF_RELEASE_GITHUB_TOKEN"]));
     expect(registry).toHaveLength(1);
     expect(registry.map((item) => item.secretName)).toContain("NOF_MP_EMAIL_WEBHOOK_TOKEN");
     for (const item of registry) {
