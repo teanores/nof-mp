@@ -9,6 +9,9 @@ describe("secret rotation registry repository", () => {
     expect(registry.length).toBeGreaterThan(0);
     expect(registry.map((item) => item.secretName)).toContain("NOF_MP_EMAIL_WEBHOOK_TOKEN");
     for (const item of registry) {
+      expect(item.source).toBe("manual");
+      expect(item.rotationPeriodDays === null || item.rotationPeriodDays > 0).toBe(true);
+      expect(item.daysUntilRotation === null || Number.isInteger(item.daysUntilRotation)).toBe(true);
       expect(Object.keys(item)).not.toContain("value");
       expect(Object.keys(item)).not.toContain("hash");
       expect(Object.keys(item)).not.toContain("preview");

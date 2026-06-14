@@ -18,6 +18,34 @@ const uatLabels: Record<SecretRotationUatStatus, string> = {
   pending: "Ожидает",
 };
 
+function formatDate(value: string | null): string {
+  if (!value) {
+    return "Не задано";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function formatDaysLeft(value: number | null): string {
+  if (value === null) {
+    return "HOLD";
+  }
+
+  if (value < 0) {
+    return `Просрочено ${Math.abs(value)} дн.`;
+  }
+
+  if (value === 0) {
+    return "Сегодня";
+  }
+
+  return `${value} дн.`;
+}
+
 export function AdminSecretsPage({ registry }: { registry: SecretRotationRegistryItem[] }) {
   const pendingCount = registry.filter((item) => item.rotationStatus === "needs-rotation" || item.rotationStatus === "planned").length;
   const p0Count = registry.filter((item) => item.riskLevel === "P0").length;
@@ -58,13 +86,17 @@ export function AdminSecretsPage({ registry }: { registry: SecretRotationRegistr
       <PortalActionBar eyebrow="Секреты" title="Реестр ротации" />
 
       <section className="overflow-hidden rounded border border-forge-line">
-        <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[1280px] border-collapse text-left text-sm">
           <thead className="bg-forge-panel text-xs uppercase text-forge-muted">
             <tr>
               <th className="px-3 py-3">Имя</th>
               <th className="px-3 py-3">Сервис</th>
               <th className="px-3 py-3">Риск</th>
               <th className="px-3 py-3">Статус</th>
+              <th className="px-3 py-3">Источник</th>
+              <th className="px-3 py-3">Последняя ротация</th>
+              <th className="px-3 py-3">Следующая ротация</th>
+              <th className="px-3 py-3">Осталось</th>
               <th className="px-3 py-3">Где хранится</th>
               <th className="px-3 py-3">Потребители</th>
               <th className="px-3 py-3">UAT</th>
@@ -77,6 +109,10 @@ export function AdminSecretsPage({ registry }: { registry: SecretRotationRegistr
                 <td className="px-3 py-3 text-forge-muted">{item.serviceKey}</td>
                 <td className="px-3 py-3 text-forge-muted">{item.riskLevel}</td>
                 <td className="px-3 py-3 text-forge-ink">{statusLabels[item.rotationStatus]}</td>
+                <td className="px-3 py-3 text-forge-muted">{item.source}</td>
+                <td className="px-3 py-3 text-forge-muted">{formatDate(item.lastRotatedAt)}</td>
+                <td className="px-3 py-3 text-forge-muted">{formatDate(item.nextRotationDueAt)}</td>
+                <td className="px-3 py-3 text-forge-ink">{formatDaysLeft(item.daysUntilRotation)}</td>
                 <td className="px-3 py-3 text-forge-muted">{item.locationClass}</td>
                 <td className="px-3 py-3 text-forge-muted">{item.consumers.join(", ")}</td>
                 <td className="px-3 py-3 text-forge-muted">{uatLabels[item.uatStatus]}</td>
