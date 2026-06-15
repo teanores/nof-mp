@@ -82,17 +82,6 @@ export function AdminHomePage({ session }: { session: ForgePortalSession }) {
           </Link>
         ))}
       </section>
-
-      <section className="panel grid gap-3 p-4 text-sm text-forge-muted md:grid-cols-2">
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Что важно</p>
-          <p className="mt-2">Раздел показывает только административный контекст и не раскрывает секреты, токены, внутренние адреса или названия схем.</p>
-        </div>
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Кому доступно</p>
-          <p className="mt-2">Вход разрешён только владельцу и администраторам платформы. Остальные роли получают закрытую страницу.</p>
-        </div>
-      </section>
     </PortalPageShell>
   );
 }
