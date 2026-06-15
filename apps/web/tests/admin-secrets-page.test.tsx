@@ -86,6 +86,11 @@ describe("admin secrets page", () => {
     const user = userEvent.setup();
     render(<AdminSecretsPage registry={registry} />);
 
+    const serviceOptions = screen.getAllByRole("option", { name: /Все сервисы|nof-/ });
+    expect(serviceOptions[0]).toHaveTextContent("Все сервисы");
+    const categoryOptions = screen.getAllByRole("option", { name: /Все типы|Боты|БД|Email/ });
+    expect(categoryOptions[0]).toHaveTextContent("Все типы");
+
     await user.selectOptions(screen.getByLabelText("Фильтр по сервису"), "nof-ht");
 
     expect(screen.getByText("TELEGRAM_HABIT_BOT_TOKEN")).toBeInTheDocument();
