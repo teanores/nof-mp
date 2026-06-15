@@ -9,13 +9,13 @@ import {
 
 describe("public registration api helpers", () => {
   it("builds NOF service public registration URLs from the internal base URL", () => {
-    const baseUrl = "http://dragon-forge-internal:5000";
+    const baseUrl = "http://nof-service-internal:5000";
 
     expect(buildPublicRegistrationRequestUrl(baseUrl)).toBe(
-      "http://dragon-forge-internal:5000/api/public/registration/request",
+      "http://nof-service-internal:5000/api/public/registration/request",
     );
     expect(buildPublicRegistrationConfirmUrl(baseUrl)).toBe(
-      "http://dragon-forge-internal:5000/api/public/registration/confirm",
+      "http://nof-service-internal:5000/api/public/registration/confirm",
     );
   });
 

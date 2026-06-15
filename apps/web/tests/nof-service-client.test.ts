@@ -10,7 +10,7 @@ import {
 
 describe("nof service client", () => {
   it("targets the internal NOF service login endpoint", () => {
-    expect(nofServiceLoginUrl("http://dragon-forge-internal:5000")).toBe("http://dragon-forge-internal:5000/login");
+    expect(nofServiceLoginUrl("http://nof-service-internal:5000")).toBe("http://nof-service-internal:5000/login");
   });
 
   it("keeps successful redirects relative to the current portal", () => {

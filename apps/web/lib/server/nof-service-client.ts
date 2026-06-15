@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 
-// Legacy hbl Kubernetes Service name. Rename the Service through nof-infra before changing this fallback.
-const defaultNofServiceUrl = "http://dragon-forge-internal:5000";
+const defaultNofServiceUrl = "http://nof-service-internal:5000";
 
 export function nofServiceLoginUrl(baseUrl = process.env.NOF_SERVICE_INTERNAL_URL ?? defaultNofServiceUrl): string {
   return new URL("/login", baseUrl).toString();
