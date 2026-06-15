@@ -33,7 +33,6 @@ describe("password reset page", () => {
     render(<PasswordResetPage />);
 
     expect(screen.getByRole("heading", { name: "Восстановление пароля" })).toBeInTheDocument();
-    expect(screen.getByText(/Ответ формы не раскрывает/)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText("Электронная почта"), "owner@example.com");
     await userEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
@@ -67,7 +66,6 @@ describe("password reset page", () => {
     expect(screen.getByRole("heading", { name: "Password recovery" })).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Get link" })).toBeInTheDocument();
-    expect(screen.getByText(/The form response does not reveal/)).toBeInTheDocument();
   });
 
   it("keeps repeat-password checklist failed until the repeat field is filled", async () => {

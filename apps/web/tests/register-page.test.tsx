@@ -15,9 +15,7 @@ describe("register page", () => {
     expect(screen.getByLabelText("Пароль")).toHaveAttribute("name", "password");
     expect(screen.getByText("ЯЗЫК")).toBeInTheDocument();
     expect(screen.getByRole("combobox")).toHaveAttribute("name", "language");
-    expect(screen.getByText("Правила регистрации")).toBeInTheDocument();
     expect(screen.getByText(/Согласие с условиями появится после публикации настоящего соглашения/)).toBeInTheDocument();
-    expect(screen.getByText(/Telegram не используется как способ регистрации или входа/)).toBeInTheDocument();
     expect(screen.getByText(/Внешние мессенджеры не используются как самостоятельный способ/)).toBeInTheDocument();
     expect(screen.getByRole("checkbox")).toBeDisabled();
     expect(screen.getByRole("link", { name: "Юридические аспекты" })).toHaveAttribute("href", "/legal");

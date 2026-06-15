@@ -12,14 +12,6 @@ interface RegisterPageProps {
   step?: RegisterStep;
 }
 
-const registrationPrinciples = [
-  "Регистрация доступна только через подтверждённую почту.",
-  "Новый аккаунт получает личный профиль и базовые разделы платформы.",
-  "Доступ к сервисам подключается отдельно по правилам платформы.",
-  "Telegram не используется как способ регистрации или входа; его можно подключать только после входа для уведомлений и сообщества.",
-  "Если письмо не пришло, проверьте папку Спам и попробуйте запросить код снова.",
-];
-
 function ErrorPanel({ error }: { error: RegisterError }) {
   if (!error) {
     return null;
@@ -145,7 +137,7 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-8">
-      <section className="panel grid w-full max-w-5xl overflow-hidden lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="panel w-full max-w-xl overflow-hidden">
         <div className="flex min-h-[560px] flex-col justify-between gap-8 p-6 sm:p-8">
           <div>
             <div className="flex items-center justify-between gap-3">
@@ -182,18 +174,6 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
             </Link>
           </div>
         </div>
-
-        <aside className="border-t border-forge-line bg-forge-surface p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="tech-label text-xs text-forge-accent">Правила регистрации</p>
-          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Как это работает</h2>
-          <div className="mt-5 grid gap-3">
-            {registrationPrinciples.map((item) => (
-              <article key={item} className="rounded-sm border border-forge-line bg-forge-panel p-3">
-                <p className="text-sm leading-6 text-forge-muted">{item}</p>
-              </article>
-            ))}
-          </div>
-        </aside>
       </section>
     </main>
   );

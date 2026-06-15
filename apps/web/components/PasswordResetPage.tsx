@@ -45,7 +45,6 @@ const copy = {
     email: "Email",
     forgeName: "Narag'Othal Forgath",
     genericError: "Request failed. Try again later.",
-    guideTitle: "How recovery works",
     invalidToken: "This link is invalid or expired.",
     language: "LANGUAGE",
     login: "Sign in",
@@ -60,7 +59,6 @@ const copy = {
     requestIntro: "Enter the account email. The response is the same even if the account is not found, so user data is not exposed.",
     requestSent: "If such an account exists and can receive email, we will send a password recovery link.",
     requestTitle: "Password recovery",
-    security: "Security",
     rules: {
       digit: "Contains a digit",
       lowercase: "Contains a lowercase letter",
@@ -69,12 +67,6 @@ const copy = {
       symbol: "Contains a special character",
       uppercase: "Contains an uppercase letter",
     },
-    securityItems: [
-      "The link is sent only to the confirmed account email.",
-      "The form response does not reveal whether a user with this email exists.",
-      "The link is single-use and stops working after the password is changed.",
-      "Service and synthetic addresses are not used for self-service recovery.",
-    ],
     submittingConfirm: "Saving",
     submittingRequest: "Sending",
   },
@@ -86,7 +78,6 @@ const copy = {
     email: "Электронная почта",
     forgeName: "Narag'Othal Forgath",
     genericError: "Не удалось выполнить запрос. Попробуйте позже.",
-    guideTitle: "Как работает восстановление",
     invalidToken: "Ссылка недействительна или срок действия истёк.",
     language: "ЯЗЫК",
     login: "Войти",
@@ -101,7 +92,6 @@ const copy = {
     requestIntro: "Укажи почту аккаунта. Ответ будет одинаковым даже если аккаунт не найден, чтобы не раскрывать данные пользователей.",
     requestSent: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
     requestTitle: "Восстановление пароля",
-    security: "Безопасность",
     rules: {
       digit: "Есть цифра",
       lowercase: "Есть строчная буква",
@@ -110,12 +100,6 @@ const copy = {
       symbol: "Есть спецсимвол",
       uppercase: "Есть заглавная буква",
     },
-    securityItems: [
-      "Ссылка отправляется только на подтверждённую почту аккаунта.",
-      "Ответ формы не раскрывает, существует ли пользователь с таким email.",
-      "Ссылка одноразовая и перестаёт работать после смены пароля.",
-      "Служебные и синтетические адреса не используются для самостоятельного восстановления.",
-    ],
     submittingConfirm: "Сохраняем",
     submittingRequest: "Отправляем",
   },
@@ -329,7 +313,7 @@ export function PasswordResetPage({ token = "" }: PasswordResetPageProps) {
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-8">
-      <section className="panel grid w-full max-w-5xl overflow-hidden lg:grid-cols-[1fr_0.9fr]">
+      <section className="panel w-full max-w-xl overflow-hidden">
         <div className="flex min-h-[560px] flex-col justify-between gap-8 p-6 sm:p-8">
           <div>
             <div className="flex items-center justify-between gap-3">
@@ -364,18 +348,6 @@ export function PasswordResetPage({ token = "" }: PasswordResetPageProps) {
             </Link>
           </div>
         </div>
-
-        <aside className="border-t border-forge-line bg-forge-surface p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="tech-label text-xs text-forge-accent">{text.security}</p>
-          <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">{text.guideTitle}</h2>
-          <div className="mt-5 grid gap-3">
-            {text.securityItems.map((item) => (
-              <article key={item} className="rounded-sm border border-forge-line bg-forge-panel p-3">
-                <p className="text-sm leading-6 text-forge-muted">{item}</p>
-              </article>
-            ))}
-          </div>
-        </aside>
       </section>
     </main>
   );
