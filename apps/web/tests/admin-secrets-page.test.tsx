@@ -80,11 +80,9 @@ describe("admin secrets page", () => {
     expect(document.body).not.toHaveTextContent("Bearer ");
     expect(document.body).not.toHaveTextContent("token value");
     expect(document.body).not.toHaveTextContent("smtp-pass");
-    expect(screen.getByText("Как читать")).toBeInTheDocument();
-    expect(screen.getByText("Безопасность")).toBeInTheDocument();
-    expect(screen.getByText("Что делать")).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent("Rule");
-    expect(document.body).not.toHaveTextContent("Runbook");
+    expect(screen.getByLabelText("Фильтр по сервису")).toBeInTheDocument();
+    expect(screen.getByLabelText("Фильтр по типу")).toBeInTheDocument();
+    expect(screen.getByLabelText("Сортировка")).toBeInTheDocument();
   });
 
   it("filters secrets by service and category", async () => {

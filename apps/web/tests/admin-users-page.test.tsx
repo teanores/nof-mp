@@ -44,7 +44,6 @@ describe("admin users page", () => {
     expect(screen.getByText("служебная почта")).toBeInTheDocument();
     expect(screen.getByText("почта вне домена")).toBeInTheDocument();
     expect(screen.getByText("Признаки")).toBeInTheDocument();
-    expect(screen.getAllByText(/признаки риска доступа/)).toHaveLength(2);
     expect(document.body).not.toHaveTextContent("Email");
     expect(document.body).not.toHaveTextContent("внешняя почта");
     expect(document.body).not.toHaveTextContent("внешний email");

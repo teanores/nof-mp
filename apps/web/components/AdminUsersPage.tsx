@@ -123,17 +123,6 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
 
       <PortalActionBar eyebrow="Администрирование" title="Аккаунты платформы" />
 
-      <section className="panel grid gap-3 p-4 text-sm text-forge-muted md:grid-cols-2">
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Что уже можно контролировать</p>
-          <p className="mt-2">Видны роли, почта, Telegram-связки, наличие пароля, готовность восстановления, последняя активность и признаки риска доступа.</p>
-        </div>
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Что нельзя имитировать</p>
-          <p className="mt-2">Блокировка аккаунта появится только после серверной проверки запрета входа.</p>
-        </div>
-      </section>
-
       <section className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full border-separate border-spacing-0 text-left text-sm">

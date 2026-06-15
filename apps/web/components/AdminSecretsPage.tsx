@@ -293,21 +293,6 @@ export function AdminSecretsPage({ registry }: { registry: SecretRotationRegistr
           </tbody>
         </table>
       </section>
-
-      <section className="panel grid gap-4 p-4 text-sm text-forge-muted md:grid-cols-3">
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Как читать</p>
-          <p className="mt-2">Строка показывает имя секрета, сервис-владельца, потребителей и дату следующей проверки или ротации.</p>
-        </div>
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Безопасность</p>
-          <p className="mt-2">Здесь видна только справочная информация. Значения, хэши, фрагменты токенов и пароли не хранятся и не отображаются.</p>
-        </div>
-        <div>
-          <p className="tech-label text-xs text-forge-ink">Что делать</p>
-          <p className="mt-2">Фильтруй по сервису или типу, проверь записи со статусом ротации и обновляй ответственного до начала работ.</p>
-        </div>
-      </section>
     </PortalPageShell>
   );
 }
