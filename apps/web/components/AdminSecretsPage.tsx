@@ -143,11 +143,12 @@ export function AdminSecretsPage({ registry }: { registry: SecretRotationRegistr
 
   const services = useMemo(() => ["all", ...Array.from(new Set(registry.map((item) => item.serviceKey))).sort()], [registry]);
   const categories = useMemo(() => {
-    const knownCategories = new Set<SecretCategory>(["all"]);
+    const knownCategories = new Set<Exclude<SecretCategory, "all">>();
     for (const item of registry) {
       knownCategories.add(categoryForSecret(item));
     }
-    return Array.from(knownCategories).sort((left, right) => categoryLabels[left].localeCompare(categoryLabels[right], "ru"));
+    const sortedCategories = Array.from(knownCategories).sort((left, right) => categoryLabels[left].localeCompare(categoryLabels[right], "ru"));
+    return ["all", ...sortedCategories] satisfies SecretCategory[];
   }, [registry]);
   const filteredRegistry = useMemo(() => {
     const filtered = registry.filter((item) => {
