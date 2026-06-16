@@ -16,15 +16,19 @@ function expiredAuthCookie(domain?: string): string {
   ].join("; ");
 }
 
+export function appendExpiredPortalAuthCookies(response: NextResponse): void {
+  for (const domain of logoutCookieDomains) {
+    response.headers.append("Set-Cookie", expiredAuthCookie(domain));
+  }
+}
+
 export function buildPortalLogoutResponse(redirectTo = "/login"): NextResponse {
   const response = new NextResponse(null, {
     headers: { Location: redirectTo },
     status: 303,
   });
 
-  for (const domain of logoutCookieDomains) {
-    response.headers.append("Set-Cookie", expiredAuthCookie(domain));
-  }
+  appendExpiredPortalAuthCookies(response);
 
   return response;
 }
