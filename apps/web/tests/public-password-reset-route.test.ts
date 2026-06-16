@@ -142,6 +142,29 @@ describe("public password reset routes", () => {
     });
   });
 
+  it("clears any existing portal session after a successful reset", async () => {
+    const response = await confirmReset(
+      request("http://localhost/api/public/password-reset/confirm", {
+        newPassword: "NextHorse22!",
+        token: "raw-reset-token",
+      }),
+    );
+
+    const cookies = response.headers.getSetCookie();
+
+    expect(cookies).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^auth_token=; Path=\/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; HttpOnly; SameSite=lax$/),
+        expect.stringMatching(
+          /^auth_token=; Path=\/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; HttpOnly; SameSite=lax; Domain=forgath\.ru$/,
+        ),
+        expect.stringMatching(
+          /^auth_token=; Path=\/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; HttpOnly; SameSite=lax; Domain=\.forgath\.ru$/,
+        ),
+      ]),
+    );
+  });
+
   it("returns a safe error for invalid or expired tokens", async () => {
     passwordResetRepository.confirmReset.mockResolvedValue({ ok: false, reason: "invalid_or_expired_token" });
 

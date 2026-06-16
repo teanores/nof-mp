@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { appendExpiredPortalAuthCookies } from "@/lib/server/logout";
 import { getPlatformPasswordResetRepository } from "@/lib/server/platform-password-reset-repository";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const result = await getPlatformPasswordResetRepository().confirmReset({ newPassword, token });
   if (result.ok) {
-    return NextResponse.json({ ok: true });
+    const response = NextResponse.json({ ok: true });
+    appendExpiredPortalAuthCookies(response);
+    return response;
   }
 
   return NextResponse.json(
