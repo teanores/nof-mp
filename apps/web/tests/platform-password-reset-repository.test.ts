@@ -119,6 +119,35 @@ describe("platform password reset repository", () => {
     expect(pool.queries.some((query) => query.sql.includes('UPDATE dragon_forge."user"'))).toBe(false);
   });
 
+  it("preflights reset tokens without exposing the raw token", async () => {
+    const pool = new FakePool([
+      {
+        rows: [
+          {
+            id: "10000000-0000-0000-0000-000000000001",
+          },
+        ],
+      },
+    ]);
+
+    await expect(repository(pool).verifyResetToken({ token: "raw-reset-token" })).resolves.toEqual({ ok: true });
+
+    const select = pool.queries.find((query) => query.sql.includes("FROM nof_platform.password_reset_tokens"));
+    expect(select?.values?.[0]).toBe(hashPasswordResetToken("raw-reset-token"));
+    expect(JSON.stringify(select?.values)).not.toContain("raw-reset-token");
+  });
+
+  it("preflights expired or used reset tokens as invalid", async () => {
+    const pool = new FakePool([{ rows: [] }]);
+
+    await expect(repository(pool).verifyResetToken({ token: "stale-token" })).resolves.toEqual({
+      ok: false,
+      reason: "invalid_or_expired_token",
+    });
+
+    expect(pool.queries.some((query) => query.sql.includes('UPDATE dragon_forge."user"'))).toBe(false);
+  });
+
   it("rejects weak reset passwords before marking the token used", async () => {
     const pool = new FakePool([
       {
