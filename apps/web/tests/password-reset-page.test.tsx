@@ -81,6 +81,16 @@ describe("password reset page", () => {
     expect(repeatedMatchRule).toHaveTextContent("+ Повтор пароля совпадает");
   });
 
+  it("shows an expired link state before password entry when preflight rejects the token", async () => {
+    render(<PasswordResetPage token="reset-token" tokenStatus="invalid" />);
+
+    expect(screen.getByRole("heading", { name: "Ссылка истекла" })).toBeInTheDocument();
+    expect(screen.getByText("Запросите новую ссылку для восстановления пароля.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Получить новую ссылку" })).toHaveAttribute("href", "/password-reset");
+    expect(screen.queryByLabelText("Новый пароль")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Сменить пароль" })).not.toBeInTheDocument();
+  });
+
   it("switches confirm reset copy to English", async () => {
     render(<PasswordResetPage token="reset-token" />);
 

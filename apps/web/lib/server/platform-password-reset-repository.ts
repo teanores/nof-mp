@@ -31,6 +31,10 @@ export type PasswordResetConfirmResult =
   | { ok: true }
   | { errors?: PlatformPasswordPolicyError[]; ok: false; reason: "invalid_or_expired_token" | "password_policy" };
 
+export type PasswordResetTokenVerificationResult =
+  | { ok: true }
+  | { ok: false; reason: "invalid_or_expired_token" };
+
 export function normalizePasswordResetEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -144,6 +148,23 @@ export class PlatformPasswordResetRepository {
     );
 
     return { ok: true };
+  }
+
+  async verifyResetToken(input: { token: string }): Promise<PasswordResetTokenVerificationResult> {
+    await this.ensureSchema();
+
+    const tokenHash = hashPasswordResetToken(input.token);
+    const tokenResult = await this.pool.query<{ id: string }>(
+      `SELECT id
+       FROM nof_platform.password_reset_tokens
+       WHERE token_hash = $1
+         AND used_at IS NULL
+         AND expires_at > $2
+       LIMIT 1`,
+      [tokenHash, this.now()],
+    );
+
+    return tokenResult.rows[0] ? { ok: true } : { ok: false, reason: "invalid_or_expired_token" };
   }
 
   async close(): Promise<void> {
