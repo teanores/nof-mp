@@ -50,6 +50,19 @@ describe("secret rotation registry repository", () => {
       .filter((query) => query.sql.includes("INSERT INTO nof_platform.secret_rotation_registry"))
       .map((query) => `${query.values?.[0]}:${query.values?.[1]}`);
     expect(seedKeys).toEqual(expect.arrayContaining(["nof-tt:NOF_TT_OAUTH_CLIENT_SECRET", "nof-ht:TELEGRAM_HABIT_BOT_TOKEN", "nof-service:SECRET_KEY", "nof-infra:NOF_RELEASE_GITHUB_TOKEN"]));
+    const emailWebhookSeed = pool.queries
+      .filter((query) => query.sql.includes("INSERT INTO nof_platform.secret_rotation_registry"))
+      .find((query) => query.values?.[0] === "nof-mp" && query.values?.[1] === "NOF_MP_EMAIL_WEBHOOK_TOKEN");
+    const smtpPassSeed = pool.queries
+      .filter((query) => query.sql.includes("INSERT INTO nof_platform.secret_rotation_registry"))
+      .find((query) => query.values?.[0] === "nof-mp" && query.values?.[1] === "SMTP_PASS");
+    expect(emailWebhookSeed?.values?.[8]).toBe("ok");
+    expect(emailWebhookSeed?.values?.[9]).toBe("2026-06-18");
+    expect(emailWebhookSeed?.values?.[12]).toBe("2026-07-18");
+    expect(emailWebhookSeed?.values?.[13]).toBe("passed");
+    expect(smtpPassSeed?.values?.[8]).toBe("ok");
+    expect(smtpPassSeed?.values?.[9]).toBe("2026-06-18");
+    expect(smtpPassSeed?.values?.[13]).toBe("passed");
     expect(registry).toHaveLength(1);
     expect(registry.map((item) => item.secretName)).toContain("NOF_MP_EMAIL_WEBHOOK_TOKEN");
     for (const item of registry) {
