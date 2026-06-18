@@ -10,6 +10,7 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 
 interface PasswordResetPageProps {
   token?: string;
+  tokenStatus?: "invalid" | "valid";
 }
 
 const passwordRules = [
@@ -43,6 +44,8 @@ const copy = {
     confirmIntro: "Enter a new platform account password. The link is single-use and expires after a limited time.",
     confirmTitle: "New password",
     email: "Email",
+    expiredIntro: "Request a new password recovery link to continue.",
+    expiredTitle: "Link expired",
     forgeName: "Narag'Othal Forgath",
     genericError: "Request failed. Try again later.",
     invalidToken: "This link is invalid or expired.",
@@ -56,6 +59,7 @@ const copy = {
     repeatMatches: "Repeated password matches",
     repeatPassword: "Repeat new password",
     requestButton: "Get link",
+    requestNewLink: "Get a new link",
     requestIntro: "Enter the account email. The response is the same even if the account is not found, so user data is not exposed.",
     requestSent: "If such an account exists and can receive email, we will send a password recovery link.",
     requestTitle: "Password recovery",
@@ -76,6 +80,8 @@ const copy = {
     confirmIntro: "Введите новый пароль для аккаунта платформы. Ссылка одноразовая и действует ограниченное время.",
     confirmTitle: "Новый пароль",
     email: "Электронная почта",
+    expiredIntro: "Запросите новую ссылку для восстановления пароля.",
+    expiredTitle: "Ссылка истекла",
     forgeName: "Narag'Othal Forgath",
     genericError: "Не удалось выполнить запрос. Попробуйте позже.",
     invalidToken: "Ссылка недействительна или срок действия истёк.",
@@ -89,6 +95,7 @@ const copy = {
     repeatMatches: "Повтор пароля совпадает",
     repeatPassword: "Повтори новый пароль",
     requestButton: "Получить ссылку",
+    requestNewLink: "Получить новую ссылку",
     requestIntro: "Укажи почту аккаунта. Ответ будет одинаковым даже если аккаунт не найден, чтобы не раскрывать данные пользователей.",
     requestSent: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
     requestTitle: "Восстановление пароля",
@@ -306,8 +313,27 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
   );
 }
 
-export function PasswordResetPage({ token = "" }: PasswordResetPageProps) {
+function ExpiredResetLink({ language }: { language: PortalLanguage }) {
+  const text = copy[language];
+
+  return (
+    <div className="grid gap-3">
+      <p className="rounded-sm border border-forge-accent bg-forge-panel px-3 py-3 text-sm font-semibold leading-6 text-forge-accent">
+        {text.invalidToken}
+      </p>
+      <Link
+        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-center text-xs font-bold text-black transition hover:brightness-110"
+        href="/password-reset"
+      >
+        {text.requestNewLink}
+      </Link>
+    </div>
+  );
+}
+
+export function PasswordResetPage({ token = "", tokenStatus }: PasswordResetPageProps) {
   const hasToken = token.trim().length > 0;
+  const isInvalidToken = hasToken && tokenStatus === "invalid";
   const language = usePortalLanguage();
   const text = copy[language];
 
@@ -324,14 +350,22 @@ export function PasswordResetPage({ token = "" }: PasswordResetPageProps) {
               </div>
             </div>
             <h1 className="heading-tech mt-3 text-4xl font-bold text-forge-ink sm:text-5xl">
-              {hasToken ? text.confirmTitle : text.requestTitle}
+              {isInvalidToken ? text.expiredTitle : hasToken ? text.confirmTitle : text.requestTitle}
             </h1>
             <p className="mt-4 text-sm leading-7 text-forge-muted">
-              {hasToken ? text.confirmIntro : text.requestIntro}
+              {isInvalidToken ? text.expiredIntro : hasToken ? text.confirmIntro : text.requestIntro}
             </p>
           </div>
 
-          <div>{hasToken ? <ConfirmResetForm language={language} token={token} /> : <RequestResetForm language={language} />}</div>
+          <div>
+            {isInvalidToken ? (
+              <ExpiredResetLink language={language} />
+            ) : hasToken ? (
+              <ConfirmResetForm language={language} token={token} />
+            ) : (
+              <RequestResetForm language={language} />
+            )}
+          </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
