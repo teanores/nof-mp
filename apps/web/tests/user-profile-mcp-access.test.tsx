@@ -102,6 +102,8 @@ describe("user profile MCP access", () => {
     expect(screen.getByText("Источник")).toBeInTheDocument();
     expect(screen.getByText("email:")).toBeInTheDocument();
     expect(screen.getByText("telegram:")).toBeInTheDocument();
+    expect(screen.getByText("Восстановление:")).toBeInTheDocument();
+    expect(screen.getByText("нужна реальная почта")).toBeInTheDocument();
     expect(screen.getByText("Уровень")).toBeInTheDocument();
     expect(screen.getByText("Ранг")).toBeInTheDocument();
     expect(screen.getByText("ID пользователя")).toBeInTheDocument();
@@ -111,6 +113,7 @@ describe("user profile MCP access", () => {
     expect(document.body).not.toHaveTextContent("SOURCE");
     expect(document.body).not.toHaveTextContent("EMAIL");
     expect(document.body).not.toHaveTextContent("TG");
+    expect(document.body).not.toHaveTextContent("RECOVERY");
     expect(document.body).not.toHaveTextContent("LEVEL");
     expect(document.body).not.toHaveTextContent("RANK");
     expect(document.body).not.toHaveTextContent("USER ID");
@@ -118,6 +121,25 @@ describe("user profile MCP access", () => {
     expect(document.body).not.toHaveTextContent("LAST SEEN");
     expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
     expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
+  });
+
+  it("shows email recovery readiness in the profile for real email accounts", async () => {
+    render(
+      <UserProfilePage
+        initialSession={{
+          ...session,
+          user: {
+            ...session.user,
+            email: "owner@example.com",
+          },
+        }}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: "teanore" });
+
+    expect(screen.getByText("Восстановление:")).toBeInTheDocument();
+    expect(screen.getByText("доступно по email")).toBeInTheDocument();
   });
 
   it("uses public copy on the login-required profile fallback", async () => {

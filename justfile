@@ -83,6 +83,10 @@ release-brief:
   Write-Host "2. What was verified"
   Write-Host "3. What approval enables"
   Write-Host "4. Exact post-deploy UAT scenarios"
+  Write-Host "5. Local identity gate result for account/auth changes"
+  Write-Host "Run before account/auth deploy requests:"
+  Write-Host "  just test-identity"
+  Write-Host "  just local-ready"
 
 deploy-command ref:
   Write-Host "Production deploy is gated by current-chat owner approval."

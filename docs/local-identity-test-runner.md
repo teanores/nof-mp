@@ -7,6 +7,25 @@ This runbook is the first local, non-production identity regression runner for N
 Use it before NOF-MP identity, OAuth, login, profile, password or service-link releases.
 It does not contact production and does not require hbl access.
 
+## Mandatory release gate
+
+For any release that changes login, logout, registration, profile, password reset, password change, OAuth, service-link or account-administration behavior, the owner-facing release briefing must include local identity gate evidence.
+
+Minimum gate:
+
+```powershell
+just test-identity
+```
+
+Release-ready gate when Docker is available:
+
+```powershell
+just local-ready
+just smoke-identity
+```
+
+Do not replace this gate with production UAT. Production-as-UAT can confirm owner-visible behavior after deploy, but the local identity gate must run before requesting deploy approval for account/auth changes.
+
 ## Command
 
 Run from `C:\Users\User\Documents\dev\NOF\nof-mp`:

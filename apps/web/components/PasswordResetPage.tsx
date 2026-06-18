@@ -9,6 +9,7 @@ import type { PortalLanguage } from "@/lib/portal-language";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
 interface PasswordResetPageProps {
+  initialEmail?: string;
   token?: string;
   tokenStatus?: "invalid" | "valid";
 }
@@ -166,9 +167,9 @@ function resetErrorMessage(error: unknown, language: PortalLanguage): string {
   return text.genericError;
 }
 
-function RequestResetForm({ language }: { language: PortalLanguage }) {
+function RequestResetForm({ initialEmail = "", language }: { initialEmail?: string; language: PortalLanguage }) {
   const text = copy[language];
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [status, setStatus] = useState<"idle" | "sent" | "submitting">("idle");
   const [error, setError] = useState<string | undefined>();
 
@@ -331,7 +332,7 @@ function ExpiredResetLink({ language }: { language: PortalLanguage }) {
   );
 }
 
-export function PasswordResetPage({ token = "", tokenStatus }: PasswordResetPageProps) {
+export function PasswordResetPage({ initialEmail = "", token = "", tokenStatus }: PasswordResetPageProps) {
   const hasToken = token.trim().length > 0;
   const isInvalidToken = hasToken && tokenStatus === "invalid";
   const language = usePortalLanguage();
@@ -363,7 +364,7 @@ export function PasswordResetPage({ token = "", tokenStatus }: PasswordResetPage
             ) : hasToken ? (
               <ConfirmResetForm language={language} token={token} />
             ) : (
-              <RequestResetForm language={language} />
+              <RequestResetForm initialEmail={initialEmail} language={language} />
             )}
           </div>
 

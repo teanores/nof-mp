@@ -58,14 +58,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function connectWithRetry(client, label) {
+async function connectWithRetry(connectionString, label) {
   let lastError;
   for (let attempt = 1; attempt <= 30; attempt += 1) {
+    const client = new Client({ connectionString });
     try {
       await client.connect();
-      return;
+      return client;
     } catch (error) {
       lastError = error;
+      await client.end().catch(() => undefined);
       await sleep(1000);
     }
   }
@@ -121,8 +123,7 @@ function printUsers() {
 
 async function seed({ reset = false } = {}) {
   assertLocalDatabaseUrl(localDatabaseUrl);
-  const client = new Client({ connectionString: localDatabaseUrl });
-  await connectWithRetry(client, "local identity database");
+  const client = await connectWithRetry(localDatabaseUrl, "local identity database");
   try {
     await client.query("BEGIN");
     await client.query('CREATE SCHEMA IF NOT EXISTS dragon_forge');
@@ -228,8 +229,7 @@ async function seed({ reset = false } = {}) {
 async function bootstrapDatabase() {
   assertLocalHost(localPostgresAdminUrl);
   const adminUrl = new URL(localPostgresAdminUrl);
-  const adminClient = new Client({ connectionString: localPostgresAdminUrl });
-  await connectWithRetry(adminClient, "local PostgreSQL admin database");
+  const adminClient = await connectWithRetry(localPostgresAdminUrl, "local PostgreSQL admin database");
   try {
     const roleExists = await adminClient.query("SELECT 1 FROM pg_roles WHERE rolname = 'nof_local'");
     if (roleExists.rowCount === 0) {
