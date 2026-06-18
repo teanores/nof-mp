@@ -41,6 +41,30 @@ describe("password reset page", () => {
     expect(await screen.findByText(/Если такой аккаунт существует/)).toBeInTheDocument();
   });
 
+  it("prefills the reset email when admin opens a recovery action", async () => {
+    render(<PasswordResetPage initialEmail="owner@example.com" />);
+
+    expect(screen.getByLabelText("Электронная почта")).toHaveValue("owner@example.com");
+
+    await userEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/public/password-reset/request",
+        expect.objectContaining({
+          body: JSON.stringify({ email: "owner@example.com" }),
+        }),
+      ),
+    );
+  });
+
+  it("ignores reset email prefill while confirming an existing token", () => {
+    render(<PasswordResetPage initialEmail="owner@example.com" token="reset-token" />);
+
+    expect(screen.getByRole("heading", { name: "Новый пароль" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Электронная почта")).not.toBeInTheDocument();
+  });
+
   it("shows a safe request failure message without exposing account state", async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       json: async () => ({ error: "request_failed" }),

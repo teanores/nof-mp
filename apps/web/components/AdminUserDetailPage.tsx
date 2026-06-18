@@ -45,6 +45,43 @@ function StatusBadge({ children, ready = false }: { children: React.ReactNode; r
   );
 }
 
+function recoveryBlockReason(user: AdminUserListItem): string {
+  if (user.recoveryState === "missing-email") {
+    return "У пользователя не указана электронная почта. Сначала добавь реальную электронную почту.";
+  }
+  if (user.recoveryState === "service-email") {
+    return "У пользователя служебная почта. Сначала нужна реальная электронная почта.";
+  }
+  return "";
+}
+
+function RecoveryActions({ user }: { user: AdminUserListItem }) {
+  const canRecoverByEmail = user.recoveryState === "email-reset-ready" && Boolean(user.email);
+  const resetHref = canRecoverByEmail ? `/password-reset?email=${encodeURIComponent(user.email ?? "")}` : "";
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Действия с доступом</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">
+            {canRecoverByEmail ? "Почтовое восстановление доступно" : "Восстановление по почте недоступно"}
+          </p>
+          {!canRecoverByEmail ? <p className="mt-1 text-sm leading-6 text-forge-muted">{recoveryBlockReason(user)}</p> : null}
+        </div>
+        {canRecoverByEmail ? (
+          <Link
+            className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-xs font-bold text-black transition hover:brightness-110"
+            href={resetHref}
+          >
+            Открыть восстановление пароля
+          </Link>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 export function AdminUserDetailPage({ user }: { user: AdminUserListItem }) {
   const telegram = user.telegram?.username ? `@${user.telegram.username}` : user.telegram?.id ? `id ${user.telegram.id}` : "нет";
   const role = user.role?.displayName ?? user.role?.name ?? "без роли";
@@ -88,6 +125,8 @@ export function AdminUserDetailPage({ user }: { user: AdminUserListItem }) {
           )}
         </div>
       </section>
+
+      <RecoveryActions user={user} />
     </PortalPageShell>
   );
 }

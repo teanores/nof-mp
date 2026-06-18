@@ -20,6 +20,20 @@ const user: AdminUserListItem = {
   username: "teanore",
 };
 
+const recoverableUser: AdminUserListItem = {
+  accountState: "password-login",
+  createdAt: "2026-06-02T10:00:00.000Z",
+  email: "owner@example.com",
+  hasPassword: true,
+  id: "u-2",
+  lastSeen: "2026-06-02T11:00:00.000Z",
+  recoveryState: "email-reset-ready",
+  registrationSource: "email",
+  risks: ["external-email"],
+  role: { displayName: "Администратор", name: "admin" },
+  username: "owner",
+};
+
 describe("admin user detail page", () => {
   it("renders a safe Russian account inspection page", () => {
     render(<AdminUserDetailPage user={user} />);
@@ -36,5 +50,27 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("token");
     expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("shows a recovery action for accounts with a real email", () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    expect(screen.getByRole("heading", { name: "Действия с доступом" })).toBeInTheDocument();
+    expect(screen.getByText("Почтовое восстановление доступно")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Открыть восстановление пароля" })).toHaveAttribute(
+      "href",
+      "/password-reset?email=owner%40example.com",
+    );
+    expect(document.body).not.toHaveTextContent("password_hash");
+    expect(document.body).not.toHaveTextContent("reset-token");
+  });
+
+  it("explains why password recovery is blocked for service emails", () => {
+    render(<AdminUserDetailPage user={user} />);
+
+    expect(screen.getByRole("heading", { name: "Действия с доступом" })).toBeInTheDocument();
+    expect(screen.getByText("Восстановление по почте недоступно")).toBeInTheDocument();
+    expect(screen.getByText("У пользователя служебная почта. Сначала нужна реальная электронная почта.")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Открыть восстановление пароля" })).not.toBeInTheDocument();
   });
 });
