@@ -6,8 +6,8 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 
 type Theme = "dark" | "light" | "system";
 
-const storageKey = "nof-mp-theme";
-const legacyStorageKey = "nof-forge-tasks-theme";
+export const portalThemeStorageKey = "nof-mp-theme";
+export const legacyPortalThemeStorageKey = "nof-forge-tasks-theme";
 
 function systemPrefersLight(): boolean {
   return window.matchMedia("(prefers-color-scheme: light)").matches;
@@ -27,20 +27,20 @@ export function ThemeToggle() {
       : { dark: "ТЕНЬ", light: "СВЕТ", system: "КАК В СИСТЕМЕ" };
 
   useEffect(() => {
-    const legacyTheme = window.localStorage.getItem(legacyStorageKey);
+    const legacyTheme = window.localStorage.getItem(legacyPortalThemeStorageKey);
     if (legacyTheme) {
-      window.localStorage.setItem(storageKey, legacyTheme);
-      window.localStorage.removeItem(legacyStorageKey);
+      window.localStorage.setItem(portalThemeStorageKey, legacyTheme);
+      window.localStorage.removeItem(legacyPortalThemeStorageKey);
     }
 
-    const saved = window.localStorage.getItem(storageKey);
+    const saved = window.localStorage.getItem(portalThemeStorageKey);
     const initialTheme: Theme = saved === "light" || saved === "dark" ? saved : "system";
     setTheme(initialTheme);
     applyTheme(initialTheme);
 
     const media = window.matchMedia("(prefers-color-scheme: light)");
     const handleSystemThemeChange = () => {
-      if ((window.localStorage.getItem(storageKey) ?? "system") === "system") {
+      if ((window.localStorage.getItem(portalThemeStorageKey) ?? "system") === "system") {
         applyTheme("system");
       }
     };
@@ -51,7 +51,7 @@ export function ThemeToggle() {
   function selectTheme(nextTheme: Theme) {
     setTheme(nextTheme);
     applyTheme(nextTheme);
-    window.localStorage.setItem(storageKey, nextTheme);
+    window.localStorage.setItem(portalThemeStorageKey, nextTheme);
   }
 
   return (

@@ -15,7 +15,6 @@ export function usePortalLanguage(initialLanguage: PortalLanguage = defaultPorta
   const [language, setLanguage] = useState<PortalLanguage>(initialLanguage);
 
   useEffect(() => {
-    // Migrate legacy localStorage key written by old nof-forge-tasks builds
     const legacy = window.localStorage.getItem(legacyPortalLanguageStorageKey);
     if (legacy) {
       window.localStorage.setItem(portalLanguageStorageKey, legacy);

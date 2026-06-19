@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import OverviewPage from "@/app/overview/page";
-import { portalLanguageStorageKey } from "@/lib/portal-language";
+import { legacyPortalLanguageStorageKey, portalLanguageStorageKey } from "@/lib/portal-language";
 
 const mocks = vi.hoisted(() => ({
   requirePortalPageSession: vi.fn(),
@@ -65,6 +65,16 @@ describe("platform overview page", () => {
     expect(screen.getByText("Public address")).toBeInTheDocument();
     expect(screen.queryByText("Разделы кузницы")).not.toBeInTheDocument();
     expect(screen.queryByText("Статус сервисов")).not.toBeInTheDocument();
+  });
+
+  it("migrates the legacy browser language key to the platform key", async () => {
+    window.localStorage.setItem(legacyPortalLanguageStorageKey, "en");
+
+    render(await OverviewPage());
+
+    expect(await screen.findByText("Platform Services")).toBeInTheDocument();
+    expect(window.localStorage.getItem(portalLanguageStorageKey)).toBe("en");
+    expect(window.localStorage.getItem(legacyPortalLanguageStorageKey)).toBeNull();
   });
 
   it("hides admin cards for moderators", async () => {
