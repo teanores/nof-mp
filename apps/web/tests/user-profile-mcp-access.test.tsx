@@ -99,7 +99,8 @@ describe("user profile MCP access", () => {
     expect(screen.getByLabelText("Текущий пароль")).toHaveAttribute("name", "currentPassword");
     expect(screen.getByLabelText("Новый пароль")).toHaveAttribute("name", "newPassword");
     expect(screen.getByLabelText("Повтори новый пароль")).toHaveAttribute("name", "repeatedPassword");
-    expect(screen.getByText("Источник")).toBeInTheDocument();
+    expect(screen.queryByText("Источник")).not.toBeInTheDocument();
+    expect(screen.queryByText("SOURCE")).not.toBeInTheDocument();
     expect(screen.getByText("email:")).toBeInTheDocument();
     expect(screen.getByText("telegram:")).toBeInTheDocument();
     expect(screen.queryByText("Восстановление:")).not.toBeInTheDocument();

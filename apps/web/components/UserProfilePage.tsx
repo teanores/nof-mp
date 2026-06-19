@@ -99,7 +99,6 @@ const profileCopy = {
     labelLastSeen: "LAST SEEN",
     labelLevel: "LEVEL",
     labelRank: "RANK",
-    labelSource: "SOURCE",
     labelUserId: "USER ID",
     mcpDescription: "The full token is shown only once. Keep it in agent secrets, not in Git, documentation or chat.",
     mcpEmpty: "No active MCP keys yet.",
@@ -170,7 +169,6 @@ const profileCopy = {
     labelLastSeen: "Последний вход",
     labelLevel: "Уровень",
     labelRank: "Ранг",
-    labelSource: "Источник",
     labelUserId: "ID пользователя",
     mcpDescription: "Полный токен показывается только один раз. Храни его в секретах агента, не в Git, документации или чате.",
     mcpEmpty: "Активных MCP-ключей пока нет.",
@@ -555,7 +553,6 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   <div className="mt-3 space-y-2">
                     <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
                     <DataRow label="telegram:" value={telegramLabel} />
-                    <DataRow label={copy.labelSource} value={user.registrationSource ?? "-"} />
                   </div>
                 </div>
               </div>
