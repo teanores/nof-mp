@@ -78,8 +78,6 @@ const profileCopy = {
     passwordUnchanged: "The new password must be different from the current password.",
     passwordUserNotFound: "The account was not found. Sign in again and retry.",
     passwordChangeFailed: "Password was not changed. Check the fields and retry.",
-    recoveryEmailReady: "available by email",
-    recoveryNeedsEmail: "real email required",
     passwordRulesTitle: "Password rules",
     passwordRuleLength: "At least 12 characters",
     passwordRuleLowercase: "Lowercase letter",
@@ -101,7 +99,6 @@ const profileCopy = {
     labelLastSeen: "LAST SEEN",
     labelLevel: "LEVEL",
     labelRank: "RANK",
-    labelRecovery: "recovery:",
     labelSource: "SOURCE",
     labelUserId: "USER ID",
     mcpDescription: "The full token is shown only once. Keep it in agent secrets, not in Git, documentation or chat.",
@@ -152,8 +149,6 @@ const profileCopy = {
     passwordUnchanged: "Новый пароль должен отличаться от текущего.",
     passwordUserNotFound: "Учётная запись не найдена. Войди заново и повтори попытку.",
     passwordChangeFailed: "Пароль не был изменён. Проверь поля и повтори попытку.",
-    recoveryEmailReady: "доступно по email",
-    recoveryNeedsEmail: "нужна реальная почта",
     passwordRulesTitle: "Правила пароля",
     passwordRuleLength: "Минимум 12 символов",
     passwordRuleLowercase: "Есть строчная буква",
@@ -175,7 +170,6 @@ const profileCopy = {
     labelLastSeen: "Последний вход",
     labelLevel: "Уровень",
     labelRank: "Ранг",
-    labelRecovery: "Восстановление:",
     labelSource: "Источник",
     labelUserId: "ID пользователя",
     mcpDescription: "Полный токен показывается только один раз. Храни его в секретах агента, не в Git, документации или чате.",
@@ -241,11 +235,6 @@ function agentJsonExample(projectKey = "nof-tt"): string {
     null,
     2,
   );
-}
-
-function canRecoverByEmail(email?: string): boolean {
-  const normalized = email?.trim().toLowerCase() ?? "";
-  return normalized.length > 0 && !/^\d+@telegram\.forgath\.ru$/.test(normalized);
 }
 
 function LoginRequired({ loginUrl }: { loginUrl?: string }) {
@@ -325,7 +314,6 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
 
   const user = session?.user;
   const telegramLabel = user?.telegram?.username ? `@${user.telegram.username}` : user?.telegram?.id ? `id:${user.telegram.id}` : "-";
-  const recoveryLabel = canRecoverByEmail(user?.email) ? copy.recoveryEmailReady : copy.recoveryNeedsEmail;
   const accessibleMcpProjects = projects.filter((project) => project.access.allowed);
   const hasMcpAccess = accessibleMcpProjects.length > 0 || mcpTokens.length > 0;
 
@@ -567,7 +555,6 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   <div className="mt-3 space-y-2">
                     <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
                     <DataRow label="telegram:" value={telegramLabel} />
-                    <DataRow label={copy.labelRecovery} value={recoveryLabel} />
                     <DataRow label={copy.labelSource} value={user.registrationSource ?? "-"} />
                   </div>
                 </div>

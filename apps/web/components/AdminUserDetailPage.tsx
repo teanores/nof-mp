@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
@@ -57,7 +59,28 @@ function recoveryBlockReason(user: AdminUserListItem): string {
 
 function RecoveryActions({ user }: { user: AdminUserListItem }) {
   const canRecoverByEmail = user.recoveryState === "email-reset-ready" && Boolean(user.email);
-  const resetHref = canRecoverByEmail ? `/password-reset?email=${encodeURIComponent(user.email ?? "")}` : "";
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+
+  async function handleSendReset() {
+    if (!canRecoverByEmail || !user.email) {
+      return;
+    }
+
+    setStatus("sending");
+    try {
+      const response = await fetch("/api/public/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("sent");
+    } catch {
+      setStatus("failed");
+    }
+  }
 
   return (
     <section className="panel p-4">
@@ -70,14 +93,24 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
           {!canRecoverByEmail ? <p className="mt-1 text-sm leading-6 text-forge-muted">{recoveryBlockReason(user)}</p> : null}
         </div>
         {canRecoverByEmail ? (
-          <Link
-            className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-xs font-bold text-black transition hover:brightness-110"
-            href={resetHref}
+          <button
+            className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={status === "sending"}
+            type="button"
+            onClick={() => void handleSendReset()}
           >
-            Открыть восстановление пароля
-          </Link>
+            {status === "sending" ? "Отправляем" : "Отправить письмо восстановления"}
+          </button>
         ) : null}
       </div>
+      {status === "sent" ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">Письмо восстановления отправлено, если аккаунт может получать почту.</p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Письмо не отправлено. Повтори позже.
+        </p>
+      ) : null}
     </section>
   );
 }

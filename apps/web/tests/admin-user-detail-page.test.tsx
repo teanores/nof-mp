@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AdminUserDetailPage } from "@/components/AdminUserDetailPage";
 import type { AdminUserListItem } from "@/lib/server/admin-users-repository";
@@ -35,6 +36,17 @@ const recoverableUser: AdminUserListItem = {
 };
 
 describe("admin user detail page", () => {
+  beforeEach(() => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      json: async () => ({ ok: true }),
+      ok: true,
+    } as Response);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders a safe Russian account inspection page", () => {
     render(<AdminUserDetailPage user={user} />);
 
@@ -52,17 +64,41 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("secret");
   });
 
-  it("shows a recovery action for accounts with a real email", () => {
+  it("sends a recovery email directly for accounts with a real email", async () => {
     render(<AdminUserDetailPage user={recoverableUser} />);
 
     expect(screen.getByRole("heading", { name: "Действия с доступом" })).toBeInTheDocument();
     expect(screen.getByText("Почтовое восстановление доступно")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Открыть восстановление пароля" })).toHaveAttribute(
-      "href",
-      "/password-reset?email=owner%40example.com",
+    expect(screen.queryByRole("link", { name: "Открыть восстановление пароля" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Отправить письмо восстановления" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/public/password-reset/request",
+        expect.objectContaining({
+          body: JSON.stringify({ email: "owner@example.com" }),
+        }),
+      ),
     );
+    expect(await screen.findByText("Письмо восстановления отправлено, если аккаунт может получать почту.")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("reset-token");
+  });
+
+  it("shows a safe error when direct recovery email delivery request fails", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => ({ error: "request_failed" }),
+      ok: false,
+    } as Response);
+
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Отправить письмо восстановления" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Письмо не отправлено. Повтори позже.");
+    expect(document.body).not.toHaveTextContent("request_failed");
+    expect(document.body).not.toHaveTextContent("SMTP");
   });
 
   it("explains why password recovery is blocked for service emails", () => {
@@ -71,6 +107,6 @@ describe("admin user detail page", () => {
     expect(screen.getByRole("heading", { name: "Действия с доступом" })).toBeInTheDocument();
     expect(screen.getByText("Восстановление по почте недоступно")).toBeInTheDocument();
     expect(screen.getByText("У пользователя служебная почта. Сначала нужна реальная электронная почта.")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Открыть восстановление пароля" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Отправить письмо восстановления" })).not.toBeInTheDocument();
   });
 });

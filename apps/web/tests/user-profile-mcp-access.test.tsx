@@ -102,8 +102,8 @@ describe("user profile MCP access", () => {
     expect(screen.getByText("Источник")).toBeInTheDocument();
     expect(screen.getByText("email:")).toBeInTheDocument();
     expect(screen.getByText("telegram:")).toBeInTheDocument();
-    expect(screen.getByText("Восстановление:")).toBeInTheDocument();
-    expect(screen.getByText("нужна реальная почта")).toBeInTheDocument();
+    expect(screen.queryByText("Восстановление:")).not.toBeInTheDocument();
+    expect(screen.queryByText("нужна реальная почта")).not.toBeInTheDocument();
     expect(screen.getByText("Уровень")).toBeInTheDocument();
     expect(screen.getByText("Ранг")).toBeInTheDocument();
     expect(screen.getByText("ID пользователя")).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe("user profile MCP access", () => {
     expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
   });
 
-  it("shows email recovery readiness in the profile for real email accounts", async () => {
+  it("keeps account recovery diagnostics out of the regular user profile", async () => {
     render(
       <UserProfilePage
         initialSession={{
@@ -138,8 +138,8 @@ describe("user profile MCP access", () => {
 
     await screen.findByRole("heading", { name: "teanore" });
 
-    expect(screen.getByText("Восстановление:")).toBeInTheDocument();
-    expect(screen.getByText("доступно по email")).toBeInTheDocument();
+    expect(screen.queryByText("Восстановление:")).not.toBeInTheDocument();
+    expect(screen.queryByText("доступно по email")).not.toBeInTheDocument();
   });
 
   it("uses public copy on the login-required profile fallback", async () => {
