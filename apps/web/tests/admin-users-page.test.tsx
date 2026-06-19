@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it } from "vitest";
 
@@ -31,6 +31,20 @@ const users: AdminUserListItem[] = [
     risks: ["external-email"],
     username: "owner",
   },
+  {
+    accountState: "password-login",
+    createdAt: "2026-06-03T10:00:00.000Z",
+    email: "moderator@forgath.ru",
+    hasPassword: true,
+    id: "u-3",
+    lastSeen: "2026-06-03T11:00:00.000Z",
+    recoveryState: "email-reset-ready",
+    registrationSource: "email",
+    risks: [],
+    role: { displayName: "Модератор", name: "moderator" },
+    telegram: { username: "mod_nof" },
+    username: "moderator",
+  },
 ];
 
 describe("admin users page", () => {
@@ -38,12 +52,12 @@ describe("admin users page", () => {
     render(<AdminUsersPage users={users} />);
 
     expect(screen.getByText("Электронная почта")).toBeInTheDocument();
-    expect(screen.getByText("Восстановление")).toBeInTheDocument();
+    expect(screen.getAllByText("Восстановление").length).toBeGreaterThan(0);
     expect(screen.getByText("Восстановление по почте")).toBeInTheDocument();
-    expect(screen.getByText("почтовое восстановление")).toBeInTheDocument();
+    expect(screen.getAllByText("почтовое восстановление").length).toBeGreaterThan(0);
     expect(screen.getByText("служебная почта")).toBeInTheDocument();
     expect(screen.getByText("почта вне домена")).toBeInTheDocument();
-    expect(screen.getByText("Признаки")).toBeInTheDocument();
+    expect(screen.getAllByText("Признаки").length).toBeGreaterThan(0);
     expect(document.body).not.toHaveTextContent("Email");
     expect(document.body).not.toHaveTextContent("внешняя почта");
     expect(document.body).not.toHaveTextContent("внешний email");
@@ -54,7 +68,9 @@ describe("admin users page", () => {
     render(<AdminUsersPage users={users} />);
 
     for (const label of ["пароль не задан", "нет пароля", "служебная telegram-почта", "служебная почта", "почтовое восстановление"]) {
-      expect(screen.getByText(label)).toHaveClass("whitespace-nowrap");
+      for (const element of screen.getAllByText(label)) {
+        expect(element).toHaveClass("whitespace-nowrap");
+      }
     }
     for (const label of screen.getAllByText("Открыть")) {
       expect(label).toHaveClass("whitespace-nowrap");
@@ -81,5 +97,47 @@ describe("admin users page", () => {
 
     expect(screen.getByRole("link", { name: "teanore" })).toHaveAttribute("href", "/admin/users/u-1");
     expect(screen.getByRole("link", { name: "owner" })).toHaveAttribute("href", "/admin/users/u-2");
+  });
+
+  it("keeps all-filter options first in every dropdown", () => {
+    render(<AdminUsersPage users={users} />);
+
+    expect(within(screen.getByLabelText("Роль")).getAllByRole("option")[0]).toHaveTextContent("Все роли");
+    expect(within(screen.getByLabelText("Доступ")).getAllByRole("option")[0]).toHaveTextContent("Все доступы");
+    expect(within(screen.getByLabelText("Восстановление")).getAllByRole("option")[0]).toHaveTextContent("Все восстановления");
+    expect(within(screen.getByLabelText("Признаки")).getAllByRole("option")[0]).toHaveTextContent("Все признаки");
+  });
+
+  it("filters users by search text, access, recovery and risk state", () => {
+    render(<AdminUsersPage users={users} />);
+
+    fireEvent.change(screen.getByLabelText("Поиск"), { target: { value: "mod_nof" } });
+    expect(screen.getByRole("link", { name: "moderator" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "teanore" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Поиск"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Доступ"), { target: { value: "telegram-only" } });
+    expect(screen.getByRole("link", { name: "teanore" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "owner" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Доступ"), { target: { value: "all" } });
+    fireEvent.change(screen.getByLabelText("Восстановление"), { target: { value: "service-email" } });
+    expect(screen.getByRole("link", { name: "teanore" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "moderator" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Восстановление"), { target: { value: "all" } });
+    fireEvent.change(screen.getByLabelText("Признаки"), { target: { value: "no-risks" } });
+    expect(screen.getByRole("link", { name: "moderator" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "owner" })).not.toBeInTheDocument();
+  });
+
+  it("shows a concise empty state when filters hide all users", () => {
+    render(<AdminUsersPage users={users} />);
+
+    fireEvent.change(screen.getByLabelText("Поиск"), { target: { value: "nobody@example.com" } });
+
+    expect(screen.getByText("Показано: 0 из 3")).toBeInTheDocument();
+    expect(screen.getByText("Пользователи по выбранным фильтрам не найдены.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("runbook");
   });
 });

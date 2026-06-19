@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import React from "react";
+import React, { useMemo, useState } from "react";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
@@ -15,6 +17,26 @@ const recoveryLabels: Record<AdminUserRecoveryState, string> = {
   "service-email": "служебная почта",
 };
 const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
+type AccountFilter = "all" | "password-login" | "telegram-only";
+type RecoveryFilter = "all" | AdminUserRecoveryState;
+type RiskFilter = "all" | "has-risks" | "no-risks";
+
+const accountFilterLabels: Record<AccountFilter, string> = {
+  all: "Все доступы",
+  "password-login": "Вход по паролю",
+  "telegram-only": "Пароль не задан",
+};
+const recoveryFilterLabels: Record<RecoveryFilter, string> = {
+  all: "Все восстановления",
+  "email-reset-ready": "Почтовое восстановление",
+  "missing-email": "Почта не указана",
+  "service-email": "Служебная почта",
+};
+const riskFilterLabels: Record<RiskFilter, string> = {
+  all: "Все признаки",
+  "has-risks": "Требуют внимания",
+  "no-risks": "Без признаков",
+};
 
 function formatDate(value?: string): string {
   if (!value) {
@@ -80,10 +102,57 @@ function AdminActionState({ user }: { user: AdminUserListItem }) {
 }
 
 export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [accountFilter, setAccountFilter] = useState<AccountFilter>("all");
+  const [recoveryFilter, setRecoveryFilter] = useState<RecoveryFilter>("all");
+  const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
   const riskyUsers = users.filter((user) => user.risks.length > 0).length;
   const passwordLoginUsers = users.filter((user) => user.hasPassword).length;
   const emailRecoveryUsers = users.filter((user) => user.recoveryState === "email-reset-ready").length;
   const recoveryAttentionUsers = users.length - emailRecoveryUsers;
+  const roleOptions = useMemo(() => {
+    const roles = Array.from(
+      new Set(users.map((user) => user.role?.displayName ?? user.role?.name).filter((role): role is string => Boolean(role))),
+    ).sort((left, right) => left.localeCompare(right, "ru"));
+    return roles;
+  }, [users]);
+  const filteredUsers = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return users.filter((user) => {
+      const role = user.role?.displayName ?? user.role?.name ?? "без роли";
+      const searchable = [
+        user.username,
+        user.email ?? "",
+        role,
+        user.telegram?.username ? `@${user.telegram.username}` : "",
+        user.telegram?.id ? String(user.telegram.id) : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (normalizedQuery && !searchable.includes(normalizedQuery)) {
+        return false;
+      }
+      if (roleFilter !== "all" && role !== roleFilter) {
+        return false;
+      }
+      if (accountFilter !== "all" && user.accountState !== accountFilter) {
+        return false;
+      }
+      if (recoveryFilter !== "all" && user.recoveryState !== recoveryFilter) {
+        return false;
+      }
+      if (riskFilter === "has-risks" && user.risks.length === 0) {
+        return false;
+      }
+      if (riskFilter === "no-risks" && user.risks.length > 0) {
+        return false;
+      }
+      return true;
+    });
+  }, [accountFilter, query, recoveryFilter, riskFilter, roleFilter, users]);
 
   return (
     <PortalPageShell>
@@ -123,6 +192,79 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
 
       <PortalActionBar eyebrow="Администрирование" title="Аккаунты платформы" />
 
+      <section className="panel grid gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_repeat(4,minmax(160px,220px))]">
+        <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Поиск</span>
+          <input
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition placeholder:text-forge-muted focus:border-forge-accent"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Имя, email, роль или Telegram"
+            type="search"
+            value={query}
+          />
+        </label>
+        <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Роль</span>
+          <select
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            onChange={(event) => setRoleFilter(event.target.value)}
+            value={roleFilter}
+          >
+            <option value="all">Все роли</option>
+            {roleOptions.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Доступ</span>
+          <select
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            onChange={(event) => setAccountFilter(event.target.value as AccountFilter)}
+            value={accountFilter}
+          >
+            {Object.entries(accountFilterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Восстановление</span>
+          <select
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            onChange={(event) => setRecoveryFilter(event.target.value as RecoveryFilter)}
+            value={recoveryFilter}
+          >
+            {Object.entries(recoveryFilterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Признаки</span>
+          <select
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            onChange={(event) => setRiskFilter(event.target.value as RiskFilter)}
+            value={riskFilter}
+          >
+            {Object.entries(riskFilterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="tech-label text-xs text-forge-muted lg:col-span-5">
+          Показано: {filteredUsers.length} из {users.length}
+        </p>
+      </section>
+
       <section className="panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
@@ -140,7 +282,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className="border-t border-forge-line">
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-3">
@@ -180,6 +322,9 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
               ))}
             </tbody>
           </table>
+          {filteredUsers.length === 0 ? (
+            <p className="border-t border-forge-line px-4 py-6 text-sm text-forge-muted">Пользователи по выбранным фильтрам не найдены.</p>
+          ) : null}
         </div>
       </section>
     </PortalPageShell>
