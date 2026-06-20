@@ -107,6 +107,20 @@ describe("security audit dashboard repository", () => {
             status_code: 200,
             user_agent: "Chrome",
           },
+          {
+            actor_user_id: "user-1",
+            actor_username: "owner",
+            classification: "normal",
+            created_at: new Date("2026-06-20T08:31:00.000Z"),
+            event_type: "logout_success",
+            id: "event-2",
+            ip: "203.0.113.1",
+            login_identifier: null,
+            method: "POST",
+            path: "/api/logout",
+            status_code: 303,
+            user_agent: "Chrome",
+          },
         ],
       });
     const repository = new SecurityAuditDashboardRepository({ query } as never, "nof_mp_security");
@@ -120,6 +134,15 @@ describe("security audit dashboard repository", () => {
         method: "POST",
         path: "/api/admin/users/user-1/password-reset",
         statusCode: 200,
+      },
+      {
+        activityLabel: "Выход из аккаунта",
+        actorLabel: "Пользователь: owner",
+        createdAt: "2026-06-20T08:31:00.000Z",
+        id: "event-2",
+        method: "POST",
+        path: "/api/logout",
+        statusCode: 303,
       },
     ]);
     expect(query).toHaveBeenLastCalledWith(expect.stringContaining("event_type IN"), [100]);

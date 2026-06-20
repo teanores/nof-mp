@@ -144,6 +144,12 @@ function activityLabelFor(eventType: string, path: string): string {
   if (eventType === "profile_service_unlinked") {
     return "Отключение связи сервиса";
   }
+  if (eventType === "logout_success") {
+    return "Выход из аккаунта";
+  }
+  if (eventType === "session_expired") {
+    return "Сессия истекла";
+  }
   if (eventType === "login_success") {
     return "Успешный вход";
   }
@@ -335,7 +341,7 @@ export class SecurityAuditDashboardRepository {
     const result = await this.pool.query<SecurityAuditRow>(
       `SELECT id::text, event_type, classification, ip, login_identifier, method, path, status_code, user_agent, actor_user_id, actor_username, created_at
        FROM ${this.schema}.security_audit_event
-       WHERE event_type IN ('admin_password_reset_requested', 'admin_user_detail_view', 'profile_service_unlinked', 'login_success', 'app_authenticated_request')
+       WHERE event_type IN ('admin_password_reset_requested', 'admin_user_detail_view', 'profile_service_unlinked', 'login_success', 'logout_success', 'session_expired', 'app_authenticated_request')
        ORDER BY created_at DESC
        LIMIT $1`,
       [safeLimit],
