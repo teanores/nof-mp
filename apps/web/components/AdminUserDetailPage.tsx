@@ -5,6 +5,7 @@ import React, { useState } from "react";
 
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
+import type { UserSecurityAuditActivity } from "@/lib/server/security-audit-dashboard";
 import type { ForgeServiceLink } from "@/lib/types";
 
 const riskLabels: Record<AdminUserRisk, string> = {
@@ -155,7 +156,54 @@ function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
   );
 }
 
-export function AdminUserDetailPage({ serviceLinks = [], user }: { serviceLinks?: ForgeServiceLink[]; user: AdminUserListItem }) {
+function RecentActivity({ events }: { events: UserSecurityAuditActivity[] }) {
+  return (
+    <section className="panel overflow-hidden">
+      <div className="border-b border-forge-line p-4">
+        <p className="tech-label text-xs text-forge-muted">Активность</p>
+        <h2 className="heading-tech mt-1 text-lg font-bold text-forge-ink">Последние события аккаунта</h2>
+      </div>
+      {events.length === 0 ? (
+        <p className="px-4 py-5 text-sm text-forge-muted">Событий по этому пользователю пока нет.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
+            <thead className="bg-forge-surface text-xs uppercase text-forge-muted">
+              <tr>
+                <th className="px-4 py-3">Время</th>
+                <th className="px-4 py-3">Событие</th>
+                <th className="px-4 py-3">Метод</th>
+                <th className="px-4 py-3">Путь</th>
+                <th className="px-4 py-3">Статус</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((event) => (
+                <tr key={event.id} className="border-t border-forge-line">
+                  <td className="px-4 py-3 text-forge-muted">{formatDate(event.createdAt)}</td>
+                  <td className="px-4 py-3 font-semibold text-forge-ink">{event.activityLabel}</td>
+                  <td className="px-4 py-3 text-forge-muted">{event.method}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-forge-muted">{event.path}</td>
+                  <td className="px-4 py-3 text-forge-muted">{event.statusCode}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function AdminUserDetailPage({
+  recentActivity = [],
+  serviceLinks = [],
+  user,
+}: {
+  recentActivity?: UserSecurityAuditActivity[];
+  serviceLinks?: ForgeServiceLink[];
+  user: AdminUserListItem;
+}) {
   const telegram = user.telegram?.username ? `@${user.telegram.username}` : user.telegram?.id ? `id ${user.telegram.id}` : "нет";
   const role = user.role?.displayName ?? user.role?.name ?? "без роли";
 
@@ -200,6 +248,8 @@ export function AdminUserDetailPage({ serviceLinks = [], user }: { serviceLinks?
       </section>
 
       <LinkedServices links={serviceLinks} />
+
+      <RecentActivity events={recentActivity} />
 
       <RecoveryActions user={user} />
     </PortalPageShell>

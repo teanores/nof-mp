@@ -56,6 +56,16 @@ const unavailableLinks: ForgeServiceLink[] = [
     openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
   },
 ];
+const recentActivity = [
+  {
+    activityLabel: "Успешный вход",
+    createdAt: "2026-06-20T08:00:00.000Z",
+    id: "event-1",
+    method: "POST",
+    path: "/api/login",
+    statusCode: 303,
+  },
+];
 
 describe("admin user detail page", () => {
   beforeEach(() => {
@@ -158,5 +168,26 @@ describe("admin user detail page", () => {
     expect(screen.getByText("не указан")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("db_down");
     expect(document.body).not.toHaveTextContent("internal");
+  });
+
+  it("shows recent sanitized account activity", () => {
+    render(<AdminUserDetailPage recentActivity={recentActivity} user={recoverableUser} />);
+
+    expect(screen.getByRole("heading", { name: "Последние события аккаунта" })).toBeInTheDocument();
+    expect(screen.getByText("Успешный вход")).toBeInTheDocument();
+    expect(screen.getByText("POST")).toBeInTheDocument();
+    expect(screen.getByText("/api/login")).toBeInTheDocument();
+    expect(screen.getByText("303")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("password");
+    expect(document.body).not.toHaveTextContent("Bearer");
+    expect(document.body).not.toHaveTextContent("token");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("shows a concise empty activity state", () => {
+    render(<AdminUserDetailPage recentActivity={[]} user={recoverableUser} />);
+
+    expect(screen.getByRole("heading", { name: "Последние события аккаунта" })).toBeInTheDocument();
+    expect(screen.getByText("Событий по этому пользователю пока нет.")).toBeInTheDocument();
   });
 });
