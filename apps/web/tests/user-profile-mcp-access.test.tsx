@@ -93,7 +93,8 @@ describe("user profile MCP access", () => {
     await screen.findByRole("heading", { name: "teanore" });
 
     expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
-    expect(screen.getByText("Идентичность портала")).toBeInTheDocument();
+    expect(screen.getByText("Основные параметры")).toBeInTheDocument();
+    expect(screen.queryByText("Идентичность портала")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
     expect(screen.getByText("Безопасность аккаунта")).toBeInTheDocument();
     expect(screen.getByLabelText("Текущий пароль")).toHaveAttribute("name", "currentPassword");

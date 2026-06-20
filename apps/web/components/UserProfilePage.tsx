@@ -58,7 +58,7 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
 const profileCopy = {
   en: {
     aboutFallback: "Profile description is not filled yet.",
-    identity: "Portal identity",
+    identity: "Core profile",
     language: "Portal language",
     languageNote: "The interface language is saved in your profile and applied to portal shell labels.",
     linkedServices: "Connected services",
@@ -136,7 +136,7 @@ const profileCopy = {
   },
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
-    identity: "Идентичность портала",
+    identity: "Основные параметры",
     language: "Язык портала",
     languageNote: "Язык интерфейса сохраняется в профиле и применяется к системным названиям портала.",
     linkedServices: "Подключённые сервисы",
@@ -563,7 +563,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
         {user ? (
           <>
             <section className="panel relative p-5">
-              <p className="tech-label text-xs text-forge-muted">{copy.profile}</p>
+              <p className="tech-label text-xs text-forge-muted">{copy.identity}</p>
               <div className="mt-4 flex items-start gap-4">
                 <div
                   aria-label={`Avatar for ${user.username}`}
@@ -586,6 +586,9 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   <div className="mt-3 space-y-2">
                     <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
                     <DataRow label="telegram:" value={telegramLabel} />
+                    <DataRow label={copy.labelUserId} value={user.id} />
+                    <DataRow label={copy.labelCreated} value={formatDate(user.createdAt)} />
+                    <DataRow label={copy.labelLastSeen} value={formatDate(user.lastSeen)} />
                   </div>
                 </div>
               </div>
@@ -595,15 +598,6 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
               <StatPill label="XP" value={user.experience} />
               <StatPill label={copy.labelLevel} value={user.level?.name ?? "-"} />
               <StatPill label={copy.labelRank} value={user.rank?.name ?? "-"} />
-            </section>
-
-            <section className="panel p-5">
-              <p className="tech-label text-xs text-forge-muted">{copy.identity}</p>
-              <div className="mt-4 space-y-2">
-                <DataRow label={copy.labelUserId} value={user.id} />
-                <DataRow label={copy.labelCreated} value={formatDate(user.createdAt)} />
-                <DataRow label={copy.labelLastSeen} value={formatDate(user.lastSeen)} />
-              </div>
             </section>
 
             <section className="panel p-5">
