@@ -64,19 +64,21 @@ function toAccessPolicy(project: PlatformProjectRecord): PlatformProductAccessPo
 }
 
 export function listPlatformProjects(subject: PlatformAccessSubject = defaultSubject): ForgeProject[] {
-  return platformProjectRecords.map((project) => {
-    const access = canAccessProduct(subject, toAccessPolicy(project));
+  return [...platformProjectRecords]
+    .sort((first, second) => first.key.localeCompare(second.key, "en"))
+    .map((project) => {
+      const access = canAccessProduct(subject, toAccessPolicy(project));
 
-    return {
-      key: project.key,
-      name: project.name,
-      description: project.description,
-      status: project.status,
-      visibility: project.visibility,
-      access,
-      createdAt: project.createdAt,
-    };
-  });
+      return {
+        key: project.key,
+        name: project.name,
+        description: project.description,
+        status: project.status,
+        visibility: project.visibility,
+        access,
+        createdAt: project.createdAt,
+      };
+    });
 }
 
 export const platformProjects: ForgeProject[] = listPlatformProjects();

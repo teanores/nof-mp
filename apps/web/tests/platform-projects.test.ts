@@ -13,6 +13,12 @@ describe("platform project registry", () => {
     });
   });
 
+  it("returns projects sorted by key for stable selectors", () => {
+    const keys = listPlatformProjects({ role: "user", userId: "u-1" }).map((project) => project.key);
+
+    expect(keys).toEqual([...keys].sort((first, second) => first.localeCompare(second, "en")));
+  });
+
   it("allows authenticated users to open registered products", () => {
     const projects = listPlatformProjects({ role: "user", userId: "u-1" });
     const taskTracker = projects.find((project) => project.key === "nof-tt");

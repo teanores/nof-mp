@@ -112,7 +112,7 @@ export class ProductAccessRepository {
          COALESCE(pa.owner_user_ids, ARRAY[]::TEXT[]) AS owner_user_ids
        FROM ${this.schema}.products p
        LEFT JOIN ${this.schema}.product_access pa ON pa.product_key = p.key
-       ORDER BY p.created_at ASC, p.key ASC`,
+       ORDER BY p.key ASC`,
     );
     return result.rows.map((row) => toProduct(row, subject));
   }
