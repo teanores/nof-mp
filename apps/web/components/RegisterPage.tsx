@@ -179,6 +179,9 @@ function RequestForm({ error }: { error: RegisterError }) {
 }
 
 function ConfirmForm({ email, error }: { email: string; error: RegisterError }) {
+  const [code, setCode] = useState("");
+  const canSubmit = /^\d{6}$/.test(code);
+
   return (
     <form action="/api/portal/registration/confirm" className="grid max-w-md gap-3" method="post">
       <ErrorPanel error={error} />
@@ -196,12 +199,16 @@ function ConfirmForm({ email, error }: { email: string; error: RegisterError }) 
           maxLength={6}
           minLength={6}
           name="code"
+          pattern="\d{6}"
           required
           type="text"
+          value={code}
+          onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
         />
       </label>
       <button
-        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110"
+        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={!canSubmit}
         type="submit"
       >
         Завершить регистрацию

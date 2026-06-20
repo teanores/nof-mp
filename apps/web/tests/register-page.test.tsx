@@ -122,8 +122,26 @@ describe("register page", () => {
     expect(screen.getByRole("heading", { name: "Введите код подтверждения" })).toBeInTheDocument();
     expect(screen.getByText(/urdzurab@proton\.me/)).toBeInTheDocument();
     expect(screen.getByLabelText("Код из письма")).toHaveAttribute("name", "code");
-    expect(screen.getByRole("button", { name: "Завершить регистрацию" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Завершить регистрацию" })).toBeDisabled();
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/confirm");
+  });
+
+  it("enables registration confirmation only for a 6 digit code", async () => {
+    const user = userEvent.setup();
+    render(<RegisterPage step="confirm" email="urdzurab@proton.me" />);
+
+    const code = screen.getByLabelText("Код из письма");
+    const submit = screen.getByRole("button", { name: "Завершить регистрацию" });
+
+    await user.type(code, "12ab3");
+
+    expect(code).toHaveValue("123");
+    expect(submit).toBeDisabled();
+
+    await user.type(code, "456");
+
+    expect(code).toHaveValue("123456");
+    expect(submit).toBeEnabled();
   });
 
   it("shows a controlled unavailable state before backend rollout", () => {
