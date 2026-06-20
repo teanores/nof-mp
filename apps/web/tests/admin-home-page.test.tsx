@@ -25,6 +25,7 @@ describe("admin home page", () => {
     expect(screen.getByRole("link", { name: /Безопасность/ })).toHaveAttribute("href", "/admin/security");
     expect(screen.getByRole("link", { name: /Журнал событий/ })).toHaveAttribute("href", "/admin/events");
     expect(screen.getByRole("link", { name: /Ротация секретов/ })).toHaveAttribute("href", "/admin/secrets");
+    expect(screen.getByRole("link", { name: /Настройки/ })).toHaveAttribute("href", "/admin/settings");
     expect(screen.getByText("Администратор")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("192.168.1.51");
     expect(document.body).not.toHaveTextContent("30500");

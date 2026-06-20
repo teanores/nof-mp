@@ -29,6 +29,12 @@ const adminSections = [
     metric: "Ротация",
     title: "Ротация секретов",
   },
+  {
+    description: "Глобальные флаги платформы, включая доступность регистрации без деплоя.",
+    href: "/admin/settings",
+    metric: "Флаги",
+    title: "Настройки",
+  },
 ];
 
 function displayRole(session: ForgePortalSession): string {

@@ -10,9 +10,19 @@ const dnsMocks = vi.hoisted(() => ({
   resolveMx: vi.fn(async () => [{ exchange: "mail.example.com", priority: 10 }]),
 }));
 
+const settingsMocks = vi.hoisted(() => ({
+  isRegistrationPaused: vi.fn(),
+}));
+
 vi.mock("node:dns/promises", () => ({
   default: { resolveMx: dnsMocks.resolveMx },
   resolveMx: dnsMocks.resolveMx,
+}));
+
+vi.mock("@/lib/server/platform-settings-repository", () => ({
+  getPlatformSettingsRepository: () => ({
+    isRegistrationPaused: settingsMocks.isRegistrationPaused,
+  }),
 }));
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({
@@ -33,6 +43,7 @@ describe("public registration routes", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     dnsMocks.resolveMx.mockResolvedValue([{ exchange: "mail.example.com", priority: 10 }]);
+    settingsMocks.isRegistrationPaused.mockResolvedValue(false);
     vi.stubGlobal("fetch", vi.fn());
     resetRegistrationAbuseProtectionForTests();
   });
@@ -80,6 +91,22 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/register?error=conflict");
+  });
+
+  it("keeps registration paused without calling upstream", async () => {
+    settingsMocks.isRegistrationPaused.mockResolvedValueOnce(true);
+
+    const response = await requestRegistration(
+      formRequest("http://localhost/api/public/registration/request", {
+        email: "owner@example.com",
+        password: "OwnerLocal123!",
+        username: "owner",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/register?error=unavailable");
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("confirms an email registration code and redirects to login", async () => {

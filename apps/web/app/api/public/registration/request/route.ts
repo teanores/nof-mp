@@ -7,6 +7,7 @@ import {
   recordRegistrationAudit,
   registrationRateLimit,
 } from "@/lib/server/registration-abuse-protection";
+import { getPlatformSettingsRepository } from "@/lib/server/platform-settings-repository";
 import {
   buildPublicRegistrationRequestUrl,
   normalizeRegistrationEmail,
@@ -22,6 +23,10 @@ export async function POST(request: NextRequest) {
 
   if (!username || !email || !password) {
     return redirectToRegistrationRequestError("invalid");
+  }
+
+  if (await getPlatformSettingsRepository().isRegistrationPaused()) {
+    return redirectToRegistrationRequestError("unavailable");
   }
 
   const limit = registrationRateLimit(email, clientIpFromRequest(request));
