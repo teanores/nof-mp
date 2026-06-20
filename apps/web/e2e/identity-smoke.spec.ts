@@ -77,9 +77,13 @@ test("registration entry smoke stays local and exposes controlled fallback state
 
   await page.getByRole("button", { name: "Показать пароль" }).click();
   await expect(page.getByLabel("Пароль", { exact: true })).toHaveAttribute("type", "text");
-  await expect(page.getByLabel("Повтори пароль")).toHaveAttribute("type", "text");
+  await expect(page.getByLabel("Повтори пароль")).toHaveAttribute("type", "password");
   await page.getByRole("button", { name: "Скрыть пароль" }).click();
   await expect(page.getByLabel("Пароль", { exact: true })).toHaveAttribute("type", "password");
+
+  await page.getByRole("button", { name: "Показать повтор пароля" }).click();
+  await expect(page.getByLabel("Повтори пароль")).toHaveAttribute("type", "text");
+  await page.getByRole("button", { name: "Скрыть повтор пароля" }).click();
   await expect(page.getByLabel("Повтори пароль")).toHaveAttribute("type", "password");
 
   await page.getByLabel("Логин").fill("local_new_user");

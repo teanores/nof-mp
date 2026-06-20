@@ -85,7 +85,7 @@ describe("register page", () => {
     expect(submit).toBeEnabled();
   });
 
-  it("lets users show and hide both registration password fields", async () => {
+  it("lets users show and hide registration password fields with field-level controls", async () => {
     const user = userEvent.setup();
     render(<RegisterPage />);
 
@@ -98,9 +98,19 @@ describe("register page", () => {
     await user.click(screen.getByRole("button", { name: "Показать пароль" }));
 
     expect(password).toHaveAttribute("type", "text");
-    expect(repeatedPassword).toHaveAttribute("type", "text");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
 
     await user.click(screen.getByRole("button", { name: "Скрыть пароль" }));
+
+    expect(password).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+
+    await user.click(screen.getByRole("button", { name: "Показать повтор пароля" }));
+
+    expect(password).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "text");
+
+    await user.click(screen.getByRole("button", { name: "Скрыть повтор пароля" }));
 
     expect(password).toHaveAttribute("type", "password");
     expect(repeatedPassword).toHaveAttribute("type", "password");
