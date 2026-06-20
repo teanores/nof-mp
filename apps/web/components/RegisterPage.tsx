@@ -43,8 +43,11 @@ const passwordRuleCopy = [
 ] as const;
 
 function RequestForm({ error }: { error: RegisterError }) {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatedPassword, setRepeatedPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const passwordRules = [
     ...passwordRuleCopy.map((rule) => ({ isMet: rule.test(password), label: rule.label })),
     {
@@ -52,7 +55,7 @@ function RequestForm({ error }: { error: RegisterError }) {
       label: "Повтор пароля совпадает",
     },
   ];
-  const canSubmit = passwordRules.every((rule) => rule.isMet);
+  const canSubmit = username.trim().length >= 3 && email.trim().length > 0 && passwordRules.every((rule) => rule.isMet);
 
   return (
     <form id="portal-registration-form" action="/api/portal/registration/request" className="grid max-w-md gap-3" method="post">
@@ -66,6 +69,8 @@ function RequestForm({ error }: { error: RegisterError }) {
           name="username"
           required
           type="text"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
         />
       </label>
       <label className="grid gap-2">
@@ -76,6 +81,8 @@ function RequestForm({ error }: { error: RegisterError }) {
           name="email"
           required
           type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
         />
       </label>
       <label className="grid gap-2">
@@ -86,7 +93,7 @@ function RequestForm({ error }: { error: RegisterError }) {
           minLength={12}
           name="password"
           required
-          type="password"
+          type={isPasswordVisible ? "text" : "password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
@@ -99,11 +106,19 @@ function RequestForm({ error }: { error: RegisterError }) {
           minLength={12}
           name="repeatedPassword"
           required
-          type="password"
+          type={isPasswordVisible ? "text" : "password"}
           value={repeatedPassword}
           onChange={(event) => setRepeatedPassword(event.target.value)}
         />
       </label>
+      <button
+        aria-pressed={isPasswordVisible}
+        className="tech-label min-h-10 rounded-sm border border-forge-line bg-forge-surface px-4 py-2 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+        type="button"
+        onClick={() => setIsPasswordVisible((current) => !current)}
+      >
+        {isPasswordVisible ? "Скрыть пароль" : "Показать пароль"}
+      </button>
       <div className="rounded-sm border border-forge-line bg-forge-surface p-3" aria-live="polite">
         <p className="tech-label text-[10px] text-forge-muted">Правила пароля</p>
         <ul className="mt-2 grid gap-2 sm:grid-cols-2">

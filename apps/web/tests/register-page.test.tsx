@@ -25,6 +25,7 @@ describe("register page", () => {
     expect(screen.getByRole("checkbox")).toBeDisabled();
     expect(screen.getByRole("link", { name: "Юридические аспекты" })).toHaveAttribute("href", "/legal");
     expect(screen.getByRole("button", { name: "Получить код" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login");
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/request");
     expect(document.querySelector("form")).toHaveAttribute("id", "portal-registration-form");
     expect(document.body.textContent).not.toContain("Dragon Forge");
@@ -43,6 +44,8 @@ describe("register page", () => {
     const repeatedPassword = screen.getByLabelText("Повтори пароль");
     const submit = screen.getByRole("button", { name: "Получить код" });
 
+    await user.type(screen.getByLabelText("Логин"), "local_user");
+    await user.type(screen.getByLabelText("Электронная почта"), "local@example.test");
     await user.type(password, "weak");
     await user.type(repeatedPassword, "weak");
 
@@ -62,6 +65,45 @@ describe("register page", () => {
 
     expect(screen.getByText("Повтор пароля совпадает").closest("li")).toHaveTextContent("+");
     expect(submit).toBeEnabled();
+  });
+
+  it("keeps code request disabled until username and email are filled", async () => {
+    const user = userEvent.setup();
+    render(<RegisterPage />);
+
+    const submit = screen.getByRole("button", { name: "Получить код" });
+
+    await user.type(screen.getByLabelText("Пароль"), "StrongLocal1!");
+    await user.type(screen.getByLabelText("Повтори пароль"), "StrongLocal1!");
+
+    expect(submit).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Логин"), "local_user");
+    expect(submit).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Электронная почта"), "local@example.test");
+    expect(submit).toBeEnabled();
+  });
+
+  it("lets users show and hide both registration password fields", async () => {
+    const user = userEvent.setup();
+    render(<RegisterPage />);
+
+    const password = screen.getByLabelText("Пароль");
+    const repeatedPassword = screen.getByLabelText("Повтори пароль");
+
+    expect(password).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+
+    await user.click(screen.getByRole("button", { name: "Показать пароль" }));
+
+    expect(password).toHaveAttribute("type", "text");
+    expect(repeatedPassword).toHaveAttribute("type", "text");
+
+    await user.click(screen.getByRole("button", { name: "Скрыть пароль" }));
+
+    expect(password).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
   });
 
   it("shows the confirmation form when email is pending", () => {
