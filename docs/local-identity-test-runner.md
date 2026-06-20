@@ -107,12 +107,14 @@ just db-down
 ## Covered scenarios
 
 - platform auth cookie decoding;
+- public email-code registration request and confirmation proxy contracts;
 - platform login proxy behavior and audit sanitization;
 - OAuth authorize, consent approval and token route contracts;
 - product launch route contract;
 - profile service-link read/unlink contract;
 - platform password hash compatibility, policy, repository and profile API;
-- profile UI for current user, linked services, MCP keys and password change.
+- profile UI for current user, linked services, MCP keys and password change;
+- local browser smoke for registration entry and controlled unavailable fallback.
 
 ## Not covered yet
 
