@@ -25,6 +25,7 @@ describe("register page", () => {
     expect(screen.getByRole("checkbox")).toBeDisabled();
     expect(screen.getByRole("link", { name: "Юридические аспекты" })).toHaveAttribute("href", "/legal");
     expect(screen.getByRole("button", { name: "Получить код" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Получить код" })).not.toHaveClass("bg-forge-accent");
     expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login");
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/request");
     expect(document.querySelector("form")).toHaveAttribute("id", "portal-registration-form");
@@ -83,6 +84,7 @@ describe("register page", () => {
 
     await user.type(screen.getByLabelText("Электронная почта"), "local@example.test");
     expect(submit).toBeEnabled();
+    expect(submit).toHaveClass("bg-forge-accent");
   });
 
   it("lets users show and hide registration password fields with field-level controls", async () => {
@@ -123,6 +125,7 @@ describe("register page", () => {
     expect(screen.getByText(/urdzurab@proton\.me/)).toBeInTheDocument();
     expect(screen.getByLabelText("Код из письма")).toHaveAttribute("name", "code");
     expect(screen.getByRole("button", { name: "Завершить регистрацию" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Завершить регистрацию" })).not.toHaveClass("bg-forge-accent");
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/confirm");
   });
 

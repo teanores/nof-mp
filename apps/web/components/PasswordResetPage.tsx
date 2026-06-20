@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 
+import { primaryActionClassName } from "@/components/ActionButtonStyles";
 import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import type { PortalLanguage } from "@/lib/portal-language";
@@ -215,7 +216,7 @@ function RequestResetForm({ initialEmail = "", language }: { initialEmail?: stri
         />
       </label>
       <button
-        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        className={primaryActionClassName(!canSubmit)}
         disabled={!canSubmit}
         type="submit"
       >
@@ -337,7 +338,7 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
         </p>
       ) : null}
       <button
-        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        className={primaryActionClassName(!canSubmit)}
         disabled={!canSubmit}
         type="submit"
       >

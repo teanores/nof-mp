@@ -338,6 +338,7 @@ describe("user profile MCP access", () => {
     const repeatedMatchRule = screen.getByText("Повтор пароля совпадает").closest("li");
 
     expect(submit).toBeDisabled();
+    expect(submit).not.toHaveClass("bg-forge-accent");
     expect(lengthRule).toHaveTextContent("-Минимум 12 символов");
     expect(digitRule).toHaveTextContent("-Есть цифра");
     expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
@@ -357,6 +358,7 @@ describe("user profile MCP access", () => {
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("+Повтор пароля совпадает");
     expect(submit).toBeEnabled();
+    expect(submit).toHaveClass("bg-forge-accent");
 
     await userEvent.clear(screen.getByLabelText("Новый пароль"));
     await userEvent.type(screen.getByLabelText("Новый пароль"), "Next Horse22!");

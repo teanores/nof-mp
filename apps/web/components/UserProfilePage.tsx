@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
+import { compactPrimaryActionClassName } from "@/components/ActionButtonStyles";
 import { BrandHomeLink } from "@/components/BrandHomeLink";
 import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalPageShell } from "@/components/PortalLayout";
@@ -762,7 +763,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <button
-                    className="tech-label min-h-10 min-w-[160px] rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-center text-[10px] font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                    className={compactPrimaryActionClassName(!canChangePassword, "min-w-[160px]")}
                     disabled={!canChangePassword}
                     type="submit"
                   >
@@ -811,7 +812,10 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                   />
                 </label>
                 <button
-                  className="tech-label min-h-11 rounded-sm border border-forge-accent bg-forge-accent px-4 py-3 text-center text-xs font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                  className={compactPrimaryActionClassName(
+                    isTokenBusy || !newTokenName.trim() || !newTokenProjectKey.trim() || accessibleMcpProjects.length === 0,
+                    "min-h-11 px-4 py-3 text-xs",
+                  )}
                   disabled={isTokenBusy || !newTokenName.trim() || !newTokenProjectKey.trim() || accessibleMcpProjects.length === 0}
                   type="button"
                   onClick={() => void handleCreateMcpToken()}
@@ -879,7 +883,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                       </div>
                       <div className="flex shrink-0 flex-wrap justify-end gap-2">
                         <button
-                          className="tech-label min-h-10 min-w-[120px] rounded-sm border border-forge-accent bg-forge-accent px-3 py-2 text-center text-[10px] font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
+                          className={compactPrimaryActionClassName(isTokenBusy, "min-w-[120px] px-3")}
                           disabled={isTokenBusy}
                           type="button"
                           onClick={() => void handleRotateMcpToken(token)}
