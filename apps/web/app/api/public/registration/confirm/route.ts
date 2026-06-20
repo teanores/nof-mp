@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { getPlatformSettingsRepository } from "@/lib/server/platform-settings-repository";
 import { recordRegistrationAudit } from "@/lib/server/registration-abuse-protection";
 import {
   buildPublicRegistrationConfirmUrl,
@@ -15,6 +16,10 @@ export async function POST(request: NextRequest) {
 
   if (!email || !code) {
     return redirectToRegistrationConfirmError(email, "invalid");
+  }
+
+  if (await getPlatformSettingsRepository().isRegistrationPaused()) {
+    return redirectToRegistrationConfirmError(email, "unavailable");
   }
 
   try {
