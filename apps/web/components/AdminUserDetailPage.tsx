@@ -101,11 +101,11 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
         {canRecoverByEmail ? (
           <button
             className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={status === "sending"}
+            disabled={status === "sending" || status === "sent"}
             type="button"
             onClick={() => void handleSendReset()}
           >
-            {status === "sending" ? "Отправляем" : "Отправить письмо восстановления"}
+            {status === "sending" ? "Отправляем" : status === "sent" ? "Письмо отправлено" : "Отправить письмо восстановления"}
           </button>
         ) : null}
       </div>

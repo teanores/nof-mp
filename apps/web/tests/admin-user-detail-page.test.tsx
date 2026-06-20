@@ -114,8 +114,20 @@ describe("admin user detail page", () => {
       ),
     );
     expect(await screen.findByText("Письмо восстановления отправлено, если аккаунт может получать почту.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Письмо отправлено" })).toBeDisabled();
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("reset-token");
+  });
+
+  it("prevents duplicate recovery email clicks after a successful send", async () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Отправить письмо восстановления" }));
+    await screen.findByRole("button", { name: "Письмо отправлено" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Письмо отправлено" }));
+
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it("shows a safe error when direct recovery email delivery request fails", async () => {
