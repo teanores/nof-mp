@@ -47,6 +47,15 @@ export interface SecurityAuditDashboard {
   topSources: Array<{ failedLogins: number; ip: string; scans: number; total: number }>;
 }
 
+export interface UserSecurityAuditActivity {
+  activityLabel: string;
+  createdAt: string;
+  id: string;
+  method: string;
+  path: string;
+  statusCode: number;
+}
+
 interface SecurityAuditRow extends QueryResultRow {
   actor_user_id: string | null;
   actor_username: string | null;
@@ -286,6 +295,28 @@ export class SecurityAuditDashboardRepository {
     );
 
     return toDashboard(result.rows);
+  }
+
+  async recentEventsForActor(actorUserId: string, limit = 12): Promise<UserSecurityAuditActivity[]> {
+    await this.initialize();
+    const safeLimit = Math.max(1, Math.min(limit, 25));
+    const result = await this.pool.query<SecurityAuditRow>(
+      `SELECT id::text, event_type, classification, ip, login_identifier, method, path, status_code, user_agent, actor_user_id, actor_username, created_at
+       FROM ${this.schema}.security_audit_event
+       WHERE actor_user_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [actorUserId.slice(0, 80), safeLimit],
+    );
+
+    return result.rows.map((row) => ({
+      activityLabel: activityLabelFor(row.event_type, row.path),
+      createdAt: row.created_at.toISOString(),
+      id: row.id,
+      method: row.method,
+      path: row.path,
+      statusCode: row.status_code,
+    }));
   }
 
   async record(input: SecurityAuditEventInput): Promise<void> {

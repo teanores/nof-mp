@@ -4,6 +4,7 @@ import { AdminUserDetailPage } from "@/components/AdminUserDetailPage";
 import { getAdminUsersRepository } from "@/lib/server/admin-users-repository";
 import { requirePortalAdminSession } from "@/lib/server/portal-admin";
 import { requirePortalPageSession } from "@/lib/server/portal-auth-gate";
+import { getSecurityAuditDashboardRepository } from "@/lib/server/security-audit-dashboard";
 import { fetchNofHtLink } from "@/lib/server/service-links-contract";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,9 @@ export default async function AdminUserDetailRoute({ params }: { params: Promise
   }
 
   const serviceLinks = [await fetchNofHtLink(user.id)];
+  const recentActivity = await getSecurityAuditDashboardRepository()
+    .recentEventsForActor(user.id)
+    .catch(() => []);
 
-  return <AdminUserDetailPage serviceLinks={serviceLinks} user={user} />;
+  return <AdminUserDetailPage recentActivity={recentActivity} serviceLinks={serviceLinks} user={user} />;
 }

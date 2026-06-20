@@ -43,4 +43,45 @@ describe("security audit dashboard repository", () => {
     );
     expect(JSON.stringify(query.mock.calls)).not.toContain("value");
   });
+
+  it("loads recent sanitized activity for one actor", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            actor_user_id: "user-1",
+            actor_username: "owner",
+            classification: "auth",
+            created_at: new Date("2026-06-20T08:00:00.000Z"),
+            event_type: "login_success",
+            id: "event-1",
+            ip: "203.0.113.1",
+            login_identifier: null,
+            method: "POST",
+            path: "/api/login",
+            status_code: 303,
+            user_agent: "Chrome",
+          },
+        ],
+      });
+    const repository = new SecurityAuditDashboardRepository({ query } as never, "nof_mp_security");
+
+    await expect(repository.recentEventsForActor("user-1")).resolves.toEqual([
+      {
+        activityLabel: "Успешный вход",
+        createdAt: "2026-06-20T08:00:00.000Z",
+        id: "event-1",
+        method: "POST",
+        path: "/api/login",
+        statusCode: 303,
+      },
+    ]);
+    expect(query).toHaveBeenLastCalledWith(expect.stringContaining("WHERE actor_user_id = $1"), ["user-1", 12]);
+    expect(JSON.stringify(query.mock.calls)).not.toContain("password");
+    expect(JSON.stringify(query.mock.calls)).not.toContain("token");
+  });
 });

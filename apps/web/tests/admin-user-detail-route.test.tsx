@@ -6,6 +6,7 @@ import type { ForgePortalSession } from "@/lib/types";
 const mocks = vi.hoisted(() => ({
   fetchNofHtLink: vi.fn(),
   getUserById: vi.fn<(id: string) => Promise<AdminUserListItem | null>>(),
+  recentEventsForActor: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -26,6 +27,10 @@ vi.mock("@/lib/server/admin-users-repository", () => ({
 
 vi.mock("@/lib/server/service-links-contract", () => ({
   fetchNofHtLink: mocks.fetchNofHtLink,
+}));
+
+vi.mock("@/lib/server/security-audit-dashboard", () => ({
+  getSecurityAuditDashboardRepository: () => ({ recentEventsForActor: mocks.recentEventsForActor }),
 }));
 
 import AdminUserDetailRoute from "@/app/admin/users/[userId]/page";
@@ -62,14 +67,26 @@ describe("admin user detail route", () => {
       canUnlink: true,
       openHref: "https://habit-tracker.forgath.ru/",
     });
+    mocks.recentEventsForActor.mockResolvedValue([
+      {
+        activityLabel: "Успешный вход",
+        createdAt: "2026-06-20T08:00:00.000Z",
+        id: "event-1",
+        method: "POST",
+        path: "/api/login",
+        statusCode: 303,
+      },
+    ]);
 
     const result = await AdminUserDetailRoute({ params: Promise.resolve({ userId: "u-1" }) });
 
     expect(mocks.getUserById).toHaveBeenCalledWith("u-1");
     expect(mocks.fetchNofHtLink).toHaveBeenCalledWith("u-1");
+    expect(mocks.recentEventsForActor).toHaveBeenCalledWith("u-1");
     expect(result.type.name).toBe("AdminUserDetailPage");
     expect(result.props.user.id).toBe("u-1");
     expect(result.props.serviceLinks).toHaveLength(1);
+    expect(result.props.recentActivity).toHaveLength(1);
   });
 
   it("returns not found when the selected user does not exist", async () => {
@@ -78,5 +95,29 @@ describe("admin user detail route", () => {
 
     await expect(AdminUserDetailRoute({ params: Promise.resolve({ userId: "missing" }) })).rejects.toThrow("NEXT_NOT_FOUND");
     expect(mocks.notFound).toHaveBeenCalled();
+  });
+
+  it("renders the selected user even when audit activity lookup fails", async () => {
+    mocks.portalPageSession.mockResolvedValue(adminSession());
+    mocks.getUserById.mockResolvedValue({
+      accountState: "password-login",
+      hasPassword: true,
+      id: "u-1",
+      recoveryState: "email-reset-ready",
+      risks: [],
+      username: "owner",
+    });
+    mocks.fetchNofHtLink.mockResolvedValue({
+      serviceKey: "nof-ht",
+      serviceName: "Habit Tracker",
+      status: "unavailable",
+      canUnlink: false,
+      openHref: "https://habit-tracker.forgath.ru/",
+    });
+    mocks.recentEventsForActor.mockRejectedValue(new Error("audit_down"));
+
+    const result = await AdminUserDetailRoute({ params: Promise.resolve({ userId: "u-1" }) });
+
+    expect(result.props.recentActivity).toEqual([]);
   });
 });
