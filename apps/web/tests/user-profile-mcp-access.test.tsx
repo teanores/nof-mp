@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserProfilePage } from "@/components/UserProfilePage";
 import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
-import type { ForgeMcpToken, ForgeProject } from "@/lib/types";
+import type { ForgeMcpToken, ForgeProject, ForgeServiceLink } from "@/lib/types";
 
 const platformApi = vi.hoisted(() => ({
   changeProfilePassword: vi.fn(),
@@ -249,6 +249,51 @@ describe("user profile MCP access", () => {
 
     await waitFor(() => expect(platformApi.unlinkProfileService).toHaveBeenCalledWith("nof-ht"));
     expect(screen.getByText("Не подключён")).toBeInTheDocument();
+  });
+
+  it("prevents duplicate service unlink requests while the unlink is pending", async () => {
+    platformApi.fetchProfileServiceLinks.mockResolvedValue([
+      {
+        serviceKey: "nof-ht",
+        serviceName: "Habit Tracker",
+        status: "connected",
+        accountEmail: "habit@example.com",
+        accountLabel: "Habit User",
+        linkedAt: "2026-06-11T10:00:00.000Z",
+        canUnlink: true,
+        openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+      },
+    ]);
+
+    let resolveUnlink: (link: ForgeServiceLink) => void = () => undefined;
+    platformApi.unlinkProfileService.mockReturnValue(
+      new Promise<ForgeServiceLink>((resolve) => {
+        resolveUnlink = resolve;
+      }),
+    );
+
+    render(<UserProfilePage initialSession={session} />);
+
+    const unlinkButton = await screen.findByRole("button", { name: "Отключить Habit Tracker" });
+
+    await userEvent.click(unlinkButton);
+
+    expect(await screen.findByRole("button", { name: "Отключаем связь Habit Tracker" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Отключаем связь Habit Tracker" }));
+    expect(platformApi.unlinkProfileService).toHaveBeenCalledTimes(1);
+
+    resolveUnlink({
+      serviceKey: "nof-ht",
+      serviceName: "Habit Tracker",
+      status: "not_connected",
+      accountEmail: undefined,
+      accountLabel: undefined,
+      linkedAt: undefined,
+      canUnlink: false,
+      openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+    });
+
+    await waitFor(() => expect(screen.getByText("Не подключён")).toBeInTheDocument());
   });
 
   it("lets the signed-in user change the platform password from profile", async () => {

@@ -130,7 +130,9 @@ const profileCopy = {
     serviceConnected: "Connected",
     serviceNotConnected: "Not connected",
     serviceUnavailable: "Check unavailable",
+    unlinkServiceAria: "Disconnect",
     unlinkService: "Disconnect",
+    unlinkingService: "Disconnecting",
   },
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
@@ -206,7 +208,9 @@ const profileCopy = {
     serviceConnected: "Подключён",
     serviceNotConnected: "Не подключён",
     serviceUnavailable: "Проверка недоступна",
+    unlinkServiceAria: "Отключить",
     unlinkService: "Отключить связь",
+    unlinkingService: "Отключаем связь",
   },
 } as const;
 
@@ -277,6 +281,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [mcpTokens, setMcpTokens] = useState<ForgeMcpToken[]>([]);
   const [projects, setProjects] = useState<ForgeProject[]>([]);
   const [serviceLinks, setServiceLinks] = useState<ForgeServiceLink[]>([]);
+  const [unlinkingServiceKey, setUnlinkingServiceKey] = useState<ForgeServiceLink["serviceKey"] | undefined>();
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
   const [currentPasswordDraft, setCurrentPasswordDraft] = useState("");
@@ -442,12 +447,19 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   }
 
   async function handleUnlinkService(serviceKey: ForgeServiceLink["serviceKey"]) {
+    if (unlinkingServiceKey) {
+      return;
+    }
+
     setError(undefined);
+    setUnlinkingServiceKey(serviceKey);
     try {
       const nextLink = await unlinkProfileService(serviceKey);
       setServiceLinks((current) => current.map((link) => (link.serviceKey === serviceKey ? nextLink : link)));
     } catch (unlinkError) {
       setError(unlinkError instanceof Error ? unlinkError.message : "Связь сервиса не была отключена");
+    } finally {
+      setUnlinkingServiceKey(undefined);
     }
   }
 
@@ -626,12 +638,13 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                         </a>
                         {link.canUnlink ? (
                           <button
-                            aria-label={`Отключить ${link.serviceName}`}
-                            className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-center text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+                            aria-label={`${unlinkingServiceKey === link.serviceKey ? copy.unlinkingService : copy.unlinkServiceAria} ${link.serviceName}`}
+                            className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-center text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent disabled:cursor-not-allowed disabled:opacity-60"
+                            disabled={unlinkingServiceKey === link.serviceKey}
                             type="button"
                             onClick={() => void handleUnlinkService(link.serviceKey)}
                           >
-                            {copy.unlinkService} {link.serviceName}
+                            {unlinkingServiceKey === link.serviceKey ? copy.unlinkingService : copy.unlinkService} {link.serviceName}
                           </button>
                         ) : null}
                       </div>
