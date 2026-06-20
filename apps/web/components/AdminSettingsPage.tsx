@@ -24,6 +24,8 @@ export function AdminSettingsPage({ initialSettings }: { initialSettings: Platfo
   const [isPending, startTransition] = useTransition();
 
   const nextPaused = !settings.registrationPaused;
+  const registrationTitle = settings.registrationPaused ? "Регистрация приостановлена" : "Регистрация включена";
+  const registrationStatus = settings.registrationPaused ? "приостановлена" : "включена";
 
   function updateRegistrationPaused() {
     setError("");
@@ -55,9 +57,9 @@ export function AdminSettingsPage({ initialSettings }: { initialSettings: Platfo
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="tech-label text-xs text-forge-muted">Регистрация</p>
-            <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">Регистрация приостановлена</h2>
+            <h2 className="heading-tech mt-2 text-2xl font-bold text-forge-ink">{registrationTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-forge-muted">
-              Статус: {settings.registrationPaused ? "приостановлена" : "включена"}
+              Статус: {registrationStatus}
             </p>
           </div>
           <button
