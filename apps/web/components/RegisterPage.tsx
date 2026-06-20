@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React, { useState } from "react";
 
+import { primaryActionClassName } from "@/components/ActionButtonStyles";
 import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 
@@ -168,7 +169,7 @@ function RequestForm({ error }: { error: RegisterError }) {
         </span>
       </label>
       <button
-        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110"
+        className={primaryActionClassName(!canSubmit)}
         disabled={!canSubmit}
         type="submit"
       >
@@ -207,7 +208,7 @@ function ConfirmForm({ email, error }: { email: string; error: RegisterError }) 
         />
       </label>
       <button
-        className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        className={primaryActionClassName(!canSubmit)}
         disabled={!canSubmit}
         type="submit"
       >

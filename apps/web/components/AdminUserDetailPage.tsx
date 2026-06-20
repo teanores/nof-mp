@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React, { useState } from "react";
 
+import { compactPrimaryActionClassName } from "@/components/ActionButtonStyles";
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
 import type { UserSecurityAuditActivity } from "@/lib/server/security-audit-dashboard";
@@ -100,7 +101,7 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
         </div>
         {canRecoverByEmail ? (
           <button
-            className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            className={compactPrimaryActionClassName(status === "sending" || status === "sent", "inline-flex items-center justify-center text-xs")}
             disabled={status === "sending" || status === "sent"}
             type="button"
             onClick={() => void handleSendReset()}

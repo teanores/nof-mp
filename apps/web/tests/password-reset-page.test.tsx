@@ -35,8 +35,10 @@ describe("password reset page", () => {
     expect(screen.getByRole("heading", { name: "Восстановление пароля" })).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Получить ссылку" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Получить ссылку" })).not.toHaveClass("bg-forge-accent");
     await userEvent.type(screen.getByLabelText("Электронная почта"), "owner@example.com");
     expect(screen.getByRole("button", { name: "Получить ссылку" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Получить ссылку" })).toHaveClass("bg-forge-accent");
     await userEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/public/password-reset/request", expect.any(Object)));
@@ -115,6 +117,7 @@ describe("password reset page", () => {
     const submit = screen.getByRole("button", { name: "Сменить пароль" });
     expect(repeatedMatchRule).toHaveTextContent("- Повтор пароля совпадает");
     expect(submit).toBeDisabled();
+    expect(submit).not.toHaveClass("bg-forge-accent");
 
     await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("- Повтор пароля совпадает");
@@ -123,6 +126,7 @@ describe("password reset page", () => {
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("+ Повтор пароля совпадает");
     expect(submit).toBeEnabled();
+    expect(submit).toHaveClass("bg-forge-accent");
   });
 
   it("lets users reveal reset password fields independently", async () => {

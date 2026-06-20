@@ -115,6 +115,7 @@ describe("admin user detail page", () => {
     );
     expect(await screen.findByText("Письмо восстановления отправлено, если аккаунт может получать почту.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Письмо отправлено" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Письмо отправлено" })).not.toHaveClass("bg-forge-accent");
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("reset-token");
   });
