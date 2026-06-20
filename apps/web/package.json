@@ -7,7 +7,7 @@
     "build": "next build",
     "lint": "eslint .",
     "test": "vitest",
-    "test:identity": "vitest run nof-portal-auth.test.ts login-route.test.tsx login-api-security-audit.test.ts oauth-authorize-route.test.ts oauth-consent-approve-route.test.ts oauth-token-route.test.ts public-registration-route.test.ts platform-password.test.ts platform-password-repository.test.ts profile-password-route.test.ts profile-service-links-route.test.ts product-launch-route.test.ts user-profile-mcp-access.test.tsx",
+    "test:identity": "vitest run nof-portal-auth.test.ts login-route.test.tsx login-api-security-audit.test.ts oauth-authorize-route.test.ts oauth-consent-approve-route.test.ts oauth-token-route.test.ts public-registration-api.test.ts public-registration-route.test.ts register-page.test.tsx platform-password.test.ts platform-password-repository.test.ts profile-password-route.test.ts profile-service-links-route.test.ts product-launch-route.test.ts user-profile-mcp-access.test.tsx",
     "smoke:identity": "playwright test e2e/identity-smoke.spec.ts",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
