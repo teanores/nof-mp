@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { recordRegistrationAudit } from "@/lib/server/registration-abuse-protection";
 import {
   buildPublicRegistrationConfirmUrl,
   normalizeRegistrationEmail,
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (upstream.ok) {
+      await recordRegistrationAudit(request, { email, eventType: "registration_success", statusCode: upstream.status });
       return redirectToLoginAfterRegistration();
     }
     return redirectToRegistrationConfirmError(email, [404, 502, 503, 504].includes(upstream.status) ? "unavailable" : "invalid");

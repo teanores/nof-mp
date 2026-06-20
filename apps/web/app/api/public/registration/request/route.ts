@@ -1,5 +1,12 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
+import {
+  clientIpFromRequest,
+  hasEmailMxRecord,
+  recordRegistrationAudit,
+  registrationRateLimit,
+} from "@/lib/server/registration-abuse-protection";
 import {
   buildPublicRegistrationRequestUrl,
   normalizeRegistrationEmail,
@@ -16,6 +23,22 @@ export async function POST(request: NextRequest) {
   if (!username || !email || !password) {
     return redirectToRegistrationRequestError("invalid");
   }
+
+  const limit = registrationRateLimit(email, clientIpFromRequest(request));
+  if (!limit.allowed) {
+    await recordRegistrationAudit(request, { email, eventType: "registration_rate_limited", statusCode: 429 });
+    return new NextResponse("Too many registration attempts", {
+      headers: { "Retry-After": String(limit.retryAfter) },
+      status: 429,
+    });
+  }
+
+  if (!(await hasEmailMxRecord(email))) {
+    await recordRegistrationAudit(request, { email, eventType: "registration_invalid_email", statusCode: 400 });
+    return redirectToRegistrationRequestError("invalid_email");
+  }
+
+  await recordRegistrationAudit(request, { email, eventType: "registration_attempt", statusCode: 202 });
 
   try {
     const upstream = await fetch(buildPublicRegistrationRequestUrl(), {
