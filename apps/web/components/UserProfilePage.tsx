@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 
 import { BrandHomeLink } from "@/components/BrandHomeLink";
+import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalPageShell } from "@/components/PortalLayout";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -69,6 +70,9 @@ const profileCopy = {
     repeatNewPassword: "Repeat new password",
     changePassword: "Change password",
     passwordChanged: "Password changed. Use the new password on your next sign-in.",
+    passwordHideCurrent: "Hide current password",
+    passwordHideNew: "Hide new password",
+    passwordHideRepeat: "Hide repeated password",
     passwordMismatch: "New passwords do not match.",
     passwordPolicyHint: "At least 12 characters, lowercase, uppercase, digit and symbol. Do not include your username or email.",
     passwordFieldsRequired: "Fill in the current password and the new password.",
@@ -79,6 +83,9 @@ const profileCopy = {
     passwordUserNotFound: "The account was not found. Sign in again and retry.",
     passwordChangeFailed: "Password was not changed. Check the fields and retry.",
     passwordRulesTitle: "Password rules",
+    passwordShowCurrent: "Show current password",
+    passwordShowNew: "Show new password",
+    passwordShowRepeat: "Show repeated password",
     passwordRuleLength: "At least 12 characters",
     passwordRuleLowercase: "Lowercase letter",
     passwordRuleUppercase: "Uppercase letter",
@@ -139,6 +146,9 @@ const profileCopy = {
     repeatNewPassword: "Повтори новый пароль",
     changePassword: "Сменить пароль",
     passwordChanged: "Пароль изменён. При следующем входе используй новый пароль.",
+    passwordHideCurrent: "Скрыть текущий пароль",
+    passwordHideNew: "Скрыть новый пароль",
+    passwordHideRepeat: "Скрыть повтор пароля",
     passwordMismatch: "Новые пароли не совпадают.",
     passwordPolicyHint: "Минимум 12 символов, строчная и заглавная буква, цифра и символ. Не используй логин или email.",
     passwordFieldsRequired: "Заполни текущий пароль и новый пароль.",
@@ -149,6 +159,9 @@ const profileCopy = {
     passwordUserNotFound: "Учётная запись не найдена. Войди заново и повтори попытку.",
     passwordChangeFailed: "Пароль не был изменён. Проверь поля и повтори попытку.",
     passwordRulesTitle: "Правила пароля",
+    passwordShowCurrent: "Показать текущий пароль",
+    passwordShowNew: "Показать новый пароль",
+    passwordShowRepeat: "Показать повтор пароля",
     passwordRuleLength: "Минимум 12 символов",
     passwordRuleLowercase: "Есть строчная буква",
     passwordRuleUppercase: "Есть заглавная буква",
@@ -269,6 +282,9 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [currentPasswordDraft, setCurrentPasswordDraft] = useState("");
   const [newPasswordDraft, setNewPasswordDraft] = useState("");
   const [repeatedPasswordDraft, setRepeatedPasswordDraft] = useState("");
+  const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+  const [isRepeatedPasswordVisible, setIsRepeatedPasswordVisible] = useState(false);
   const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordNotice, setPasswordNotice] = useState<string | undefined>();
@@ -652,39 +668,63 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 <div className="grid gap-3 md:grid-cols-3">
                   <label className="grid gap-2">
                     <span className="tech-label text-[10px] text-forge-muted">{copy.currentPassword}</span>
-                    <input
-                      autoComplete="current-password"
-                      className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-                      name="currentPassword"
-                      required
-                      type="password"
-                      value={currentPasswordDraft}
-                      onChange={(event) => setCurrentPasswordDraft(event.target.value)}
-                    />
+                    <span className="relative block">
+                      <input
+                        autoComplete="current-password"
+                        className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-2 pr-12 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        name="currentPassword"
+                        required
+                        type={isCurrentPasswordVisible ? "text" : "password"}
+                        value={currentPasswordDraft}
+                        onChange={(event) => setCurrentPasswordDraft(event.target.value)}
+                      />
+                      <PasswordVisibilityButton
+                        hideLabel={copy.passwordHideCurrent}
+                        isVisible={isCurrentPasswordVisible}
+                        showLabel={copy.passwordShowCurrent}
+                        onClick={() => setIsCurrentPasswordVisible((current) => !current)}
+                      />
+                    </span>
                   </label>
                   <label className="grid gap-2">
                     <span className="tech-label text-[10px] text-forge-muted">{copy.newPassword}</span>
-                    <input
-                      autoComplete="new-password"
-                      className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-                      name="newPassword"
-                      required
-                      type="password"
-                      value={newPasswordDraft}
-                      onChange={(event) => setNewPasswordDraft(event.target.value)}
-                    />
+                    <span className="relative block">
+                      <input
+                        autoComplete="new-password"
+                        className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-2 pr-12 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        name="newPassword"
+                        required
+                        type={isNewPasswordVisible ? "text" : "password"}
+                        value={newPasswordDraft}
+                        onChange={(event) => setNewPasswordDraft(event.target.value)}
+                      />
+                      <PasswordVisibilityButton
+                        hideLabel={copy.passwordHideNew}
+                        isVisible={isNewPasswordVisible}
+                        showLabel={copy.passwordShowNew}
+                        onClick={() => setIsNewPasswordVisible((current) => !current)}
+                      />
+                    </span>
                   </label>
                   <label className="grid gap-2">
                     <span className="tech-label text-[10px] text-forge-muted">{copy.repeatNewPassword}</span>
-                    <input
-                      autoComplete="new-password"
-                      className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-                      name="repeatedPassword"
-                      required
-                      type="password"
-                      value={repeatedPasswordDraft}
-                      onChange={(event) => setRepeatedPasswordDraft(event.target.value)}
-                    />
+                    <span className="relative block">
+                      <input
+                        autoComplete="new-password"
+                        className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-2 pr-12 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        name="repeatedPassword"
+                        required
+                        type={isRepeatedPasswordVisible ? "text" : "password"}
+                        value={repeatedPasswordDraft}
+                        onChange={(event) => setRepeatedPasswordDraft(event.target.value)}
+                      />
+                      <PasswordVisibilityButton
+                        hideLabel={copy.passwordHideRepeat}
+                        isVisible={isRepeatedPasswordVisible}
+                        showLabel={copy.passwordShowRepeat}
+                        onClick={() => setIsRepeatedPasswordVisible((current) => !current)}
+                      />
+                    </span>
                   </label>
                 </div>
                 <div className="rounded-sm border border-forge-line bg-forge-panel p-3" aria-live="polite">

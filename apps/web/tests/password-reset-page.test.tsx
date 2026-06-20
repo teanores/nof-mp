@@ -105,6 +105,27 @@ describe("password reset page", () => {
     expect(repeatedMatchRule).toHaveTextContent("+ Повтор пароля совпадает");
   });
 
+  it("lets users reveal reset password fields independently", async () => {
+    render(<PasswordResetPage token="reset-token" />);
+
+    const newPassword = screen.getByLabelText("Новый пароль");
+    const repeatedPassword = screen.getByLabelText("Повтори новый пароль");
+
+    expect(newPassword).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Показать новый пароль" }));
+
+    expect(newPassword).toHaveAttribute("type", "text");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Скрыть новый пароль" }));
+    await userEvent.click(screen.getByRole("button", { name: "Показать повтор пароля" }));
+
+    expect(newPassword).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "text");
+  });
+
   it("shows an expired link state before password entry when preflight rejects the token", async () => {
     render(<PasswordResetPage token="reset-token" tokenStatus="invalid" />);
 
