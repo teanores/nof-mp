@@ -114,6 +114,9 @@ function classificationFor(input: SecurityAuditEventInput): EdgeEventClassificat
   if (input.eventType.startsWith("login_")) {
     return "auth";
   }
+  if (input.eventType.startsWith("registration_")) {
+    return "auth";
+  }
   return classifyEdgeRequest({ path: input.path, status: input.statusCode });
 }
 
@@ -155,6 +158,15 @@ function activityLabelFor(eventType: string, path: string): string {
   }
   if (eventType.startsWith("login_")) {
     return "Неудачный вход";
+  }
+  if (eventType === "registration_success") {
+    return "Регистрация подтверждена";
+  }
+  if (eventType === "registration_rate_limited") {
+    return "Лимит регистрации";
+  }
+  if (eventType.startsWith("registration_")) {
+    return "Попытка регистрации";
   }
   if (eventType === "app_authenticated_request") {
     return path.startsWith("/api/") ? "Авторизованный API-запрос" : "Авторизованный просмотр страницы";
