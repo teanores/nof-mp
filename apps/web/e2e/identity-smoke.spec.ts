@@ -70,13 +70,14 @@ test("registration entry smoke stays local and exposes controlled fallback state
   await expect(page.getByRole("heading", { name: "Стойка регистрации" })).toBeVisible();
   await expect(page.getByLabel("Логин")).toBeVisible();
   await expect(page.getByLabel("Электронная почта")).toBeVisible();
-  await expect(page.getByLabel("Пароль")).toBeVisible();
+  await expect(page.getByLabel("Пароль", { exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox")).toBeDisabled();
   await expect(page.getByRole("link", { name: "Юридические аспекты" })).toHaveAttribute("href", "/legal");
 
   await page.getByLabel("Логин").fill("local_new_user");
   await page.getByLabel("Электронная почта").fill("local-new@example.test");
-  await page.getByLabel("Пароль").fill("NewLocal123!");
+  await page.getByLabel("Пароль", { exact: true }).fill("NewLocal123!");
+  await page.getByLabel("Повтори пароль").fill("NewLocal123!");
   await page.getByRole("button", { name: "Получить код" }).click();
 
   await expect(page).toHaveURL(/\/register\?error=unavailable$/);

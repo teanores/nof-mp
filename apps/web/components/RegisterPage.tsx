@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 
@@ -31,7 +33,27 @@ function ErrorPanel({ error }: { error: RegisterError }) {
   );
 }
 
+const passwordRuleCopy = [
+  { key: "length", label: "Минимум 12 символов", test: (password: string) => password.length >= 12 },
+  { key: "lowercase", label: "Есть строчная буква", test: (password: string) => /[a-z]/.test(password) },
+  { key: "uppercase", label: "Есть заглавная буква", test: (password: string) => /[A-Z]/.test(password) },
+  { key: "digit", label: "Есть цифра", test: (password: string) => /\d/.test(password) },
+  { key: "symbol", label: "Есть спецсимвол", test: (password: string) => /[^A-Za-z0-9]/.test(password) },
+  { key: "safe", label: "Нет пробелов и обратной кавычки", test: (password: string) => !/[\s`]/.test(password) },
+] as const;
+
 function RequestForm({ error }: { error: RegisterError }) {
+  const [password, setPassword] = useState("");
+  const [repeatedPassword, setRepeatedPassword] = useState("");
+  const passwordRules = [
+    ...passwordRuleCopy.map((rule) => ({ isMet: rule.test(password), label: rule.label })),
+    {
+      isMet: repeatedPassword.length > 0 && password === repeatedPassword,
+      label: "Повтор пароля совпадает",
+    },
+  ];
+  const canSubmit = passwordRules.every((rule) => rule.isMet);
+
   return (
     <form id="portal-registration-form" action="/api/portal/registration/request" className="grid max-w-md gap-3" method="post">
       <ErrorPanel error={error} />
@@ -61,12 +83,48 @@ function RequestForm({ error }: { error: RegisterError }) {
         <input
           autoComplete="new-password"
           className="rounded-sm border border-forge-line bg-forge-surface px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-          minLength={8}
+          minLength={12}
           name="password"
           required
           type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
         />
       </label>
+      <label className="grid gap-2">
+        <span className="tech-label text-[10px] text-forge-muted">Повтори пароль</span>
+        <input
+          autoComplete="new-password"
+          className="rounded-sm border border-forge-line bg-forge-surface px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+          minLength={12}
+          name="repeatedPassword"
+          required
+          type="password"
+          value={repeatedPassword}
+          onChange={(event) => setRepeatedPassword(event.target.value)}
+        />
+      </label>
+      <div className="rounded-sm border border-forge-line bg-forge-surface p-3" aria-live="polite">
+        <p className="tech-label text-[10px] text-forge-muted">Правила пароля</p>
+        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+          {passwordRules.map((rule) => (
+            <li
+              key={rule.label}
+              className={`flex items-center gap-2 text-xs leading-5 ${rule.isMet ? "text-forge-accent" : "text-forge-muted"}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`grid h-5 w-5 shrink-0 place-items-center rounded-sm border text-[10px] ${
+                  rule.isMet ? "border-forge-accent bg-forge-accent text-black" : "border-forge-line bg-forge-panel text-forge-muted"
+                }`}
+              >
+                {rule.isMet ? "+" : "-"}
+              </span>
+              <span>{rule.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
       <label className="flex items-start gap-3 rounded-sm border border-forge-line bg-forge-surface p-3 text-sm leading-6 text-forge-muted">
         <input
           checked={false}
@@ -86,6 +144,7 @@ function RequestForm({ error }: { error: RegisterError }) {
       </label>
       <button
         className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110"
+        disabled={!canSubmit}
         type="submit"
       >
         Получить код
