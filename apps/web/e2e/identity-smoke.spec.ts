@@ -63,3 +63,22 @@ test("profile account smoke: service links section and password change work loca
   expect(oldPasswordResponse.status()).toBe(400);
   await expect(oldPasswordResponse.json()).resolves.toMatchObject({ error: "invalid_current_password" });
 });
+
+test("registration entry smoke stays local and exposes controlled fallback states", async ({ page }) => {
+  await page.goto("/register");
+
+  await expect(page.getByRole("heading", { name: "Стойка регистрации" })).toBeVisible();
+  await expect(page.getByLabel("Логин")).toBeVisible();
+  await expect(page.getByLabel("Электронная почта")).toBeVisible();
+  await expect(page.getByLabel("Пароль")).toBeVisible();
+  await expect(page.getByRole("checkbox")).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Юридические аспекты" })).toHaveAttribute("href", "/legal");
+
+  await page.getByLabel("Логин").fill("local_new_user");
+  await page.getByLabel("Электронная почта").fill("local-new@example.test");
+  await page.getByLabel("Пароль").fill("NewLocal123!");
+  await page.getByRole("button", { name: "Получить код" }).click();
+
+  await expect(page).toHaveURL(/\/register\?error=unavailable$/);
+  await expect(page.getByText("Регистрация временно недоступна")).toBeVisible();
+});
