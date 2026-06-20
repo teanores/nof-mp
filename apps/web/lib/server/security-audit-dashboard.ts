@@ -49,6 +49,7 @@ export interface SecurityAuditDashboard {
 
 export interface UserSecurityAuditActivity {
   activityLabel: string;
+  actorLabel?: string;
   createdAt: string;
   id: string;
   method: string;
@@ -134,6 +135,15 @@ function normalizeEvent(input: SecurityAuditEventInput, now = new Date()): Norma
 }
 
 function activityLabelFor(eventType: string, path: string): string {
+  if (eventType === "admin_password_reset_requested") {
+    return "Администратор отправил восстановление";
+  }
+  if (eventType === "admin_user_detail_view") {
+    return "Просмотр карточки пользователя";
+  }
+  if (eventType === "profile_service_unlinked") {
+    return "Отключение связи сервиса";
+  }
   if (eventType === "login_success") {
     return "Успешный вход";
   }
@@ -311,6 +321,29 @@ export class SecurityAuditDashboardRepository {
 
     return result.rows.map((row) => ({
       activityLabel: activityLabelFor(row.event_type, row.path),
+      createdAt: row.created_at.toISOString(),
+      id: row.id,
+      method: row.method,
+      path: row.path,
+      statusCode: row.status_code,
+    }));
+  }
+
+  async recentAccountEvents(limit = 100): Promise<UserSecurityAuditActivity[]> {
+    await this.initialize();
+    const safeLimit = Math.max(1, Math.min(limit, 250));
+    const result = await this.pool.query<SecurityAuditRow>(
+      `SELECT id::text, event_type, classification, ip, login_identifier, method, path, status_code, user_agent, actor_user_id, actor_username, created_at
+       FROM ${this.schema}.security_audit_event
+       WHERE event_type IN ('admin_password_reset_requested', 'admin_user_detail_view', 'profile_service_unlinked', 'login_success', 'app_authenticated_request')
+       ORDER BY created_at DESC
+       LIMIT $1`,
+      [safeLimit],
+    );
+
+    return result.rows.map((row) => ({
+      activityLabel: activityLabelFor(row.event_type, row.path),
+      actorLabel: actorLabelFor(row).actorLabel,
       createdAt: row.created_at.toISOString(),
       id: row.id,
       method: row.method,

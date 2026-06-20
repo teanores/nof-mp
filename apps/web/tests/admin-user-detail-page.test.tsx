@@ -107,9 +107,9 @@ describe("admin user detail page", () => {
 
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
-        "/api/public/password-reset/request",
+        "/api/admin/users/u-2/password-reset",
         expect.objectContaining({
-          body: JSON.stringify({ email: "owner@example.com" }),
+          method: "POST",
         }),
       ),
     );

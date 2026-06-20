@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   fetchNofHtLink: vi.fn(),
   getUserById: vi.fn<(id: string) => Promise<AdminUserListItem | null>>(),
   recentEventsForActor: vi.fn(),
+  recordSecurityAuditEvent: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -31,6 +32,7 @@ vi.mock("@/lib/server/service-links-contract", () => ({
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({
   getSecurityAuditDashboardRepository: () => ({ recentEventsForActor: mocks.recentEventsForActor }),
+  recordSecurityAuditEvent: mocks.recordSecurityAuditEvent,
 }));
 
 import AdminUserDetailRoute from "@/app/admin/users/[userId]/page";
@@ -83,6 +85,14 @@ describe("admin user detail route", () => {
     expect(mocks.getUserById).toHaveBeenCalledWith("u-1");
     expect(mocks.fetchNofHtLink).toHaveBeenCalledWith("u-1");
     expect(mocks.recentEventsForActor).toHaveBeenCalledWith("u-1");
+    expect(mocks.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "admin-1",
+        actorUsername: "admin",
+        eventType: "admin_user_detail_view",
+        path: "/admin/users/u-1",
+      }),
+    );
     expect(result.type.name).toBe("AdminUserDetailPage");
     expect(result.props.user.id).toBe("u-1");
     expect(result.props.serviceLinks).toHaveLength(1);

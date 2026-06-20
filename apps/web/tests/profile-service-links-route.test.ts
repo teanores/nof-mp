@@ -23,6 +23,14 @@ vi.mock("@/lib/server/portal-auth-gate", () => ({
   }),
 }));
 
+const audit = vi.hoisted(() => ({
+  recordSecurityAuditEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/server/security-audit-dashboard", () => ({
+  recordSecurityAuditEvent: audit.recordSecurityAuditEvent,
+}));
+
 vi.stubEnv("NOF_PLATFORM_OAUTH_JWT_SECRET", "test-oauth-jwt-secret");
 vi.stubEnv("NOF_HT_ORIGIN", "https://habit-tracker.forgath.ru");
 
@@ -136,5 +144,13 @@ describe("profile service links route", () => {
       },
     });
     expect(fetchMock.mock.calls[0][1]?.method).toBe("DELETE");
+    expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "platform-user-1",
+        actorUsername: "teanore",
+        eventType: "profile_service_unlinked",
+        path: "/api/profile/service-links?serviceKey=nof-ht",
+      }),
+    );
   });
 });
