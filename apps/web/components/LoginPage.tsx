@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 
+import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
@@ -20,7 +21,9 @@ const copy = {
     invalidCredentials: "Invalid email or password.",
     language: "LANGUAGE",
     loginButton: "Sign in",
+    passwordHide: "Hide password",
     password: "Password",
+    passwordShow: "Show password",
     resetPassword: "Forgot password?",
     tagline: '"Show your guild badge!"',
     subtitle: "Sign in to continue working with platform services.",
@@ -34,7 +37,9 @@ const copy = {
     invalidCredentials: "Неверный email или пароль.",
     language: "ЯЗЫК",
     loginButton: "Войти",
+    passwordHide: "Скрыть пароль",
     password: "Пароль",
+    passwordShow: "Показать пароль",
     resetPassword: "Забыли пароль?",
     tagline: "«Покажите жетон гильдии!»",
     subtitle: "Войдите, чтобы продолжить работу с сервисами платформы.",
@@ -53,6 +58,7 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
   const safeNext = safeLoginReturnTo(next);
   const language = usePortalLanguage();
   const text = copy[language];
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-8">
@@ -85,13 +91,21 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
           </label>
           <label className="grid gap-2">
             <span className="tech-label text-[10px] text-forge-muted">{text.password}</span>
-            <input
-              autoComplete="current-password"
-              className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-              name="password"
-              required
-              type="password"
-            />
+            <span className="relative block">
+              <input
+                autoComplete="current-password"
+                className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-3 pr-12 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                name="password"
+                required
+                type={isPasswordVisible ? "text" : "password"}
+              />
+              <PasswordVisibilityButton
+                hideLabel={text.passwordHide}
+                isVisible={isPasswordVisible}
+                showLabel={text.passwordShow}
+                onClick={() => setIsPasswordVisible((current) => !current)}
+              />
+            </span>
           </label>
           <Link className="text-right text-xs font-semibold text-forge-muted transition hover:text-forge-accent" href="/password-reset">
             {text.resetPassword}

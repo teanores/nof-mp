@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -38,5 +39,21 @@ describe("login language switch", () => {
     expect(screen.getByRole("link", { name: "Create account" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/password-reset");
     expect(screen.getByText("Password")).toBeInTheDocument();
+  });
+
+  it("lets users reveal the login password field", async () => {
+    render(<LoginPage next="/overview" />);
+
+    const password = screen.getByLabelText("Пароль");
+
+    expect(password).toHaveAttribute("type", "password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Показать пароль" }));
+
+    expect(password).toHaveAttribute("type", "text");
+
+    await userEvent.click(screen.getByRole("button", { name: "Скрыть пароль" }));
+
+    expect(password).toHaveAttribute("type", "password");
   });
 });
