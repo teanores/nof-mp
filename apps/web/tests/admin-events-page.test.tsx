@@ -24,6 +24,15 @@ const events = [
     path: "/api/profile/service-links?serviceKey=nof-ht",
     statusCode: 200,
   },
+  {
+    activityLabel: "Выход из аккаунта",
+    actorLabel: "Пользователь: owner",
+    createdAt: "2026-06-20T08:32:00.000Z",
+    id: "event-3",
+    method: "POST",
+    path: "/api/logout",
+    statusCode: 303,
+  },
 ];
 
 describe("admin events page", () => {
@@ -62,5 +71,15 @@ describe("admin events page", () => {
     await userEvent.type(screen.getByLabelText("Поиск"), "missing");
 
     expect(screen.getByText("По выбранным фильтрам событий не найдено.")).toBeInTheDocument();
+  });
+
+  it("includes logout events in the type filter", async () => {
+    render(<AdminEventsPage events={events} />);
+
+    await userEvent.selectOptions(screen.getByLabelText("Тип события"), "Выход");
+
+    expect(screen.getByText("Выход из аккаунта")).toBeInTheDocument();
+    expect(screen.queryByText("Отключение связи сервиса")).not.toBeInTheDocument();
+    expect(screen.queryByText("Администратор отправил восстановление")).not.toBeInTheDocument();
   });
 });

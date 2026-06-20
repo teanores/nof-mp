@@ -12,7 +12,9 @@ export type SecurityAuditEventType =
   | "login_missing_credentials"
   | "login_rate_limited"
   | "login_success"
-  | "login_upstream_error";
+  | "login_upstream_error"
+  | "logout_success"
+  | "session_expired";
 
 export type EdgeEventClassification =
   | "forbidden"
