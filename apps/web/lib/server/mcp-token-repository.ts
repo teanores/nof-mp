@@ -2,10 +2,10 @@ import crypto from "node:crypto";
 
 import { Pool, type QueryResultRow } from "pg";
 
-import { projectExists } from "@/lib/platform-projects";
+import { canAccessProduct, type PlatformAccessSubject } from "@/lib/platform-access-contract";
 import { mcpTokenPrefixForProject, normalizeMcpProjectKey } from "@/lib/server/mcp-project-scope";
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
-import type { ForgeMcpToken } from "@/lib/types";
+import type { ForgeMcpToken, ForgeProject } from "@/lib/types";
 
 const defaultProjectKey = "nof-tt";
 const defaultScopes = ["project:read", "project:write", "wiki:write", "ideas:write"];
@@ -19,6 +19,14 @@ interface McpTokenRow extends QueryResultRow {
   revoked_at: Date | string | null;
   scopes: string[];
   token_prefix: string;
+}
+
+interface McpProjectRow extends QueryResultRow {
+  created_at: Date | string;
+  description: string | null;
+  key: string;
+  name: string;
+  status: "active" | "archived";
 }
 
 export function mcpTokenSchemaName(): string {
@@ -50,6 +58,18 @@ function toToken(row: McpTokenRow): ForgeMcpToken {
     createdAt: toIso(row.created_at) ?? "",
     ...(toIso(row.last_used_at) ? { lastUsedAt: toIso(row.last_used_at) } : {}),
     ...(toIso(row.revoked_at) ? { revokedAt: toIso(row.revoked_at) } : {}),
+  };
+}
+
+function toProject(row: McpProjectRow, subject: PlatformAccessSubject): ForgeProject {
+  return {
+    key: row.key,
+    name: row.name,
+    description: row.description ?? "",
+    status: row.status,
+    visibility: "registered",
+    access: canAccessProduct(subject, { productKey: row.key, visibility: "registered" }),
+    createdAt: toIso(row.created_at) ?? "",
   };
 }
 
@@ -86,7 +106,7 @@ export class McpTokenRepository {
     if (!name) {
       throw new Error("Token name is required");
     }
-    if (!projectExists(projectKey)) {
+    if (!(await this.projectExists(projectKey))) {
       throw new Error(`Project does not exist: ${projectKey}`);
     }
     const scopes = input.scopes?.length ? input.scopes : defaultScopes;
@@ -113,6 +133,22 @@ export class McpTokenRepository {
       [tokenId, userId],
     );
     return (result.rowCount ?? 0) > 0;
+  }
+
+  async listProjectsForTokenIssuer(subject: PlatformAccessSubject): Promise<ForgeProject[]> {
+    await this.initialize();
+    const result = await this.pool.query<McpProjectRow>(
+      `SELECT key, name, description, status, created_at
+       FROM ${this.schema}.projects
+       ORDER BY key ASC`,
+    );
+    return result.rows.map((row) => toProject(row, subject));
+  }
+
+  async projectExists(projectKey: string): Promise<boolean> {
+    await this.initialize();
+    const result = await this.pool.query<{ exists: boolean }>(`SELECT EXISTS(SELECT 1 FROM ${this.schema}.projects WHERE key = $1)`, [projectKey]);
+    return Boolean(result.rows[0]?.exists);
   }
 
   async resolve(fullToken: string): Promise<{ projectKey: string; scopes: string[]; tokenId: string; userId: string } | undefined> {

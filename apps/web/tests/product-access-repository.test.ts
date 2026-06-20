@@ -66,6 +66,7 @@ describe("product access repository", () => {
     ]);
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.products"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.product_access"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("ORDER BY p.key ASC"))).toBe(true);
   });
 
   it("seeds the default platform products into database tables", async () => {
