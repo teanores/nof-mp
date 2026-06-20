@@ -39,6 +39,16 @@ function unavailableNofHtLink(): ForgeServiceLink {
   };
 }
 
+export function fetchNofTtLink(): ForgeServiceLink {
+  return {
+    serviceKey: "nof-tt",
+    serviceName: "Task Tracker",
+    status: "connected",
+    canUnlink: false,
+    openHref: "/products/nof-tt/launch?next=/projects/nof-tt",
+  };
+}
+
 export async function fetchNofHtLink(platformUserId: string): Promise<ForgeServiceLink> {
   try {
     const response = await fetch(new URL("/api/platform/links/habit-tracker", nofHtOrigin()).toString(), {

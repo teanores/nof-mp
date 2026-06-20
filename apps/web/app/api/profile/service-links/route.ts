@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { portalSessionFromRequest, requirePortalApiSession } from "@/lib/server/portal-auth-gate";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
-import { fetchNofHtLink, unlinkNofHt } from "@/lib/server/service-links-contract";
+import { fetchNofHtLink, fetchNofTtLink, unlinkNofHt } from "@/lib/server/service-links-contract";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const userId = session.user?.id;
   if (!userId) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
 
-  return NextResponse.json({ links: [await fetchNofHtLink(userId)] });
+  return NextResponse.json({ links: [fetchNofTtLink(), await fetchNofHtLink(userId)] });
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {

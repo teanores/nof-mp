@@ -52,6 +52,7 @@ describe("profile service links route", () => {
       },
     };
     vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it("requires platform authentication", async () => {
@@ -63,7 +64,7 @@ describe("profile service links route", () => {
     await expect(response.json()).resolves.toMatchObject({ error: "Authentication required" });
   });
 
-  it("returns Habit Tracker link summary from the service contract", async () => {
+  it("returns Task Tracker and Habit Tracker link summaries", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       Response.json({
         ok: true,
@@ -84,6 +85,13 @@ describe("profile service links route", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       links: [
+        {
+          serviceKey: "nof-tt",
+          serviceName: "Task Tracker",
+          status: "connected",
+          canUnlink: false,
+          openHref: "/products/nof-tt/launch?next=/projects/nof-tt",
+        },
         {
           serviceKey: "nof-ht",
           serviceName: "Habit Tracker",
@@ -109,6 +117,13 @@ describe("profile service links route", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       links: [
+        {
+          serviceKey: "nof-tt",
+          serviceName: "Task Tracker",
+          status: "connected",
+          canUnlink: false,
+          openHref: "/products/nof-tt/launch?next=/projects/nof-tt",
+        },
         {
           serviceKey: "nof-ht",
           serviceName: "Habit Tracker",
@@ -152,5 +167,13 @@ describe("profile service links route", () => {
         path: "/api/profile/service-links?serviceKey=nof-ht",
       }),
     );
+  });
+
+  it("rejects unlinking Task Tracker because it is a platform-owned OAuth link", async () => {
+    const response = await DELETE(request("DELETE", "?serviceKey=nof-tt"));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "unsupported_service" });
+    expect(audit.recordSecurityAuditEvent).not.toHaveBeenCalled();
   });
 });
