@@ -4,6 +4,7 @@ import type { AdminUserListItem } from "@/lib/server/admin-users-repository";
 import type { ForgePortalSession } from "@/lib/types";
 
 const mocks = vi.hoisted(() => ({
+  fetchNofHtLink: vi.fn(),
   getUserById: vi.fn<(id: string) => Promise<AdminUserListItem | null>>(),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
@@ -21,6 +22,10 @@ vi.mock("@/lib/server/portal-auth-gate", () => ({
 
 vi.mock("@/lib/server/admin-users-repository", () => ({
   getAdminUsersRepository: () => ({ getUserById: mocks.getUserById }),
+}));
+
+vi.mock("@/lib/server/service-links-contract", () => ({
+  fetchNofHtLink: mocks.fetchNofHtLink,
 }));
 
 import AdminUserDetailRoute from "@/app/admin/users/[userId]/page";
@@ -49,12 +54,22 @@ describe("admin user detail route", () => {
       risks: [],
       username: "owner",
     });
+    mocks.fetchNofHtLink.mockResolvedValue({
+      serviceKey: "nof-ht",
+      serviceName: "Habit Tracker",
+      status: "connected",
+      accountEmail: "owner@example.com",
+      canUnlink: true,
+      openHref: "https://habit-tracker.forgath.ru/",
+    });
 
     const result = await AdminUserDetailRoute({ params: Promise.resolve({ userId: "u-1" }) });
 
     expect(mocks.getUserById).toHaveBeenCalledWith("u-1");
+    expect(mocks.fetchNofHtLink).toHaveBeenCalledWith("u-1");
     expect(result.type.name).toBe("AdminUserDetailPage");
     expect(result.props.user.id).toBe("u-1");
+    expect(result.props.serviceLinks).toHaveLength(1);
   });
 
   it("returns not found when the selected user does not exist", async () => {

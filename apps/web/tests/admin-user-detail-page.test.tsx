@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AdminUserDetailPage } from "@/components/AdminUserDetailPage";
 import type { AdminUserListItem } from "@/lib/server/admin-users-repository";
+import type { ForgeServiceLink } from "@/lib/types";
 
 const user: AdminUserListItem = {
   accountState: "telegram-only",
@@ -34,6 +35,27 @@ const recoverableUser: AdminUserListItem = {
   role: { displayName: "Администратор", name: "admin" },
   username: "owner",
 };
+const connectedLinks: ForgeServiceLink[] = [
+  {
+    serviceKey: "nof-ht",
+    serviceName: "Habit Tracker",
+    status: "connected",
+    accountEmail: "habit@example.com",
+    accountLabel: "Habit User",
+    linkedAt: "2026-06-11T10:00:00.000Z",
+    canUnlink: true,
+    openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+  },
+];
+const unavailableLinks: ForgeServiceLink[] = [
+  {
+    serviceKey: "nof-ht",
+    serviceName: "Habit Tracker",
+    status: "unavailable",
+    canUnlink: false,
+    openHref: "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+  },
+];
 
 describe("admin user detail page", () => {
   beforeEach(() => {
@@ -108,5 +130,33 @@ describe("admin user detail page", () => {
     expect(screen.getByText("Восстановление по почте недоступно")).toBeInTheDocument();
     expect(screen.getByText("У пользователя служебная почта. Сначала нужна реальная электронная почта.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Отправить письмо восстановления" })).not.toBeInTheDocument();
+  });
+
+  it("shows linked service state for the selected user without admin-side unlink controls", () => {
+    render(<AdminUserDetailPage serviceLinks={connectedLinks} user={recoverableUser} />);
+
+    expect(screen.getByRole("heading", { name: "Состояние связей аккаунта" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
+    expect(screen.getByText("связано")).toBeInTheDocument();
+    expect(screen.getByText("Habit User")).toBeInTheDocument();
+    expect(screen.getByText("habit@example.com")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /отключ/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /отключ/i })).not.toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Bearer");
+    expect(document.body).not.toHaveTextContent("jwt");
+    expect(document.body).not.toHaveTextContent("token");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("keeps the admin user card readable when service links are unavailable", () => {
+    render(<AdminUserDetailPage serviceLinks={unavailableLinks} user={recoverableUser} />);
+
+    expect(screen.getByRole("heading", { name: "Состояние связей аккаунта" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Habit Tracker" })).toBeInTheDocument();
+    expect(screen.getByText("недоступно")).toBeInTheDocument();
+    expect(screen.getByText("учётная запись не указана")).toBeInTheDocument();
+    expect(screen.getByText("не указан")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("db_down");
+    expect(document.body).not.toHaveTextContent("internal");
   });
 });

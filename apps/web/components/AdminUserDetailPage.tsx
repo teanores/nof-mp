@@ -5,6 +5,7 @@ import React, { useState } from "react";
 
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
 import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
+import type { ForgeServiceLink } from "@/lib/types";
 
 const riskLabels: Record<AdminUserRisk, string> = {
   "external-email": "почта вне домена",
@@ -16,6 +17,11 @@ const recoveryLabels: Record<AdminUserRecoveryState, string> = {
   "email-reset-ready": "почтовое восстановление",
   "missing-email": "почта не указана",
   "service-email": "служебная почта",
+};
+const serviceStatusLabels: Record<ForgeServiceLink["status"], string> = {
+  connected: "связано",
+  not_connected: "не связано",
+  unavailable: "недоступно",
 };
 
 const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
@@ -115,7 +121,41 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
-export function AdminUserDetailPage({ user }: { user: AdminUserListItem }) {
+function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-1">
+        <p className="tech-label text-xs text-forge-muted">Связанные сервисы</p>
+        <h2 className="heading-tech text-lg font-bold text-forge-ink">Состояние связей аккаунта</h2>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {links.map((link) => (
+          <article key={link.serviceKey} className="rounded-sm border border-forge-line bg-forge-surface p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-semibold text-forge-ink">{link.serviceName}</h3>
+                <p className="mt-1 text-sm text-forge-muted">{link.accountLabel ?? link.accountEmail ?? "учётная запись не указана"}</p>
+              </div>
+              <StatusBadge ready={link.status === "connected"}>{serviceStatusLabels[link.status]}</StatusBadge>
+            </div>
+            <dl className="mt-4 grid gap-2 text-sm text-forge-muted">
+              <div className="flex flex-col gap-1">
+                <dt className="tech-label text-[10px]">Email сервиса</dt>
+                <dd className="text-forge-ink">{link.accountEmail ?? "не указан"}</dd>
+              </div>
+              <div className="flex flex-col gap-1">
+                <dt className="tech-label text-[10px]">Связано</dt>
+                <dd className="text-forge-ink">{formatDate(link.linkedAt)}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function AdminUserDetailPage({ serviceLinks = [], user }: { serviceLinks?: ForgeServiceLink[]; user: AdminUserListItem }) {
   const telegram = user.telegram?.username ? `@${user.telegram.username}` : user.telegram?.id ? `id ${user.telegram.id}` : "нет";
   const role = user.role?.displayName ?? user.role?.name ?? "без роли";
 
@@ -158,6 +198,8 @@ export function AdminUserDetailPage({ user }: { user: AdminUserListItem }) {
           )}
         </div>
       </section>
+
+      <LinkedServices links={serviceLinks} />
 
       <RecoveryActions user={user} />
     </PortalPageShell>

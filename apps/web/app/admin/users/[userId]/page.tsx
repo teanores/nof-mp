@@ -4,6 +4,7 @@ import { AdminUserDetailPage } from "@/components/AdminUserDetailPage";
 import { getAdminUsersRepository } from "@/lib/server/admin-users-repository";
 import { requirePortalAdminSession } from "@/lib/server/portal-admin";
 import { requirePortalPageSession } from "@/lib/server/portal-auth-gate";
+import { fetchNofHtLink } from "@/lib/server/service-links-contract";
 
 export const dynamic = "force-dynamic";
 
@@ -17,5 +18,7 @@ export default async function AdminUserDetailRoute({ params }: { params: Promise
     notFound();
   }
 
-  return <AdminUserDetailPage user={user} />;
+  const serviceLinks = [await fetchNofHtLink(user.id)];
+
+  return <AdminUserDetailPage serviceLinks={serviceLinks} user={user} />;
 }
