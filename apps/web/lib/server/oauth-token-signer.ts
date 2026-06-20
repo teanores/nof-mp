@@ -7,6 +7,7 @@ interface OAuthTokenClaims {
   iat: number;
   iss: string;
   nonce: string;
+  role?: string;
   scope: string;
   sub: string;
 }

@@ -27,11 +27,30 @@ const redeemState = vi.hoisted(() => ({
   calls: [] as unknown[],
 }));
 
+const portalUsers = vi.hoisted(() => ({
+  calls: [] as string[],
+  result: {
+    experience: 0,
+    id: "platform-user-1",
+    role: { id: 1, name: "owner" },
+    username: "teanore",
+  },
+}));
+
 vi.mock("@/lib/server/oauth-authorization-code-repository", () => ({
   getOAuthAuthorizationCodeRepository: () => ({
     redeem: async (input: unknown) => {
       redeemState.calls.push(input);
       return redeemState.result;
+    },
+  }),
+}));
+
+vi.mock("@/lib/server/nof-portal-auth", () => ({
+  getNofPortalAuthRepository: () => ({
+    userById: async (userId: string) => {
+      portalUsers.calls.push(userId);
+      return portalUsers.result;
     },
   }),
 }));
@@ -57,6 +76,13 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 describe("oauth token route", () => {
   beforeEach(() => {
     redeemState.calls = [];
+    portalUsers.calls = [];
+    portalUsers.result = {
+      experience: 0,
+      id: "platform-user-1",
+      role: { id: 1, name: "owner" },
+      username: "teanore",
+    };
     redeemState.result = {
       ok: true,
       record: {
@@ -96,6 +122,8 @@ describe("oauth token route", () => {
     expect(body.access_token).toMatch(/^[^.]+\.[^.]+\.[^.]+$/);
     expect(body.id_token).toMatch(/^[^.]+\.[^.]+\.[^.]+$/);
     expect(body.claims).toBeUndefined();
+    expect(decodeJwtPayload(String(body.id_token))).toMatchObject({ role: "owner" });
+    expect(portalUsers.calls).toEqual(["platform-user-1"]);
     expect(redeemState.calls).toEqual([
       {
         clientId: "nof-tt",
@@ -225,5 +253,43 @@ describe("oauth token route", () => {
     expect(payload.scope).toBe("openid profile");
     expect(payload).not.toHaveProperty("email");
     expect(payload).not.toHaveProperty("email_verified");
+    expect(payload).toHaveProperty("role", "owner");
+  });
+
+  it("does not emit role claims when the profile scope was not granted", async () => {
+    redeemState.result = {
+      ok: true,
+      record: {
+        clientId: "nof-tt",
+        code: "oauth_code_valid",
+        expiresAt: "2026-06-04T15:02:00.000Z",
+        nonce: "nonce-1",
+        platformUserId: "platform-user-1",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
+        scopes: ["openid"],
+        state: "state-1",
+        usedAt: "2026-06-04T15:00:00.000Z",
+      },
+    };
+
+    const response = await token(
+      tokenRequest(
+        new URLSearchParams({
+          client_id: "nof-tt",
+          client_secret: "nof-tt-secret",
+          code: "oauth_code_valid",
+          grant_type: "authorization_code",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const payload = decodeJwtPayload(String(body.id_token));
+
+    expect(payload.scope).toBe("openid");
+    expect(payload).not.toHaveProperty("role");
+    expect(portalUsers.calls).toEqual([]);
   });
 });

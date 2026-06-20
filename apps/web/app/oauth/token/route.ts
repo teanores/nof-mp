@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { authenticateOAuthClient } from "@/lib/server/oauth-client-auth";
 import { findOAuthClient, isAllowedOAuthRedirectUri } from "@/lib/server/oauth-client-registry";
 import { getOAuthAuthorizationCodeRepository } from "@/lib/server/oauth-authorization-code-repository";
+import { getNofPortalAuthRepository } from "@/lib/server/nof-portal-auth";
 import { oauthIssuer, signOAuthJwt } from "@/lib/server/oauth-token-signer";
 
 export const dynamic = "force-dynamic";
@@ -47,12 +48,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const nowSeconds = Math.floor(Date.now() / 1000);
   const scope = redeemed.record.scopes.join(" ");
+  const platformUser = redeemed.record.scopes.includes("profile")
+    ? await getNofPortalAuthRepository().userById(redeemed.record.platformUserId).catch(() => undefined)
+    : undefined;
   const claims = {
     aud: client.clientId,
     exp: nowSeconds + 300,
     iat: nowSeconds,
     iss: oauthIssuer(),
     nonce: redeemed.record.nonce,
+    ...(platformUser?.role?.name ? { role: platformUser.role.name } : {}),
     scope,
     sub: redeemed.record.platformUserId,
     ...(redeemed.record.scopes.includes("email") ? { email_verified: false } : {}),

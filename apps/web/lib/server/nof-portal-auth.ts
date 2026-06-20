@@ -160,16 +160,7 @@ export class NofPortalAuthRepository {
     await this.pool.end();
   }
 
-  async sessionFromCookie(token?: string): Promise<ForgePortalSession> {
-    if (!token) {
-      return { authenticated: false, loginUrl };
-    }
-
-    const payload = decodeNofAuthToken(token);
-    if (!payload?.sub) {
-      return { authenticated: false, loginUrl };
-    }
-
+  async userById(userId: string): Promise<ForgePortalUser | undefined> {
     const result = await this.pool.query<PortalUserRow>(
       `SELECT
          u.id::text AS id,
@@ -200,10 +191,23 @@ export class NofPortalAuthRepository {
        LEFT JOIN dragon_forge.role role ON role.id = u.role_id
        WHERE u.id = $1::uuid
        LIMIT 1`,
-      [payload.sub],
+      [userId],
     );
 
-    const user = result.rows[0] ? toPortalUser(result.rows[0]) : undefined;
+    return result.rows[0] ? toPortalUser(result.rows[0]) : undefined;
+  }
+
+  async sessionFromCookie(token?: string): Promise<ForgePortalSession> {
+    if (!token) {
+      return { authenticated: false, loginUrl };
+    }
+
+    const payload = decodeNofAuthToken(token);
+    if (!payload?.sub) {
+      return { authenticated: false, loginUrl };
+    }
+
+    const user = await this.userById(payload.sub);
     return user ? { authenticated: true, loginUrl, user } : { authenticated: false, loginUrl };
   }
 }
