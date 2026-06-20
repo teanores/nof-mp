@@ -315,6 +315,41 @@ describe("user profile MCP access", () => {
     expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
   });
 
+  it("lets users reveal profile password fields independently", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByText("Безопасность аккаунта");
+
+    const currentPassword = screen.getByLabelText("Текущий пароль");
+    const newPassword = screen.getByLabelText("Новый пароль");
+    const repeatedPassword = screen.getByLabelText("Повтори новый пароль");
+
+    expect(currentPassword).toHaveAttribute("type", "password");
+    expect(newPassword).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Показать текущий пароль" }));
+
+    expect(currentPassword).toHaveAttribute("type", "text");
+    expect(newPassword).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+
+    await userEvent.click(screen.getByRole("button", { name: "Показать новый пароль" }));
+    await userEvent.click(screen.getByRole("button", { name: "Показать повтор пароля" }));
+
+    expect(currentPassword).toHaveAttribute("type", "text");
+    expect(newPassword).toHaveAttribute("type", "text");
+    expect(repeatedPassword).toHaveAttribute("type", "text");
+
+    await userEvent.click(screen.getByRole("button", { name: "Скрыть текущий пароль" }));
+    await userEvent.click(screen.getByRole("button", { name: "Скрыть новый пароль" }));
+    await userEvent.click(screen.getByRole("button", { name: "Скрыть повтор пароля" }));
+
+    expect(currentPassword).toHaveAttribute("type", "password");
+    expect(newPassword).toHaveAttribute("type", "password");
+    expect(repeatedPassword).toHaveAttribute("type", "password");
+  });
+
   it("does not call the password API when new passwords do not match", async () => {
     render(<UserProfilePage initialSession={session} />);
 

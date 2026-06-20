@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 
+import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 import type { PortalLanguage } from "@/lib/portal-language";
 import { usePortalLanguage } from "@/lib/use-portal-language";
@@ -54,11 +55,15 @@ const copy = {
     login: "Sign in",
     newPassword: "New password",
     passwordChanged: "Password changed. You can now sign in with the new password.",
+    passwordHide: "Hide new password",
     passwordMismatch: "New passwords do not match.",
+    passwordShow: "Show new password",
     policyGeneric: "The new password does not meet security rules.",
     policyPrefix: "The new password does not meet security rules:",
     repeatMatches: "Repeated password matches",
+    repeatPasswordHide: "Hide repeated password",
     repeatPassword: "Repeat new password",
+    repeatPasswordShow: "Show repeated password",
     requestButton: "Get link",
     requestNewLink: "Get a new link",
     requestIntro: "Enter the account email. The response is the same even if the account is not found, so user data is not exposed.",
@@ -90,11 +95,15 @@ const copy = {
     login: "Войти",
     newPassword: "Новый пароль",
     passwordChanged: "Пароль изменён. Теперь можно войти с новым паролем.",
+    passwordHide: "Скрыть новый пароль",
     passwordMismatch: "Новые пароли не совпадают.",
+    passwordShow: "Показать новый пароль",
     policyGeneric: "Новый пароль не соответствует правилам безопасности.",
     policyPrefix: "Новый пароль не соответствует правилам безопасности:",
     repeatMatches: "Повтор пароля совпадает",
     repeatPassword: "Повтори новый пароль",
+    repeatPasswordHide: "Скрыть повтор пароля",
+    repeatPasswordShow: "Показать повтор пароля",
     requestButton: "Получить ссылку",
     requestNewLink: "Получить новую ссылку",
     requestIntro: "Укажи почту аккаунта. Ответ будет одинаковым даже если аккаунт не найден, чтобы не раскрывать данные пользователей.",
@@ -226,6 +235,8 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
   const text = copy[language];
   const [newPassword, setNewPassword] = useState("");
   const [repeatedPassword, setRepeatedPassword] = useState("");
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
+  const [isRepeatedPasswordVisible, setIsRepeatedPasswordVisible] = useState(false);
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState<string | undefined>();
 
@@ -264,27 +275,43 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
     <form className="grid gap-3" onSubmit={submit}>
       <label className="grid gap-2">
         <span className="tech-label text-[10px] text-forge-muted">{text.newPassword}</span>
-        <input
-          autoComplete="new-password"
-          className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-          name="newPassword"
-          onChange={(event) => setNewPassword(event.target.value)}
-          required
-          type="password"
-          value={newPassword}
-        />
+        <span className="relative block">
+          <input
+            autoComplete="new-password"
+            className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-3 pr-12 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            name="newPassword"
+            onChange={(event) => setNewPassword(event.target.value)}
+            required
+            type={isNewPasswordVisible ? "text" : "password"}
+            value={newPassword}
+          />
+          <PasswordVisibilityButton
+            hideLabel={text.passwordHide}
+            isVisible={isNewPasswordVisible}
+            showLabel={text.passwordShow}
+            onClick={() => setIsNewPasswordVisible((current) => !current)}
+          />
+        </span>
       </label>
       <label className="grid gap-2">
         <span className="tech-label text-[10px] text-forge-muted">{text.repeatPassword}</span>
-        <input
-          autoComplete="new-password"
-          className="rounded-sm border border-forge-line bg-forge-panel px-3 py-3 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-          name="repeatedPassword"
-          onChange={(event) => setRepeatedPassword(event.target.value)}
-          required
-          type="password"
-          value={repeatedPassword}
-        />
+        <span className="relative block">
+          <input
+            autoComplete="new-password"
+            className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-3 pr-12 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            name="repeatedPassword"
+            onChange={(event) => setRepeatedPassword(event.target.value)}
+            required
+            type={isRepeatedPasswordVisible ? "text" : "password"}
+            value={repeatedPassword}
+          />
+          <PasswordVisibilityButton
+            hideLabel={text.repeatPasswordHide}
+            isVisible={isRepeatedPasswordVisible}
+            showLabel={text.repeatPasswordShow}
+            onClick={() => setIsRepeatedPasswordVisible((current) => !current)}
+          />
+        </span>
       </label>
       <ul className="grid gap-2 rounded-sm border border-forge-line bg-forge-surface p-3 text-sm text-forge-muted">
         {checks.map((check) => (
