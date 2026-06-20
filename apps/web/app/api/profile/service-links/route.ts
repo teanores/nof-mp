@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { portalSessionFromRequest, requirePortalApiSession } from "@/lib/server/portal-auth-gate";
+import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
 import { fetchNofHtLink, unlinkNofHt } from "@/lib/server/service-links-contract";
 
 export const dynamic = "force-dynamic";
@@ -29,5 +30,15 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "unsupported_service" }, { status: 400 });
   }
 
-  return NextResponse.json({ link: await unlinkNofHt(userId) });
+  const link = await unlinkNofHt(userId);
+  await recordSecurityAuditEvent({
+    actorUserId: session.user?.id,
+    actorUsername: session.user?.username,
+    eventType: "profile_service_unlinked",
+    method: "DELETE",
+    path: `/api/profile/service-links?serviceKey=${encodeURIComponent(serviceKey)}`,
+    statusCode: 200,
+  });
+
+  return NextResponse.json({ link });
 }

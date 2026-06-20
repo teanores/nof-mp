@@ -75,10 +75,9 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
 
     setStatus("sending");
     try {
-      const response = await fetch("/api/public/password-reset/request", {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email }),
       });
       if (!response.ok) {
         throw new Error("request_failed");

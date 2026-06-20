@@ -84,4 +84,46 @@ describe("security audit dashboard repository", () => {
     expect(JSON.stringify(query.mock.calls)).not.toContain("password");
     expect(JSON.stringify(query.mock.calls)).not.toContain("token");
   });
+
+  it("loads recent sanitized account events across actors", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            actor_user_id: "admin-1",
+            actor_username: "admin",
+            classification: "normal",
+            created_at: new Date("2026-06-20T08:30:00.000Z"),
+            event_type: "admin_password_reset_requested",
+            id: "event-1",
+            ip: "203.0.113.1",
+            login_identifier: null,
+            method: "POST",
+            path: "/api/admin/users/user-1/password-reset",
+            status_code: 200,
+            user_agent: "Chrome",
+          },
+        ],
+      });
+    const repository = new SecurityAuditDashboardRepository({ query } as never, "nof_mp_security");
+
+    await expect(repository.recentAccountEvents()).resolves.toEqual([
+      {
+        activityLabel: "Администратор отправил восстановление",
+        actorLabel: "Пользователь: admin",
+        createdAt: "2026-06-20T08:30:00.000Z",
+        id: "event-1",
+        method: "POST",
+        path: "/api/admin/users/user-1/password-reset",
+        statusCode: 200,
+      },
+    ]);
+    expect(query).toHaveBeenLastCalledWith(expect.stringContaining("event_type IN"), [100]);
+    expect(JSON.stringify(query.mock.calls)).not.toContain("resetToken");
+    expect(JSON.stringify(query.mock.calls)).not.toContain("Bearer");
+  });
 });
