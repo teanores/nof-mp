@@ -34,11 +34,27 @@ describe("password reset page", () => {
 
     expect(screen.getByRole("heading", { name: "Восстановление пароля" })).toBeInTheDocument();
 
+    expect(screen.getByRole("button", { name: "Получить ссылку" })).toBeDisabled();
     await userEvent.type(screen.getByLabelText("Электронная почта"), "owner@example.com");
+    expect(screen.getByRole("button", { name: "Получить ссылку" })).toBeEnabled();
     await userEvent.click(screen.getByRole("button", { name: "Получить ссылку" }));
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/public/password-reset/request", expect.any(Object)));
     expect(await screen.findByText(/Если такой аккаунт существует/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Получить ссылку" })).toBeDisabled();
+  });
+
+  it("keeps the reset link request disabled until the email is valid", async () => {
+    render(<PasswordResetPage />);
+
+    const submit = screen.getByRole("button", { name: "Получить ссылку" });
+    expect(submit).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText("Электронная почта"), "owner");
+    expect(submit).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText("Электронная почта"), "@example.com");
+    expect(submit).toBeEnabled();
   });
 
   it("prefills the reset email when admin opens a recovery action", async () => {
@@ -96,13 +112,17 @@ describe("password reset page", () => {
     render(<PasswordResetPage token="reset-token" />);
 
     const repeatedMatchRule = screen.getByText("Повтор пароля совпадает").closest("li");
+    const submit = screen.getByRole("button", { name: "Сменить пароль" });
     expect(repeatedMatchRule).toHaveTextContent("- Повтор пароля совпадает");
+    expect(submit).toBeDisabled();
 
     await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("- Повтор пароля совпадает");
+    expect(submit).toBeDisabled();
 
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("+ Повтор пароля совпадает");
+    expect(submit).toBeEnabled();
   });
 
   it("lets users reveal reset password fields independently", async () => {
@@ -187,8 +207,8 @@ describe("password reset page", () => {
 
     render(<PasswordResetPage token="reset-token" />);
 
-    await userEvent.type(screen.getByLabelText("Новый пароль"), "Bad password!");
-    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "Bad password!");
+    await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
+    await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
 
     expect(

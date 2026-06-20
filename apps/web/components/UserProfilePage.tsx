@@ -529,6 +529,11 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       label: copy.passwordRuleRepeatedMatch,
     },
   ];
+  const canChangePassword =
+    !isPasswordBusy &&
+    currentPasswordDraft.length > 0 &&
+    newPasswordDraft.length > 0 &&
+    passwordRules.every((rule) => rule.isMet);
 
   return (
     <PortalPageShell maxWidthClassName="max-w-[1180px]">
@@ -764,7 +769,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     className="tech-label min-h-10 min-w-[160px] rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-center text-[10px] font-bold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isPasswordBusy}
+                    disabled={!canChangePassword}
                     type="submit"
                   >
                     {copy.changePassword}

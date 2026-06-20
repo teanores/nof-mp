@@ -330,15 +330,20 @@ describe("user profile MCP access", () => {
 
     await screen.findByText("Безопасность аккаунта");
 
+    const submit = screen.getByRole("button", { name: "Сменить пароль" });
     const lengthRule = screen.getByText("Минимум 12 символов").closest("li");
     const digitRule = screen.getByText("Есть цифра").closest("li");
     const safeCharsRule = screen.getByText("Нет пробелов и обратной кавычки").closest("li");
     const repeatedMatchRule = screen.getByText("Повтор пароля совпадает").closest("li");
 
+    expect(submit).toBeDisabled();
     expect(lengthRule).toHaveTextContent("-Минимум 12 символов");
     expect(digitRule).toHaveTextContent("-Есть цифра");
     expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
     expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
+
+    await userEvent.type(screen.getByLabelText("Текущий пароль"), "CurrentHorse1!");
+    expect(submit).toBeDisabled();
 
     await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
 
@@ -346,18 +351,22 @@ describe("user profile MCP access", () => {
     expect(digitRule).toHaveTextContent("+Есть цифра");
     expect(safeCharsRule).toHaveTextContent("+Нет пробелов и обратной кавычки");
     expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
+    expect(submit).toBeDisabled();
 
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "NextHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("+Повтор пароля совпадает");
+    expect(submit).toBeEnabled();
 
     await userEvent.clear(screen.getByLabelText("Новый пароль"));
     await userEvent.type(screen.getByLabelText("Новый пароль"), "Next Horse22!");
 
     expect(safeCharsRule).toHaveTextContent("-Нет пробелов и обратной кавычки");
+    expect(submit).toBeDisabled();
 
     await userEvent.clear(screen.getByLabelText("Повтори новый пароль"));
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "OtherHorse22!");
     expect(repeatedMatchRule).toHaveTextContent("-Повтор пароля совпадает");
+    expect(submit).toBeDisabled();
   });
 
   it("lets users reveal profile password fields independently", async () => {
@@ -403,9 +412,8 @@ describe("user profile MCP access", () => {
     await userEvent.type(screen.getByLabelText("Текущий пароль"), "CurrentHorse1!");
     await userEvent.type(screen.getByLabelText("Новый пароль"), "NextHorse22!");
     await userEvent.type(screen.getByLabelText("Повтори новый пароль"), "OtherHorse22!");
-    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
 
-    expect(await screen.findByText("Новые пароли не совпадают.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Сменить пароль" })).toBeDisabled();
     expect(platformApi.changeProfilePassword).not.toHaveBeenCalled();
   });
 
@@ -420,9 +428,7 @@ describe("user profile MCP access", () => {
 
     expect(screen.getByText("Отличается от текущего пароля").closest("li")).toHaveTextContent("-Отличается от текущего пароля");
 
-    await userEvent.click(screen.getByRole("button", { name: "Сменить пароль" }));
-
-    expect(await screen.findByText("Новый пароль должен отличаться от текущего.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Сменить пароль" })).toBeDisabled();
     expect(platformApi.changeProfilePassword).not.toHaveBeenCalled();
   });
 

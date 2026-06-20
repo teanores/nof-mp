@@ -145,6 +145,10 @@ const policyErrorCopy: Record<PortalLanguage, Record<string, string>> = {
   },
 };
 
+function looksLikeEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 async function postJson(url: string, body: unknown): Promise<ApiResponse> {
   const response = await fetch(url, {
     body: JSON.stringify(body),
@@ -181,6 +185,7 @@ function RequestResetForm({ initialEmail = "", language }: { initialEmail?: stri
   const [email, setEmail] = useState(initialEmail);
   const [status, setStatus] = useState<"idle" | "sent" | "submitting">("idle");
   const [error, setError] = useState<string | undefined>();
+  const canSubmit = looksLikeEmail(email) && status === "idle";
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -211,7 +216,7 @@ function RequestResetForm({ initialEmail = "", language }: { initialEmail?: stri
       </label>
       <button
         className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={status === "submitting"}
+        disabled={!canSubmit}
         type="submit"
       >
         {status === "submitting" ? text.submittingRequest : text.requestButton}
@@ -250,6 +255,7 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
     ],
     [newPassword, repeatedPassword, text],
   );
+  const canSubmit = status === "idle" && checks.every((check) => check.isMet);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -332,7 +338,7 @@ function ConfirmResetForm({ language, token }: { language: PortalLanguage; token
       ) : null}
       <button
         className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={status === "submitting"}
+        disabled={!canSubmit}
         type="submit"
       >
         {status === "submitting" ? text.submittingConfirm : text.confirmButton}
