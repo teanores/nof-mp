@@ -44,6 +44,13 @@ const passwordRuleCopy = [
   { key: "safe", label: "Нет пробелов и обратной кавычки", test: (password: string) => !/[\s`]/.test(password) },
 ] as const;
 
+function passwordDoesNotContainIdentity(password: string, username: string, email: string): boolean {
+  const lowerPassword = password.toLowerCase();
+  const normalizedUsername = username.trim().toLowerCase();
+  const emailLocalPart = email.trim().toLowerCase().split("@", 1)[0] ?? "";
+  return [normalizedUsername, emailLocalPart].every((value) => value.length < 3 || !lowerPassword.includes(value));
+}
+
 function RequestForm({ error }: { error: RegisterError }) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -53,6 +60,10 @@ function RequestForm({ error }: { error: RegisterError }) {
   const [isRepeatedPasswordVisible, setIsRepeatedPasswordVisible] = useState(false);
   const passwordRules = [
     ...passwordRuleCopy.map((rule) => ({ isMet: rule.test(password), label: rule.label })),
+    {
+      isMet: passwordDoesNotContainIdentity(password, username, email),
+      label: "Не содержит логин или часть email",
+    },
     {
       isMet: repeatedPassword.length > 0 && password === repeatedPassword,
       label: "Повтор пароля совпадает",

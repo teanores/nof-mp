@@ -17,6 +17,7 @@ describe("register page", () => {
     expect(screen.getByLabelText("Повтори пароль")).toHaveAttribute("name", "repeatedPassword");
     expect(screen.getByText("Правила пароля")).toBeInTheDocument();
     expect(screen.getByText("Минимум 12 символов")).toBeInTheDocument();
+    expect(screen.getByText("Не содержит логин или часть email")).toBeInTheDocument();
     expect(screen.getByText("Повтор пароля совпадает")).toBeInTheDocument();
     expect(screen.getByText("ЯЗЫК")).toBeInTheDocument();
     expect(screen.getByRole("combobox")).toHaveAttribute("name", "language");
@@ -55,17 +56,33 @@ describe("register page", () => {
 
     await user.clear(password);
     await user.clear(repeatedPassword);
-    await user.type(password, "StrongLocal1!");
+    await user.type(password, "CorrectHorse1!");
     await user.type(repeatedPassword, "DifferentLocal1!");
 
     expect(screen.getByText("Повтор пароля совпадает").closest("li")).toHaveTextContent("-");
     expect(submit).toBeDisabled();
 
     await user.clear(repeatedPassword);
-    await user.type(repeatedPassword, "StrongLocal1!");
+    await user.type(repeatedPassword, "CorrectHorse1!");
 
     expect(screen.getByText("Повтор пароля совпадает").closest("li")).toHaveTextContent("+");
     expect(submit).toBeEnabled();
+  });
+
+  it("keeps code request disabled when password contains username or email local part", async () => {
+    const user = userEvent.setup();
+    render(<RegisterPage />);
+
+    const submit = screen.getByRole("button", { name: "Получить код" });
+
+    await user.type(screen.getByLabelText("Логин"), "localuser");
+    await user.type(screen.getByLabelText("Электронная почта"), "localuser@example.com");
+    await user.type(screen.getByLabelText("Пароль"), "localuserA123!");
+    await user.type(screen.getByLabelText("Повтори пароль"), "localuserA123!");
+
+    expect(screen.getByText("Не содержит логин или часть email").closest("li")).toHaveTextContent("-");
+    expect(submit).toBeDisabled();
+    expect(submit).not.toHaveClass("bg-forge-accent");
   });
 
   it("keeps code request disabled until username and email are filled", async () => {
@@ -74,8 +91,8 @@ describe("register page", () => {
 
     const submit = screen.getByRole("button", { name: "Получить код" });
 
-    await user.type(screen.getByLabelText("Пароль"), "StrongLocal1!");
-    await user.type(screen.getByLabelText("Повтори пароль"), "StrongLocal1!");
+    await user.type(screen.getByLabelText("Пароль"), "CorrectHorse1!");
+    await user.type(screen.getByLabelText("Повтори пароль"), "CorrectHorse1!");
 
     expect(submit).toBeDisabled();
 
