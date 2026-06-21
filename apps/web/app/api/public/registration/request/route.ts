@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 import {
   clientIpFromRequest,
-  hasEmailMxRecord,
   recordRegistrationAudit,
   registrationRateLimit,
 } from "@/lib/server/registration-abuse-protection";
@@ -16,6 +15,10 @@ import {
   redirectToRegistrationRequestError,
 } from "@/lib/server/public-registration";
 
+function hasValidEmailShape(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const username = String(formData.get("username") ?? "").trim();
@@ -24,6 +27,11 @@ export async function POST(request: NextRequest) {
 
   if (!username || !email || !password) {
     return redirectToRegistrationRequestError("invalid");
+  }
+
+  if (!hasValidEmailShape(email)) {
+    await recordRegistrationAudit(request, { email, eventType: "registration_invalid_email", statusCode: 400 });
+    return redirectToRegistrationRequestError("invalid_email");
   }
 
   if (await getPlatformSettingsRepository().isRegistrationPaused()) {
@@ -37,11 +45,6 @@ export async function POST(request: NextRequest) {
       headers: { "Retry-After": String(limit.retryAfter) },
       status: 429,
     });
-  }
-
-  if (!(await hasEmailMxRecord(email))) {
-    await recordRegistrationAudit(request, { email, eventType: "registration_invalid_email", statusCode: 400 });
-    return redirectToRegistrationRequestError("invalid_email");
   }
 
   await recordRegistrationAudit(request, { email, eventType: "registration_attempt", statusCode: 202 });

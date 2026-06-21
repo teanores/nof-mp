@@ -6,10 +6,6 @@ import { POST as requestRegistration } from "@/app/api/public/registration/reque
 import { resetRegistrationAbuseProtectionForTests } from "@/lib/server/registration-abuse-protection";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
 
-const dnsMocks = vi.hoisted(() => ({
-  resolveMx: vi.fn(async () => [{ exchange: "mail.example.com", priority: 10 }]),
-}));
-
 const settingsMocks = vi.hoisted(() => ({
   isRegistrationPaused: vi.fn(),
 }));
@@ -21,11 +17,6 @@ const registrationMocks = vi.hoisted(() => ({
 
 const emailMocks = vi.hoisted(() => ({
   sendRegistrationCodeEmail: vi.fn(),
-}));
-
-vi.mock("node:dns/promises", () => ({
-  default: { resolveMx: dnsMocks.resolveMx },
-  resolveMx: dnsMocks.resolveMx,
 }));
 
 vi.mock("@/lib/server/email-delivery", () => ({
@@ -63,7 +54,6 @@ describe("public registration routes", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
-    dnsMocks.resolveMx.mockResolvedValue([{ exchange: "mail.example.com", priority: 10 }]);
     settingsMocks.isRegistrationPaused.mockResolvedValue(false);
     registrationMocks.requestRegistration.mockResolvedValue({ code: "123456", email: "owner@example.com", ok: true, reason: "code_created" });
     registrationMocks.confirmRegistration.mockResolvedValue({ ok: true, userId: "user-1" });
@@ -228,12 +218,10 @@ describe("public registration routes", () => {
     );
   });
 
-  it("rejects email addresses without MX records before upstream", async () => {
-    dnsMocks.resolveMx.mockRejectedValueOnce(new Error("ENOTFOUND"));
-
+  it("rejects malformed email addresses before native registration", async () => {
     const response = await requestRegistration(
       formRequest("http://localhost/api/public/registration/request", {
-        email: "owner@invalid.test",
+        email: "owner-at-invalid",
         password: "OwnerLocal123!",
         username: "owner",
       }),
@@ -249,5 +237,29 @@ describe("public registration routes", () => {
         statusCode: 400,
       }),
     );
+  });
+
+  it("does not hard-block common mail domains before SMTP delivery", async () => {
+    for (const [index, email] of ["owner@proton.me", "owner@ya.ru", "owner@yandex.ru"].entries()) {
+      registrationMocks.requestRegistration.mockResolvedValueOnce({
+        code: `12345${index}`,
+        email,
+        ok: true,
+        reason: "code_created",
+      });
+
+      const response = await requestRegistration(
+        formRequest("http://localhost/api/public/registration/request", {
+          email,
+          password: "OwnerLocal123!",
+          username: `owner-${index}`,
+        }),
+      );
+
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(`/register?step=confirm&email=${encodeURIComponent(email)}`);
+    }
+
+    expect(emailMocks.sendRegistrationCodeEmail).toHaveBeenCalledTimes(3);
   });
 });

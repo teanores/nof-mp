@@ -27,7 +27,7 @@ function ErrorPanel({ error }: { error: RegisterError }) {
       : error === "conflict"
         ? "Не удалось создать аккаунт с такими данными."
         : error === "invalid_email"
-          ? "Проверьте email: домен должен принимать почту, чтобы мы могли отправить код."
+          ? "Проверьте email: адрес должен быть в формате name@example.com."
           : error === "password_policy"
             ? "Пароль не соответствует правилам безопасности."
             : error === "email_delivery"

@@ -175,11 +175,11 @@ describe("register page", () => {
     expect(document.body.textContent).not.toContain("backend");
   });
 
-  it("shows a specific message for invalid email domains", () => {
+  it("shows a specific message for malformed email addresses", () => {
     render(<RegisterPage error="invalid_email" />);
 
     expect(screen.getByText(/Проверьте email/)).toBeInTheDocument();
-    expect(screen.getByText(/домен должен принимать почту/)).toBeInTheDocument();
+    expect(screen.getByText(/name@example\.com/)).toBeInTheDocument();
   });
 
   it("shows a specific message for server-side password policy rejection", () => {
