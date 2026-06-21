@@ -29,7 +29,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "invalid_settings" }, { status: 400 });
   }
 
-  const settings = await getPlatformSettingsRepository().setRegistrationPaused(input.registrationPaused, session.user?.id);
+  const repository = getPlatformSettingsRepository();
+  await repository.setRegistrationPaused(input.registrationPaused, session.user?.id);
+  const settings = await repository.getSettings();
   await recordSecurityAuditEvent({
     actorUserId: session.user?.id,
     actorUsername: session.user?.username,

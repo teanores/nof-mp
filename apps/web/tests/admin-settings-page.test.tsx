@@ -43,6 +43,7 @@ describe("admin settings page", () => {
       "/api/admin/settings",
       expect.objectContaining({
         body: JSON.stringify({ registrationPaused: false }),
+        cache: "no-store",
         method: "PATCH",
       }),
     );

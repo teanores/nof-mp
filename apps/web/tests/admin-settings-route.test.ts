@@ -72,11 +72,13 @@ describe("admin settings route", () => {
     mocks.portalApiSession.mockResolvedValue(undefined);
     mocks.portalSession.mockResolvedValue(sessionWithRole("admin"));
     mocks.setRegistrationPaused.mockResolvedValue({ registrationPaused: false });
+    mocks.getSettings.mockResolvedValue({ registrationPaused: false });
 
     const response = await PATCH(request({ registrationPaused: false }));
 
     await expect(response.json()).resolves.toEqual({ settings: { registrationPaused: false } });
     expect(mocks.setRegistrationPaused).toHaveBeenCalledWith(false, "admin-1");
+    expect(mocks.getSettings).toHaveBeenCalled();
     expect(mocks.recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         actorUserId: "admin-1",

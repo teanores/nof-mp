@@ -8,6 +8,7 @@ import type { PlatformSettings } from "@/lib/server/platform-settings-repository
 async function patchSettings(registrationPaused: boolean): Promise<PlatformSettings> {
   const response = await fetch("/api/admin/settings", {
     body: JSON.stringify({ registrationPaused }),
+    cache: "no-store",
     headers: { "content-type": "application/json" },
     method: "PATCH",
   });
