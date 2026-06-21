@@ -7,9 +7,10 @@ import {
   recordRegistrationAudit,
   registrationRateLimit,
 } from "@/lib/server/registration-abuse-protection";
+import { sendRegistrationCodeEmail } from "@/lib/server/email-delivery";
+import { getPlatformRegistrationRepository } from "@/lib/server/platform-registration-repository";
 import { getPlatformSettingsRepository } from "@/lib/server/platform-settings-repository";
 import {
-  buildPublicRegistrationRequestUrl,
   normalizeRegistrationEmail,
   redirectToRegistrationConfirm,
   redirectToRegistrationRequestError,
@@ -46,23 +47,16 @@ export async function POST(request: NextRequest) {
   await recordRegistrationAudit(request, { email, eventType: "registration_attempt", statusCode: 202 });
 
   try {
-    const upstream = await fetch(buildPublicRegistrationRequestUrl(), {
-      body: JSON.stringify({ email, password, username }),
-      headers: { "content-type": "application/json" },
-      method: "POST",
-      redirect: "manual",
-    });
+    const result = await getPlatformRegistrationRepository().requestRegistration({ email, password, username });
+    if (!result.ok) {
+      if (result.reason === "conflict") {
+        return redirectToRegistrationRequestError("conflict");
+      }
+      return redirectToRegistrationRequestError("invalid");
+    }
 
-    if (upstream.ok) {
-      return redirectToRegistrationConfirm(email);
-    }
-    if (upstream.status === 409) {
-      return redirectToRegistrationRequestError("conflict");
-    }
-    if ([404, 502, 503, 504].includes(upstream.status)) {
-      return redirectToRegistrationRequestError("unavailable");
-    }
-    return redirectToRegistrationRequestError("invalid");
+    await sendRegistrationCodeEmail({ code: result.code, to: result.email });
+    return redirectToRegistrationConfirm(email);
   } catch {
     return redirectToRegistrationRequestError("unavailable");
   }

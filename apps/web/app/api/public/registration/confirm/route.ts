@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 
 import { getPlatformSettingsRepository } from "@/lib/server/platform-settings-repository";
+import { getPlatformRegistrationRepository } from "@/lib/server/platform-registration-repository";
 import { recordRegistrationAudit } from "@/lib/server/registration-abuse-protection";
 import {
-  buildPublicRegistrationConfirmUrl,
   normalizeRegistrationEmail,
   redirectToLoginAfterRegistration,
   redirectToRegistrationConfirmError,
@@ -23,18 +23,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(buildPublicRegistrationConfirmUrl(), {
-      body: JSON.stringify({ code, email }),
-      headers: { "content-type": "application/json" },
-      method: "POST",
-      redirect: "manual",
-    });
-
-    if (upstream.ok) {
-      await recordRegistrationAudit(request, { email, eventType: "registration_success", statusCode: upstream.status });
+    const result = await getPlatformRegistrationRepository().confirmRegistration({ code, email });
+    if (result.ok) {
+      await recordRegistrationAudit(request, { email, eventType: "registration_success", statusCode: 201 });
       return redirectToLoginAfterRegistration();
     }
-    return redirectToRegistrationConfirmError(email, [404, 502, 503, 504].includes(upstream.status) ? "unavailable" : "invalid");
+    return redirectToRegistrationConfirmError(email, result.reason === "conflict" ? "conflict" : "invalid");
   } catch {
     return redirectToRegistrationConfirmError(email, "unavailable");
   }

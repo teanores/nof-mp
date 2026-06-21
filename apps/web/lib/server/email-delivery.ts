@@ -7,6 +7,11 @@ export interface PasswordResetEmailInput {
   userId: string;
 }
 
+export interface RegistrationCodeEmailInput {
+  code: string;
+  to: string;
+}
+
 interface SmtpConfig {
   from: string;
   host: string;
@@ -63,6 +68,36 @@ export async function sendPasswordResetEmail(input: PasswordResetEmailInput): Pr
   }
 }
 
+export async function sendRegistrationCodeEmail(input: RegistrationCodeEmailInput): Promise<void> {
+  const config = smtpConfig();
+  if (!config) {
+    throw new Error("email_delivery_not_configured");
+  }
+
+  const transport = nodemailer.createTransport({
+    auth: {
+      pass: config.pass,
+      user: config.user,
+    },
+    host: config.host,
+    port: config.port,
+    secure: config.port === 465,
+    tls: { rejectUnauthorized: process.env.NODE_ENV === "production" },
+  });
+
+  try {
+    await transport.sendMail({
+      from: `"NOF Platform" <${config.from}>`,
+      html: registrationCodeHtml(input.code),
+      subject: "Код регистрации NOF Platform",
+      text: registrationCodeText(input.code),
+      to: input.to,
+    });
+  } finally {
+    transport.close();
+  }
+}
+
 function passwordResetText(resetUrl: string, expiresAt: string): string {
   return [
     "Запрошено восстановление пароля NOF Platform.",
@@ -88,6 +123,28 @@ function passwordResetHtml(resetUrl: string, expiresAt: string): string {
       </p>
       <p style="font-size:13px;color:#52525b">Срок действия ссылки: ${safeExpiresAt}</p>
       <p style="font-size:13px;color:#52525b">Если вы не запрашивали восстановление, проигнорируйте это письмо.</p>
+    </div>
+  `;
+}
+
+function registrationCodeText(code: string): string {
+  return [
+    "Код регистрации NOF Platform.",
+    "",
+    `Код: ${code}`,
+    "",
+    "Если вы не регистрировались на платформе, проигнорируйте это письмо.",
+  ].join("\n");
+}
+
+function registrationCodeHtml(code: string): string {
+  const safeCode = escapeHtml(code);
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#18181b;max-width:560px">
+      <h1 style="font-size:20px;margin:0 0 16px">Код регистрации NOF Platform</h1>
+      <p>Введите этот код на странице регистрации:</p>
+      <p style="font-size:28px;letter-spacing:4px;font-weight:700">${safeCode}</p>
+      <p style="font-size:13px;color:#52525b">Если вы не регистрировались на платформе, проигнорируйте это письмо.</p>
     </div>
   `;
 }

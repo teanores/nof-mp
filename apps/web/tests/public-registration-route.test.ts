@@ -14,9 +14,29 @@ const settingsMocks = vi.hoisted(() => ({
   isRegistrationPaused: vi.fn(),
 }));
 
+const registrationMocks = vi.hoisted(() => ({
+  confirmRegistration: vi.fn(),
+  requestRegistration: vi.fn(),
+}));
+
+const emailMocks = vi.hoisted(() => ({
+  sendRegistrationCodeEmail: vi.fn(),
+}));
+
 vi.mock("node:dns/promises", () => ({
   default: { resolveMx: dnsMocks.resolveMx },
   resolveMx: dnsMocks.resolveMx,
+}));
+
+vi.mock("@/lib/server/email-delivery", () => ({
+  sendRegistrationCodeEmail: emailMocks.sendRegistrationCodeEmail,
+}));
+
+vi.mock("@/lib/server/platform-registration-repository", () => ({
+  getPlatformRegistrationRepository: () => ({
+    confirmRegistration: registrationMocks.confirmRegistration,
+    requestRegistration: registrationMocks.requestRegistration,
+  }),
 }));
 
 vi.mock("@/lib/server/platform-settings-repository", () => ({
@@ -42,15 +62,16 @@ function formRequest(url: string, body: Record<string, string>): NextRequest {
 describe("public registration routes", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.clearAllMocks();
     dnsMocks.resolveMx.mockResolvedValue([{ exchange: "mail.example.com", priority: 10 }]);
     settingsMocks.isRegistrationPaused.mockResolvedValue(false);
-    vi.stubGlobal("fetch", vi.fn());
+    registrationMocks.requestRegistration.mockResolvedValue({ code: "123456", email: "owner@example.com", ok: true, reason: "code_created" });
+    registrationMocks.confirmRegistration.mockResolvedValue({ ok: true, userId: "user-1" });
+    emailMocks.sendRegistrationCodeEmail.mockResolvedValue(undefined);
     resetRegistrationAbuseProtectionForTests();
   });
 
-  it("requests an email registration code through the internal nof-service boundary", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
-
+  it("requests an email registration code through native nof-mp registration", async () => {
     const response = await requestRegistration(
       formRequest("http://localhost/api/public/registration/request", {
         email: " Owner@Example.COM ",
@@ -61,12 +82,12 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/register?step=confirm&email=owner%40example.com");
-    expect(fetch).toHaveBeenCalledWith("http://nof-service-internal:5000/api/public/registration/request", {
-      body: JSON.stringify({ email: "owner@example.com", password: "OwnerLocal123!", username: "owner" }),
-      headers: { "content-type": "application/json" },
-      method: "POST",
-      redirect: "manual",
+    expect(registrationMocks.requestRegistration).toHaveBeenCalledWith({
+      email: "owner@example.com",
+      password: "OwnerLocal123!",
+      username: "owner",
     });
+    expect(emailMocks.sendRegistrationCodeEmail).toHaveBeenCalledWith({ code: "123456", to: "owner@example.com" });
     expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "registration_attempt",
@@ -79,7 +100,7 @@ describe("public registration routes", () => {
   });
 
   it("keeps registration failures controlled and owner-readable", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 409 }));
+    registrationMocks.requestRegistration.mockResolvedValueOnce({ ok: false, reason: "conflict" });
 
     const response = await requestRegistration(
       formRequest("http://localhost/api/public/registration/request", {
@@ -91,6 +112,7 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/register?error=conflict");
+    expect(emailMocks.sendRegistrationCodeEmail).not.toHaveBeenCalled();
   });
 
   it("keeps registration paused without calling upstream", async () => {
@@ -106,12 +128,10 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/register?error=unavailable");
-    expect(fetch).not.toHaveBeenCalled();
+    expect(registrationMocks.requestRegistration).not.toHaveBeenCalled();
   });
 
   it("confirms an email registration code and redirects to login", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
-
     const response = await confirmRegistration(
       formRequest("http://localhost/api/public/registration/confirm", {
         code: "123456",
@@ -121,24 +141,19 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/login?registered=1");
-    expect(fetch).toHaveBeenCalledWith("http://nof-service-internal:5000/api/public/registration/confirm", {
-      body: JSON.stringify({ code: "123456", email: "owner@example.com" }),
-      headers: { "content-type": "application/json" },
-      method: "POST",
-      redirect: "manual",
-    });
+    expect(registrationMocks.confirmRegistration).toHaveBeenCalledWith({ code: "123456", email: "owner@example.com" });
     expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "registration_success",
         loginIdentifier: expect.stringMatching(/^sha256:/),
         path: "/api/public/registration/confirm",
-        statusCode: 200,
+        statusCode: 201,
       }),
     );
   });
 
   it("returns to the confirmation step when code confirmation fails", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 400 }));
+    registrationMocks.confirmRegistration.mockResolvedValueOnce({ ok: false, reason: "invalid_or_expired_code" });
 
     const response = await confirmRegistration(
       formRequest("http://localhost/api/public/registration/confirm", {
@@ -152,8 +167,6 @@ describe("public registration routes", () => {
   });
 
   it("rate limits repeated registration attempts by IP before upstream", async () => {
-    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 200 }));
-
     for (let index = 0; index < 5; index += 1) {
       await requestRegistration(
         formRequest("http://localhost/api/public/registration/request", {
@@ -174,7 +187,7 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBeTruthy();
-    expect(fetch).toHaveBeenCalledTimes(5);
+    expect(registrationMocks.requestRegistration).toHaveBeenCalledTimes(5);
     expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "registration_rate_limited",
@@ -197,7 +210,7 @@ describe("public registration routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/register?error=invalid_email");
-    expect(fetch).not.toHaveBeenCalled();
+    expect(registrationMocks.requestRegistration).not.toHaveBeenCalled();
     expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: "registration_invalid_email",
