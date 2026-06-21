@@ -155,12 +155,14 @@ Before production email delivery is enabled:
 3. Configure `NOF_MP_EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` and `SMTP_PASS` in runtime secret/config storage without printing values.
 4. Confirm the webhook endpoint is internal or protected.
 5. Run local tests and release preflight.
-6. Deploy nof-mp.
+6. Deploy nof-mp through the nof-infra release-builder workflow, not through a nof-mp direct SSH command.
 7. Owner UAT: request reset for a real email, receive link, set new password, log in with the new password.
 
 ## hbl Secret Setup
 
 Production-changing hbl commands require explicit owner approval in the current conversation.
+
+This section is for secret setup only. It is not the nof-mp deploy path.
 
 Use this pattern on hbl only after approval. It avoids printing secret values:
 

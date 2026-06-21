@@ -89,7 +89,16 @@ release-brief:
   Write-Host "  just local-ready"
 
 deploy-command ref:
-  Write-Host "Production deploy is gated by current-chat owner approval."
-  Write-Host "After approval, use nof-infra release-builder for service nof-mp and ref {{ref}}."
-  Write-Host "SSH command:"
-  Write-Host 'ssh nofadminhbl@192.168.1.51 "/opt/nof-release-builder/nof-release-builder.sh deploy nof-mp {{ref}}"'
+  Write-Host "NOF-MP does not execute production deploys directly."
+  Write-Host "Target release ref: {{ref}}"
+  Write-Host "Required flow:"
+  Write-Host "1. Push code and semver tag to git@github.com:teanores/nof-mp.git."
+  Write-Host "2. Create the GitHub Release for {{ref}}."
+  Write-Host "3. Ask nof-infra to run its release-builder workflow_dispatch:"
+  Write-Host "   repository: git@github.com:teanores/nof-infra.git"
+  Write-Host "   workflow: .github/workflows/release-builder.yml"
+  Write-Host "   service: nof-mp"
+  Write-Host "   ref: {{ref}}"
+  Write-Host "   approval_id: <owner approval / tracker evidence id>"
+  Write-Host "   execute_deploy: true"
+  Write-Host "4. Read nof-infra evidence and run public smoke before owner UAT."

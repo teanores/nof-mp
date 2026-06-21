@@ -1,12 +1,12 @@
 # Release Builder Safety
 
-Status: draft
+Status: accepted service-local boundary
 Project: NOF Main Platform / `nof-mp`
 Repository: `nof-mp`
 
 ## Purpose
 
-This runbook keeps NOF MP releases scoped when the shared release-builder manifest contains multiple enabled services.
+This runbook keeps NOF MP releases scoped and ensures release execution stays owned by `nof-infra`.
 
 ## Current Release Identity
 
@@ -20,11 +20,18 @@ This runbook keeps NOF MP releases scoped when the shared release-builder manife
 
 ## Scoped Deploy Rule
 
-When only NOF MP should be deployed, use the scoped builder command:
+When only NOF MP should be deployed, prepare and publish a semver tag in this repository, then ask `nof-infra` to execute its release-builder workflow:
 
-```bash
-/opt/nof-release-builder/nof-release-builder.sh deploy nof-mp <approved-ref>
+```text
+repository: git@github.com:teanores/nof-infra.git
+workflow: .github/workflows/release-builder.yml
+service: nof-mp
+ref: <approved-semver-tag>
+approval_id: <owner approval / tracker evidence id>
+execute_deploy: true
 ```
+
+The workflow delegates execution to the hbl release-builder. NOF MP agents must not print or run direct SSH deploy commands as the routine path.
 
 Do not use broad manifest sync for a NOF MP-only release unless every enabled service row is explicitly approved for deployment in the same release window.
 
@@ -43,7 +50,7 @@ confirm and record:
 - whether each service is intended to deploy now;
 - rollback/verification expectations for each service.
 
-If only NOF MP is intended to deploy, use scoped deploy instead.
+If only NOF MP is intended to deploy, use the nof-infra one-service workflow dispatch instead.
 
 ## Desired State Ownership
 
@@ -53,13 +60,13 @@ Current legacy manifest location:
 ops/release-builder/desired-state.tsv
 ```
 
-Intended future canonical home:
+Canonical infrastructure home:
 
 ```text
-nof-infra
+nof-infra/environments/hbl/desired-state.tsv
 ```
 
-Do not migrate the manifest to `nof-infra` until the repository is confirmed, bootstrapped and owner-approved as the canonical infra repo.
+Do not push enabled desired-state rows as a side effect of nof-mp application work. Desired-state is controlled by nof-infra.
 
 ## Secrets
 
@@ -70,6 +77,7 @@ The builder reads GitHub credentials from server-side configuration. Do not prin
 - Kubernetes secrets;
 - registry credentials;
 - private SSH keys.
+- direct SSH deploy commands from nof-mp service-local tooling.
 
 ## Evidence
 
@@ -89,6 +97,7 @@ For every NOF MP deploy, record:
 Stop before deploy if:
 
 - target ref is not pushed or is ambiguous;
+- the nof-infra workflow cannot be used and the owner has not explicitly approved a break-glass manual release-builder exception;
 - desired state would deploy unrelated services;
 - required token/config checks require printing secret values;
 - Docker build fails;

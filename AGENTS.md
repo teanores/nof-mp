@@ -65,7 +65,18 @@ For release-bound work, run the full set above and record results in the tracker
 
 Agents do not deploy by default.
 
-Controlled NOF MP deploy is allowed only when the owner explicitly asks in the current conversation and a runbook exists. The current hardening release runbook is stored in tracker Wiki:
+This repository must not store, print or use an SSH key to hbl for routine production deploys. NOF MP release execution belongs to `nof-infra`.
+
+The approved routine path is:
+
+1. nof-mp prepares code, tests, semver tag and GitHub Release;
+2. the owner gives explicit approval in the current conversation;
+3. `nof-infra` runs `.github/workflows/release-builder.yml` with `service=nof-mp`, the approved semver tag, `approval_id` and `execute_deploy=true`;
+4. nof-mp reads the nof-infra/release-builder evidence, performs public smoke and asks the owner for UAT.
+
+Direct SSH/manual release-builder execution from a nof-mp session is a break-glass exception only for an explicitly approved incident or automation outage. If used, it must be named `manual release-builder` in chat/tracker evidence and followed by a nof-infra hardening task. It is not the normal deploy path.
+
+The current hardening release runbook is stored in tracker Wiki:
 
 - `nof-mp-hardening-release-runbook-2026-06-04`
 
