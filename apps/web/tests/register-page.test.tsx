@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { RegisterPage } from "@/components/RegisterPage";
 
@@ -27,7 +27,9 @@ describe("register page", () => {
     expect(screen.getByRole("link", { name: "Юридические аспекты" })).toHaveAttribute("href", "/legal");
     expect(screen.getByRole("button", { name: "Получить код" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Получить код" })).not.toHaveClass("bg-forge-accent");
-    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("button", { name: "Назад" })).toHaveAttribute("type", "button");
+    expect(screen.queryByRole("link", { name: "Войти" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "На портал" })).not.toBeInTheDocument();
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/request");
     expect(document.querySelector("form")).toHaveAttribute("id", "portal-registration-form");
     expect(document.body.textContent).not.toContain("Dragon Forge");
@@ -67,6 +69,20 @@ describe("register page", () => {
 
     expect(screen.getByText("Повтор пароля совпадает").closest("li")).toHaveTextContent("+");
     expect(submit).toBeEnabled();
+  });
+
+  it("uses a real back action instead of login or portal navigation links", async () => {
+    const user = userEvent.setup();
+    const back = vi.spyOn(window.history, "back").mockImplementation(() => undefined);
+    window.history.pushState({}, "", "/overview");
+    window.history.pushState({}, "", "/register");
+    render(<RegisterPage />);
+
+    await user.click(screen.getByRole("button", { name: "Назад" }));
+
+    expect(back).toHaveBeenCalledTimes(1);
+
+    back.mockRestore();
   });
 
   it("keeps code request disabled when password contains username or email local part", async () => {

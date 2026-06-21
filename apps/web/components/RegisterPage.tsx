@@ -16,6 +16,26 @@ interface RegisterPageProps {
   step?: RegisterStep;
 }
 
+function BackButton() {
+  function goBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.assign("/");
+  }
+
+  return (
+    <button
+      className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+      type="button"
+      onClick={goBack}
+    >
+      Назад
+    </button>
+  );
+}
+
 function ErrorPanel({ error }: { error: RegisterError }) {
   if (!error) {
     return null;
@@ -269,18 +289,7 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
           {isConfirmStep ? <ConfirmForm email={email} error={error} /> : <RequestForm error={error} />}
 
           <div className="flex flex-wrap gap-3">
-            <Link
-              className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
-              href="/login"
-            >
-              Войти
-            </Link>
-            <Link
-              className="tech-label rounded-sm border border-forge-line bg-forge-surface px-5 py-3 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
-              href="/"
-            >
-              На портал
-            </Link>
+            <BackButton />
           </div>
         </div>
       </section>
