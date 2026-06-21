@@ -175,6 +175,25 @@ describe("register page", () => {
     expect(document.body.textContent).not.toContain("backend");
   });
 
+  it("shows a specific message for invalid email domains", () => {
+    render(<RegisterPage error="invalid_email" />);
+
+    expect(screen.getByText(/Проверьте email/)).toBeInTheDocument();
+    expect(screen.getByText(/домен должен принимать почту/)).toBeInTheDocument();
+  });
+
+  it("shows a specific message for server-side password policy rejection", () => {
+    render(<RegisterPage error="password_policy" />);
+
+    expect(screen.getByText("Пароль не соответствует правилам безопасности.")).toBeInTheDocument();
+  });
+
+  it("shows a specific message when registration code email delivery fails", () => {
+    render(<RegisterPage error="email_delivery" />);
+
+    expect(screen.getByText(/Не удалось отправить код на email/)).toBeInTheDocument();
+  });
+
   it("guards against mojibake in owner-facing text", () => {
     render(<RegisterPage />);
 

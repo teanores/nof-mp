@@ -8,7 +8,7 @@ import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton"
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
 
 type RegisterStep = "request" | "confirm";
-type RegisterError = "unavailable" | "invalid" | "conflict" | undefined;
+type RegisterError = "conflict" | "email_delivery" | "invalid" | "invalid_email" | "password_policy" | "unavailable" | undefined;
 
 interface RegisterPageProps {
   email?: string;
@@ -26,7 +26,13 @@ function ErrorPanel({ error }: { error: RegisterError }) {
       ? "Регистрация временно недоступна. Мы уже восстанавливаем приём новых аккаунтов; сейчас можно войти в уже созданную учётную запись."
       : error === "conflict"
         ? "Не удалось создать аккаунт с такими данными."
-        : "Проверьте введённые данные и попробуйте ещё раз.";
+        : error === "invalid_email"
+          ? "Проверьте email: домен должен принимать почту, чтобы мы могли отправить код."
+          : error === "password_policy"
+            ? "Пароль не соответствует правилам безопасности."
+            : error === "email_delivery"
+              ? "Не удалось отправить код на email. Попробуйте ещё раз позже."
+              : "Проверьте введённые данные и попробуйте ещё раз.";
 
   return (
     <p className="rounded-sm border border-forge-accent bg-forge-surface px-3 py-2 text-sm font-semibold text-forge-accent">

@@ -52,10 +52,14 @@ export async function POST(request: NextRequest) {
       if (result.reason === "conflict") {
         return redirectToRegistrationRequestError("conflict");
       }
-      return redirectToRegistrationRequestError("invalid");
+      return redirectToRegistrationRequestError("password_policy");
     }
 
-    await sendRegistrationCodeEmail({ code: result.code, to: result.email });
+    try {
+      await sendRegistrationCodeEmail({ code: result.code, to: result.email });
+    } catch {
+      return redirectToRegistrationRequestError("email_delivery");
+    }
     return redirectToRegistrationConfirm(email);
   } catch {
     return redirectToRegistrationRequestError("unavailable");

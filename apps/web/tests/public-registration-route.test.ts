@@ -115,6 +115,37 @@ describe("public registration routes", () => {
     expect(emailMocks.sendRegistrationCodeEmail).not.toHaveBeenCalled();
   });
 
+  it("returns a password policy error when server-side password rules reject the request", async () => {
+    registrationMocks.requestRegistration.mockResolvedValueOnce({ errors: ["password_contains_identity"], ok: false, reason: "password_policy" });
+
+    const response = await requestRegistration(
+      formRequest("http://localhost/api/public/registration/request", {
+        email: "owner@example.com",
+        password: "OwnerLocal123!",
+        username: "owner",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/register?error=password_policy");
+    expect(emailMocks.sendRegistrationCodeEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns an email delivery error when SMTP delivery fails after creating a code", async () => {
+    emailMocks.sendRegistrationCodeEmail.mockRejectedValueOnce(new Error("email_delivery_failed"));
+
+    const response = await requestRegistration(
+      formRequest("http://localhost/api/public/registration/request", {
+        email: "owner@example.com",
+        password: "OwnerLocal123!",
+        username: "owner",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/register?error=email_delivery");
+  });
+
   it("keeps registration paused without calling upstream", async () => {
     settingsMocks.isRegistrationPaused.mockResolvedValueOnce(true);
 
