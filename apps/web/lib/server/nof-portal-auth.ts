@@ -53,7 +53,9 @@ function safeEqual(left: string, right: string): boolean {
 }
 
 function authVerificationSecrets(explicitSecret?: string): string[] {
-  const candidates = explicitSecret ? [explicitSecret] : [process.env.NOF_AUTH_SECRET_KEY, process.env.SECRET_KEY];
+  const candidates = explicitSecret
+    ? [explicitSecret]
+    : [process.env.NOF_AUTH_SECRET_KEY, process.env.SECRET_KEY, process.env.NOF_AUTH_SECRET_KEY_PREVIOUS, process.env.SECRET_KEY_PREVIOUS];
   return [...new Set(candidates.filter((value): value is string => Boolean(value)))];
 }
 

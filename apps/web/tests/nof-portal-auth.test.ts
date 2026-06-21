@@ -18,8 +18,10 @@ function sign(payload: object, secret: string): string {
 describe("nof portal auth token", () => {
   afterEach(() => {
     delete process.env.NOF_AUTH_SECRET_KEY;
+    delete process.env.NOF_AUTH_SECRET_KEY_PREVIOUS;
     delete process.env.NEXT_PUBLIC_NOF_LOGIN_URL;
     delete process.env.SECRET_KEY;
+    delete process.env.SECRET_KEY_PREVIOUS;
     vi.resetModules();
   });
 
@@ -78,6 +80,17 @@ describe("nof portal auth token", () => {
   it("keeps SECRET_KEY as a migration fallback when the new variable is not set", () => {
     process.env.SECRET_KEY = "legacy-shared-secret";
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "legacy-shared-secret");
+
+    expect(decodeNofAuthToken(token)).toMatchObject({
+      sub: "11111111-1111-1111-1111-111111111111",
+      username: "teanore",
+    });
+  });
+
+  it("accepts the previous legacy SECRET_KEY during a runtime secret rotation window", () => {
+    process.env.SECRET_KEY = "new-legacy-secret";
+    process.env.SECRET_KEY_PREVIOUS = "old-legacy-secret";
+    const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "old-legacy-secret");
 
     expect(decodeNofAuthToken(token)).toMatchObject({
       sub: "11111111-1111-1111-1111-111111111111",
