@@ -52,17 +52,27 @@ function safeEqual(left: string, right: string): boolean {
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function decodeNofAuthToken(token: string, secret = process.env.NOF_AUTH_SECRET_KEY ?? process.env.SECRET_KEY): JwtPayload | undefined {
-  if (!secret) {
-    return undefined;
-  }
+function authVerificationSecrets(explicitSecret?: string): string[] {
+  const candidates = explicitSecret ? [explicitSecret] : [process.env.NOF_AUTH_SECRET_KEY, process.env.SECRET_KEY];
+  return [...new Set(candidates.filter((value): value is string => Boolean(value)))];
+}
 
+function decodeNofAuthTokenWithSecret(token: string, secret: string): JwtPayload | undefined {
   const [encodedHeader, encodedPayload, signature] = token.split(".");
   if (!encodedHeader || !encodedPayload || !signature) {
     return undefined;
   }
 
-  const header = JSON.parse(base64UrlDecode(encodedHeader).toString("utf8")) as { alg?: string };
+  let header: { alg?: string };
+  let payload: JwtPayload;
+
+  try {
+    header = JSON.parse(base64UrlDecode(encodedHeader).toString("utf8")) as { alg?: string };
+    payload = JSON.parse(base64UrlDecode(encodedPayload).toString("utf8")) as JwtPayload;
+  } catch {
+    return undefined;
+  }
+
   if (header.alg !== algorithm) {
     return undefined;
   }
@@ -76,7 +86,6 @@ export function decodeNofAuthToken(token: string, secret = process.env.NOF_AUTH_
     return undefined;
   }
 
-  const payload = JSON.parse(base64UrlDecode(encodedPayload).toString("utf8")) as JwtPayload;
   if (!payload.sub || !payload.username) {
     return undefined;
   }
@@ -85,6 +94,17 @@ export function decodeNofAuthToken(token: string, secret = process.env.NOF_AUTH_
   }
 
   return payload;
+}
+
+export function decodeNofAuthToken(token: string, secret?: string): JwtPayload | undefined {
+  for (const candidate of authVerificationSecrets(secret)) {
+    const payload = decodeNofAuthTokenWithSecret(token, candidate);
+    if (payload) {
+      return payload;
+    }
+  }
+
+  return undefined;
 }
 
 function toIso(value: Date | string | null): string | undefined {

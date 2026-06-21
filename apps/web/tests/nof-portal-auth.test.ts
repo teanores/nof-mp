@@ -53,7 +53,7 @@ describe("nof portal auth token", () => {
     expect(decodeNofAuthToken(token, "wrong-secret")).toBeUndefined();
   });
 
-  it("prefers NOF_AUTH_SECRET_KEY over the legacy SECRET_KEY fallback", () => {
+  it("accepts auth tokens signed with NOF_AUTH_SECRET_KEY during rotation", () => {
     process.env.NOF_AUTH_SECRET_KEY = "new-purpose-secret";
     process.env.SECRET_KEY = "legacy-shared-secret";
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "new-purpose-secret");
@@ -64,7 +64,18 @@ describe("nof portal auth token", () => {
     });
   });
 
-  it("keeps SECRET_KEY as a migration fallback for existing legacy sessions", () => {
+  it("also accepts auth tokens signed with legacy SECRET_KEY during the dual-key rotation window", () => {
+    process.env.NOF_AUTH_SECRET_KEY = "new-purpose-secret";
+    process.env.SECRET_KEY = "legacy-shared-secret";
+    const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "legacy-shared-secret");
+
+    expect(decodeNofAuthToken(token)).toMatchObject({
+      sub: "11111111-1111-1111-1111-111111111111",
+      username: "teanore",
+    });
+  });
+
+  it("keeps SECRET_KEY as a migration fallback when the new variable is not set", () => {
     process.env.SECRET_KEY = "legacy-shared-secret";
     const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "teanore", exp: 4_102_444_800 }, "legacy-shared-secret");
 

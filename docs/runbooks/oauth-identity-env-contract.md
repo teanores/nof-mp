@@ -13,8 +13,9 @@ Do not store or paste real secret values here.
 - Owner: `nof-mp`, shared operationally with legacy `nof-service` during decomposition.
 - Purpose: verifies HS256 JWTs issued by legacy `nof-service` (legacy session cookie `auth_token`).
 - Consumers: `apps/web/lib/server/nof-portal-auth.ts` → `decodeNofAuthToken`.
-- Fallback: falls back to `SECRET_KEY` when absent (backward compatibility during migration).
-- Rotation: coordinate with legacy `nof-service` secret store. Remove fallback after legacy `nof-service` auth is fully decommissioned.
+- Dual-key rotation: while both `NOF_AUTH_SECRET_KEY` and legacy `SECRET_KEY` are configured, `nof-mp` must verify tokens signed by either key. This avoids forced logout during the owner-approved transition window.
+- Fallback: falls back to `SECRET_KEY` when the purpose-specific variable is absent.
+- Rotation: coordinate with legacy `nof-service` secret store. Remove or reduce the legacy fallback only after the dual-key transition has passed UAT and `NOF-MP-16` is ready to close.
 - Secret handling: never expose to browser JavaScript, logs, Wiki, tracker comments or build output.
 
 `NOF_PLATFORM_MCP_TOKEN_SECRET`
