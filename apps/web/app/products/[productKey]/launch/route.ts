@@ -54,10 +54,9 @@ export async function GET(request: NextRequest, context: ProductLaunchContext): 
     return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
   }
   if (isOAuthManagedProduct(productKey)) {
-    const serviceUrl = new URL(oauthManagedProductServicePath(productKey), request.nextUrl.origin);
-    serviceUrl.searchParams.set("launch", "oauth");
+    const servicePath = oauthManagedProductServicePath(productKey);
     return new NextResponse(null, {
-      headers: { location: serviceUrl.toString() },
+      headers: { location: `${servicePath}?launch=oauth` },
       status: 303,
     });
   }

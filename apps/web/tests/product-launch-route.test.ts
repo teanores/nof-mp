@@ -87,7 +87,7 @@ describe("product launch route", () => {
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("http://localhost/services/task-tracker?launch=oauth");
+    expect(response.headers.get("location")).toBe("/services/task-tracker?launch=oauth");
   });
 
   it("redirects Habit Tracker legacy launch to the canonical OAuth service page", async () => {
@@ -96,7 +96,7 @@ describe("product launch route", () => {
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("http://localhost/services/habit-tracker?launch=oauth");
+    expect(response.headers.get("location")).toBe("/services/habit-tracker?launch=oauth");
   });
 
   it("redirects guests to platform login before launching the product", async () => {
