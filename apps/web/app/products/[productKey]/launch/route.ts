@@ -21,6 +21,16 @@ function productCallbackOrigin(productKey: string): string {
   return process.env.NOF_DEFAULT_PRODUCT_ORIGIN ?? "http://localhost:3001";
 }
 
+function oauthManagedProductServicePath(productKey: string): string {
+  if (productKey === "nof-tt") {
+    return "/services/task-tracker";
+  }
+  if (productKey === "nof-ht") {
+    return "/services/habit-tracker";
+  }
+  return "/overview";
+}
+
 export async function GET(request: NextRequest, context: ProductLaunchContext): Promise<NextResponse> {
   const { productKey } = await context.params;
   const session = await portalSessionFromRequest(request);
@@ -44,7 +54,12 @@ export async function GET(request: NextRequest, context: ProductLaunchContext): 
     return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
   }
   if (isOAuthManagedProduct(productKey)) {
-    return NextResponse.json({ error: "standard_oauth_required", ok: false, productKey }, { status: 410 });
+    const serviceUrl = new URL(oauthManagedProductServicePath(productKey), request.nextUrl.origin);
+    serviceUrl.searchParams.set("launch", "oauth");
+    return new NextResponse(null, {
+      headers: { location: serviceUrl.toString() },
+      status: 303,
+    });
   }
 
   const returnTo = safePortalReturnTo(request.nextUrl.searchParams.get("next") ?? "/");

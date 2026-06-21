@@ -81,30 +81,22 @@ describe("product launch route", () => {
     };
   });
 
-  it("does not issue legacy exchange codes for OAuth-managed products", async () => {
+  it("redirects Task Tracker legacy launch to the canonical OAuth service page", async () => {
     const response = await launchProduct(launchRequest("/products/nof-tt/launch?next=/projects/nof-tt"), {
       params: Promise.resolve({ productKey: "nof-tt" }),
     });
 
-    expect(response.status).toBe(410);
-    await expect(response.json()).resolves.toEqual({
-      error: "standard_oauth_required",
-      ok: false,
-      productKey: "nof-tt",
-    });
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("http://localhost/services/task-tracker?launch=oauth");
   });
 
-  it("fails closed for direct Habit Tracker launch instead of creating a silent product session", async () => {
+  it("redirects Habit Tracker legacy launch to the canonical OAuth service page", async () => {
     const response = await launchProduct(launchRequest("/products/nof-ht/launch?next=/"), {
       params: Promise.resolve({ productKey: "nof-ht" }),
     });
 
-    expect(response.status).toBe(410);
-    await expect(response.json()).resolves.toEqual({
-      error: "standard_oauth_required",
-      ok: false,
-      productKey: "nof-ht",
-    });
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("http://localhost/services/habit-tracker?launch=oauth");
   });
 
   it("redirects guests to platform login before launching the product", async () => {
