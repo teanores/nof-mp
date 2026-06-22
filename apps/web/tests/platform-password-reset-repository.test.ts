@@ -1,9 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   hashPasswordResetToken,
   PlatformPasswordResetRepository,
 } from "@/lib/server/platform-password-reset-repository";
+
+const passwordPolicyState = vi.hoisted(() => ({
+  clearRotationRequirement: vi.fn(),
+}));
+
+vi.mock("@/lib/server/password-policy-state-repository", () => ({
+  getPasswordPolicyStateRepository: () => passwordPolicyState,
+}));
 
 interface FakeQueryResult<T> {
   rowCount?: number;
@@ -35,6 +43,10 @@ function repository(pool: FakePool, now = new Date("2026-06-11T10:00:00.000Z")):
 }
 
 describe("platform password reset repository", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("creates a hash-only reset token for resettable email accounts", async () => {
     const pool = new FakePool([
       { rows: [{ email: "owner@example.com", id: "00000000-0000-0000-0000-000000000001", username: "owner" }] },
@@ -99,7 +111,10 @@ describe("platform password reset repository", () => {
       { rows: [], rowCount: 1 },
     ]);
 
-    await expect(repository(pool).confirmReset({ newPassword: "NextHorse22!", token: "raw-reset-token" })).resolves.toEqual({ ok: true });
+    await expect(repository(pool).confirmReset({ newPassword: "NextHorse22!", token: "raw-reset-token" })).resolves.toEqual({
+      ok: true,
+      userId: "00000000-0000-0000-0000-000000000001",
+    });
 
     const select = pool.queries.find((query) => query.sql.includes("WHERE prt.token_hash = $1"));
     expect(select?.values?.[0]).toBe(hashPasswordResetToken("raw-reset-token"));
@@ -108,6 +123,7 @@ describe("platform password reset repository", () => {
     const passwordUpdate = pool.queries.find((query) => query.sql.includes('UPDATE dragon_forge."user"'));
     expect(passwordUpdate?.values?.[0]).not.toBe("NextHorse22!");
     expect(passwordUpdate?.values?.[1]).toBe("00000000-0000-0000-0000-000000000001");
+    expect(passwordPolicyState.clearRotationRequirement).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000001");
   });
 
   it("rejects replayed or expired tokens without updating the password", async () => {

@@ -10,6 +10,7 @@ import {
 import { authRateLimit } from "@/lib/server/auth-abuse-protection";
 import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
 import { normalizePortalLanguage } from "@/lib/portal-language";
+import { getPasswordPolicyStateRepository } from "@/lib/server/password-policy-state-repository";
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 import { summarizeUserAgent } from "@/lib/server/security-audit-sanitize";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
@@ -82,6 +83,12 @@ export async function POST(request: NextRequest) {
   copyAuthCookies(upstream, response);
   const authCookieValue = authCookieValueFromResponse(upstream);
   const userId = authCookieValue ? decodeNofAuthToken(authCookieValue)?.sub : undefined;
+  if (userId) {
+    const passwordPolicyState = await getPasswordPolicyStateRepository().stateForUser(userId);
+    if (passwordPolicyState.mustRotatePassword) {
+      response.headers.set("location", "/profile?password=rotation-required");
+    }
+  }
   await recordSecurityAuditEvent({
     ...auditContext,
     actorUserId: userId,

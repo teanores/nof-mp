@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { Pool, type QueryResultRow } from "pg";
 
 import { isResettableEmail, normalizePlatformEmail } from "@/lib/server/email-address-policy";
+import { getPasswordPolicyStateRepository } from "@/lib/server/password-policy-state-repository";
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import { hashPlatformPassword, platformPasswordPolicyErrors, type PlatformPasswordPolicyError } from "@/lib/server/platform-password";
 
@@ -29,7 +30,7 @@ export type PasswordResetRequestResult =
   | { ok: true; expiresAt: Date; reason: "token_created"; resetToken: string; userId: string };
 
 export type PasswordResetConfirmResult =
-  | { ok: true }
+  | { ok: true; userId: string }
   | { errors?: PlatformPasswordPolicyError[]; ok: false; reason: "invalid_or_expired_token" | "password_policy" };
 
 export type PasswordResetTokenVerificationResult =
@@ -143,8 +144,9 @@ export class PlatformPasswordResetRepository {
        WHERE id = $2::uuid`,
       [hashPlatformPassword(input.newPassword), token.user_id],
     );
+    await getPasswordPolicyStateRepository().clearRotationRequirement(token.user_id);
 
-    return { ok: true };
+    return { ok: true, userId: token.user_id };
   }
 
   async verifyResetToken(input: { token: string }): Promise<PasswordResetTokenVerificationResult> {

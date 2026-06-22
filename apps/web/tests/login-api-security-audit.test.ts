@@ -21,6 +21,14 @@ vi.mock("@/lib/server/security-audit-dashboard", () => ({
   recordSecurityAuditEvent: vi.fn(),
 }));
 
+const passwordPolicyState = vi.hoisted(() => ({
+  stateForUser: vi.fn(async () => ({ mustRotatePassword: false })),
+}));
+
+vi.mock("@/lib/server/password-policy-state-repository", () => ({
+  getPasswordPolicyStateRepository: () => passwordPolicyState,
+}));
+
 vi.mock("@/lib/server/user-preferences-repository", () => ({
   getUserPreferencesRepository: () => ({
     upsert: vi.fn(),
@@ -45,6 +53,7 @@ describe("login API security audit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetAuthAbuseProtectionForTests();
+    passwordPolicyState.stateForUser.mockResolvedValue({ mustRotatePassword: false });
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -95,6 +104,16 @@ describe("login API security audit", () => {
       }),
     );
     expect(JSON.stringify(vi.mocked(recordSecurityAuditEvent).mock.calls)).not.toContain("correct-password");
+  });
+
+  it("redirects successful login to profile when password rotation is required", async () => {
+    passwordPolicyState.stateForUser.mockResolvedValue({ mustRotatePassword: true });
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { headers: { location: "/" }, status: 302 }));
+
+    const response = await POST(loginRequest({ language: "ru", next: "/overview", password: "correct-password", username: "owner@example.com" }));
+
+    expect(response.headers.get("location")).toBe("/profile?password=rotation-required");
+    expect(passwordPolicyState.stateForUser).toHaveBeenCalledWith("user-1");
   });
 
   it("rate limits repeated login attempts before forwarding to upstream", async () => {

@@ -2,6 +2,7 @@ import { Pool, type QueryResultRow } from "pg";
 
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import { hashPlatformPassword, platformPasswordPolicyErrors, verifyPlatformPassword, type PlatformPasswordPolicyError } from "@/lib/server/platform-password";
+import { getPasswordPolicyStateRepository } from "@/lib/server/password-policy-state-repository";
 
 interface PlatformPasswordUserRow extends QueryResultRow {
   email: string | null;
@@ -44,6 +45,7 @@ export class PlatformPasswordRepository {
        WHERE id = $2::uuid`,
       [hashPlatformPassword(input.newPassword), input.userId],
     );
+    await getPasswordPolicyStateRepository().clearRotationRequirement(input.userId);
 
     return { ok: true };
   }
