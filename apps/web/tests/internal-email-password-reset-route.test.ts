@@ -32,7 +32,7 @@ describe("internal password reset email route", () => {
     vi.clearAllMocks();
     process.env = {
       ...originalEnv,
-      NOF_MP_EMAIL_FROM: "accounts@example.com",
+      NOF_MP_EMAIL_FROM: "accounts@forgath.ru",
       NOF_MP_EMAIL_WEBHOOK_TOKEN: "delivery-token",
       NEXT_PUBLIC_PLATFORM_ORIGIN: "https://forgath.ru",
       SMTP_HOST: "smtp.gmail.com",
@@ -143,7 +143,7 @@ describe("internal password reset email route", () => {
     );
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "\"NOF Platform\" <accounts@example.com>",
+        from: "\"NOF Platform\" <accounts@forgath.ru>",
         subject: "Восстановление пароля NOF Platform",
         to: "owner@example.com",
       }),
