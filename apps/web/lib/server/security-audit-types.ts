@@ -5,6 +5,7 @@ export type SecurityAuditEventType =
   | "edge_request"
   | "edge_suspicious_scan"
   | "app_authenticated_request"
+  | "admin_email_link_requested"
   | "admin_password_reset_requested"
   | "admin_settings_updated"
   | "admin_user_access_updated"

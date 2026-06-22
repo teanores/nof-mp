@@ -65,6 +65,62 @@ function recoveryBlockReason(user: AdminUserListItem): string {
   return "";
 }
 
+function EmailLinkActions({ user }: { user: AdminUserListItem }) {
+  const canPrepareEmailLink = user.recoveryState === "service-email" && user.risks.includes("telegram-placeholder-email") && Boolean(user.telegram?.id);
+  const [status, setStatus] = useState<"idle" | "preparing" | "blocked" | "failed">("idle");
+
+  async function handlePrepareEmailLink() {
+    if (!canPrepareEmailLink) {
+      return;
+    }
+
+    setStatus("preparing");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/email-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("blocked");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  if (!canPrepareEmailLink) {
+    return null;
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Привязка реальной почты</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">Можно подготовить одноразовую ссылку для замены служебной почты на реальную.</p>
+        </div>
+        <button
+          className={compactPrimaryActionClassName(status === "preparing" || status === "blocked", "inline-flex items-center justify-center text-xs")}
+          disabled={status === "preparing" || status === "blocked"}
+          type="button"
+          onClick={() => void handlePrepareEmailLink()}
+        >
+          {status === "preparing" ? "Готовим" : status === "blocked" ? "Ожидает шлюз" : "Подготовить привязку email"}
+        </button>
+      </div>
+      {status === "blocked" ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">Ссылка подготовлена. Отправка пользователю ждёт отдельный шлюз сообщений.</p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Привязку не удалось подготовить. Повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function RecoveryActions({ user }: { user: AdminUserListItem }) {
   const canRecoverByEmail = user.recoveryState === "email-reset-ready" && Boolean(user.email);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
@@ -309,6 +365,8 @@ export function AdminUserDetailPage({
       <RecentActivity events={recentActivity} />
 
       <AccessActions user={user} />
+
+      <EmailLinkActions user={user} />
 
       <RecoveryActions user={user} />
     </PortalPageShell>

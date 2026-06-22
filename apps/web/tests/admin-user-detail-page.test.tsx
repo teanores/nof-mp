@@ -175,6 +175,34 @@ describe("admin user detail page", () => {
     expect(screen.queryByRole("button", { name: "Отправить письмо восстановления" })).not.toBeInTheDocument();
   });
 
+  it("lets an admin prepare email linking for telegram placeholder accounts through the gateway stub", async () => {
+    render(<AdminUserDetailPage user={user} />);
+
+    expect(screen.getByRole("heading", { name: "Привязка реальной почты" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Подготовить привязку email" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-1/email-link",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Ссылка подготовлена. Отправка пользователю ждёт отдельный шлюз сообщений.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ожидает шлюз" })).toBeDisabled();
+    expect(document.body).not.toHaveTextContent("raw-email-link");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("does not show email-link gateway actions for real email accounts", () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    expect(screen.queryByRole("heading", { name: "Привязка реальной почты" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Подготовить привязку email" })).not.toBeInTheDocument();
+  });
+
   it("shows linked service state for the selected user without admin-side unlink controls", () => {
     render(<AdminUserDetailPage serviceLinks={connectedLinks} user={recoverableUser} />);
 
