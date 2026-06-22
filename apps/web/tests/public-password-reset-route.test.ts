@@ -10,6 +10,10 @@ const passwordResetDelivery = vi.hoisted(() => ({
   sendResetLink: vi.fn(),
 }));
 
+const auditMocks = vi.hoisted(() => ({
+  recordSecurityAuditEvent: vi.fn(),
+}));
+
 vi.mock("@/lib/server/platform-password-reset-repository", () => ({
   getPlatformPasswordResetRepository: vi.fn(() => passwordResetRepository),
   normalizePasswordResetEmail: (email: string) => email.trim().toLowerCase(),
@@ -19,8 +23,13 @@ vi.mock("@/lib/server/password-reset-delivery", () => ({
   getPasswordResetDelivery: vi.fn(() => passwordResetDelivery),
 }));
 
+vi.mock("@/lib/server/security-audit-dashboard", () => ({
+  recordSecurityAuditEvent: auditMocks.recordSecurityAuditEvent,
+}));
+
 import { POST as confirmReset } from "@/app/api/public/password-reset/confirm/route";
 import { POST as requestReset } from "@/app/api/public/password-reset/request/route";
+import { resetAuthAbuseProtectionForTests } from "@/lib/server/auth-abuse-protection";
 
 function request(url: string, body: unknown): NextRequest {
   return new NextRequest(url, {
@@ -33,6 +42,7 @@ function request(url: string, body: unknown): NextRequest {
 describe("public password reset routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetAuthAbuseProtectionForTests();
     vi.spyOn(console, "info").mockImplementation(() => undefined);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     passwordResetRepository.requestReset.mockResolvedValue({ ok: true, reason: "missing_or_unresettable" });
@@ -68,6 +78,15 @@ describe("public password reset routes", () => {
       outcome: "not_configured",
       userId: "user-1",
     });
+    expect(auditMocks.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "password_reset_requested",
+        loginIdentifier: expect.stringMatching(/^sha256:/),
+        statusCode: 200,
+      }),
+    );
+    expect(JSON.stringify(auditMocks.recordSecurityAuditEvent.mock.calls)).not.toContain("owner@example.com");
+    expect(JSON.stringify(auditMocks.recordSecurityAuditEvent.mock.calls)).not.toContain("raw-reset-token");
   });
 
   it("records a delivered outcome when the email provider accepts the reset link", async () => {
@@ -140,6 +159,14 @@ describe("public password reset routes", () => {
       newPassword: "NextHorse22!",
       token: "raw-reset-token",
     });
+    expect(auditMocks.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "password_reset_completed",
+        statusCode: 200,
+      }),
+    );
+    expect(JSON.stringify(auditMocks.recordSecurityAuditEvent.mock.calls)).not.toContain("raw-reset-token");
+    expect(JSON.stringify(auditMocks.recordSecurityAuditEvent.mock.calls)).not.toContain("NextHorse22!");
   });
 
   it("clears any existing portal session after a successful reset", async () => {
@@ -177,5 +204,32 @@ describe("public password reset routes", () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "invalid_or_expired_token" });
+    expect(auditMocks.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "password_reset_failed",
+        statusCode: 400,
+      }),
+    );
+  });
+
+  it("rate limits repeated reset requests without exposing account existence", async () => {
+    for (let index = 0; index < 5; index += 1) {
+      await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+    }
+
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      message: "Если такой аккаунт существует и может получать письма, мы отправим ссылку для восстановления пароля.",
+    });
+    expect(auditMocks.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "password_reset_rate_limited",
+        loginIdentifier: expect.stringMatching(/^sha256:/),
+        statusCode: 429,
+      }),
+    );
   });
 });

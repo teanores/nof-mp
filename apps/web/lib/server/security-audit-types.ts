@@ -19,6 +19,12 @@ export type SecurityAuditEventType =
   | "login_success"
   | "login_upstream_error"
   | "logout_success"
+  | "password_change_failed"
+  | "password_change_success"
+  | "password_reset_completed"
+  | "password_reset_failed"
+  | "password_reset_rate_limited"
+  | "password_reset_requested"
   | "session_expired";
 
 export type EdgeEventClassification =

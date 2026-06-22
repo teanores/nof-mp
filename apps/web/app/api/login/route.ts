@@ -7,6 +7,7 @@ import {
   copyAuthCookies,
   nofServiceLoginUrl,
 } from "@/lib/server/nof-service-client";
+import { authRateLimit } from "@/lib/server/auth-abuse-protection";
 import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
 import { normalizePortalLanguage } from "@/lib/portal-language";
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
@@ -41,6 +42,17 @@ export async function POST(request: NextRequest) {
       eventType: "login_missing_credentials",
       loginIdentifier: username || undefined,
       statusCode: 400,
+    });
+    return buildPortalLoginFailedRedirect(next);
+  }
+
+  const limit = authRateLimit(`login:${auditContext.ip}:${username.toLowerCase()}`, { limit: 10, windowMs: 15 * 60 * 1000 });
+  if (!limit.allowed) {
+    await recordSecurityAuditEvent({
+      ...auditContext,
+      eventType: "login_rate_limited",
+      loginIdentifier: username,
+      statusCode: 429,
     });
     return buildPortalLoginFailedRedirect(next);
   }

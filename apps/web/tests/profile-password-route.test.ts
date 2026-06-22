@@ -19,12 +19,20 @@ const passwordRepository = vi.hoisted(() => ({
   changePassword: vi.fn(),
 }));
 
+const audit = vi.hoisted(() => ({
+  recordSecurityAuditEvent: vi.fn(),
+}));
+
 vi.mock("@/lib/server/portal-auth-gate", () => ({
   portalSessionFromRequest: vi.fn(async () => authSession.value),
 }));
 
 vi.mock("@/lib/server/platform-password-repository", () => ({
   getPlatformPasswordRepository: vi.fn(() => passwordRepository),
+}));
+
+vi.mock("@/lib/server/security-audit-dashboard", () => ({
+  recordSecurityAuditEvent: audit.recordSecurityAuditEvent,
 }));
 
 import { POST } from "@/app/api/profile/password/route";
@@ -76,6 +84,16 @@ describe("profile password route", () => {
       newPassword: "NextHorse22!",
       userId: "platform-user-1",
     });
+    expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "platform-user-1",
+        actorUsername: "teanore",
+        eventType: "password_change_success",
+        statusCode: 200,
+      }),
+    );
+    expect(JSON.stringify(audit.recordSecurityAuditEvent.mock.calls)).not.toContain("CurrentHorse1!");
+    expect(JSON.stringify(audit.recordSecurityAuditEvent.mock.calls)).not.toContain("NextHorse22!");
   });
 
   it("returns a safe error for invalid current passwords", async () => {
@@ -85,5 +103,11 @@ describe("profile password route", () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "invalid_current_password" });
+    expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "password_change_failed",
+        statusCode: 400,
+      }),
+    );
   });
 });

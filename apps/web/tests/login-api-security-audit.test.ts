@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST } from "@/app/api/login/route";
+import { resetAuthAbuseProtectionForTests } from "@/lib/server/auth-abuse-protection";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
 
 vi.mock("@/lib/server/nof-portal-auth", () => ({
@@ -43,6 +44,7 @@ function loginRequest(fields: Record<string, string>, init?: RequestInit): NextR
 describe("login API security audit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetAuthAbuseProtectionForTests();
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -93,5 +95,25 @@ describe("login API security audit", () => {
       }),
     );
     expect(JSON.stringify(vi.mocked(recordSecurityAuditEvent).mock.calls)).not.toContain("correct-password");
+  });
+
+  it("rate limits repeated login attempts before forwarding to upstream", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
+
+    for (let index = 0; index < 10; index += 1) {
+      await POST(loginRequest({ next: "/overview", password: "wrong-password", username: "owner@example.com" }));
+    }
+
+    await POST(loginRequest({ next: "/overview", password: "wrong-password", username: "owner@example.com" }));
+
+    expect(fetch).toHaveBeenCalledTimes(10);
+    expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "login_rate_limited",
+        loginIdentifier: "owner@example.com",
+        statusCode: 429,
+      }),
+    );
+    expect(JSON.stringify(vi.mocked(recordSecurityAuditEvent).mock.calls)).not.toContain("wrong-password");
   });
 });
