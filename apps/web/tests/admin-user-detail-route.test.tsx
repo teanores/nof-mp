@@ -55,6 +55,7 @@ describe("admin user detail route", () => {
     mocks.portalPageSession.mockResolvedValue(adminSession());
     mocks.getUserById.mockResolvedValue({
       accountState: "password-login",
+      accessState: "active",
       hasPassword: true,
       id: "u-1",
       recoveryState: "email-reset-ready",
@@ -111,6 +112,7 @@ describe("admin user detail route", () => {
     mocks.portalPageSession.mockResolvedValue(adminSession());
     mocks.getUserById.mockResolvedValue({
       accountState: "password-login",
+      accessState: "active",
       hasPassword: true,
       id: "u-1",
       recoveryState: "email-reset-ready",

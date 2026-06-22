@@ -9,6 +9,7 @@ import type { ForgeServiceLink } from "@/lib/types";
 
 const user: AdminUserListItem = {
   accountState: "telegram-only",
+  accessState: "active",
   createdAt: "2026-06-01T10:00:00.000Z",
   email: "251740038@telegram.forgath.ru",
   hasPassword: false,
@@ -24,6 +25,7 @@ const user: AdminUserListItem = {
 
 const recoverableUser: AdminUserListItem = {
   accountState: "password-login",
+  accessState: "active",
   createdAt: "2026-06-02T10:00:00.000Z",
   email: "owner@example.com",
   hasPassword: true,
@@ -120,6 +122,24 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("reset-token");
   });
 
+  it("lets an admin deny account access from the user card", async () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Запретить доступ" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-2/access",
+        expect.objectContaining({
+          body: JSON.stringify({ action: "deny", reason: "admin_review" }),
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Состояние доступа обновлено.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Вернуть доступ" })).toBeInTheDocument();
+  });
+
   it("prevents duplicate recovery email clicks after a successful send", async () => {
     render(<AdminUserDetailPage user={recoverableUser} />);
 
@@ -153,6 +173,34 @@ describe("admin user detail page", () => {
     expect(screen.getByText("Восстановление по почте недоступно")).toBeInTheDocument();
     expect(screen.getByText("У пользователя служебная почта. Сначала нужна реальная электронная почта.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Отправить письмо восстановления" })).not.toBeInTheDocument();
+  });
+
+  it("lets an admin prepare email linking for telegram placeholder accounts through the gateway stub", async () => {
+    render(<AdminUserDetailPage user={user} />);
+
+    expect(screen.getByRole("heading", { name: "Привязка реальной почты" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Подготовить привязку email" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-1/email-link",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Ссылка подготовлена. Отправка пользователю ждёт отдельный шлюз сообщений.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ожидает шлюз" })).toBeDisabled();
+    expect(document.body).not.toHaveTextContent("raw-email-link");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("does not show email-link gateway actions for real email accounts", () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    expect(screen.queryByRole("heading", { name: "Привязка реальной почты" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Подготовить привязку email" })).not.toBeInTheDocument();
   });
 
   it("shows linked service state for the selected user without admin-side unlink controls", () => {

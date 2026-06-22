@@ -32,7 +32,7 @@ describe("internal password reset email route", () => {
     vi.clearAllMocks();
     process.env = {
       ...originalEnv,
-      NOF_MP_EMAIL_FROM: "accounts@example.com",
+      NOF_MP_EMAIL_FROM: "accounts@forgath.ru",
       NOF_MP_EMAIL_WEBHOOK_TOKEN: "delivery-token",
       NEXT_PUBLIC_PLATFORM_ORIGIN: "https://forgath.ru",
       SMTP_HOST: "smtp.gmail.com",
@@ -99,20 +99,22 @@ describe("internal password reset email route", () => {
   });
 
   it("rejects synthetic telegram recipients before touching SMTP", async () => {
-    const response = await POST(
-      request(
-        {
-          expiresAt: "2026-06-11T11:00:00.000Z",
-          kind: "password_reset",
-          resetUrl: "https://forgath.ru/password-reset?token=raw-token",
-          to: "251740038@telegram.forgath.ru",
-          userId: "user-1",
-        },
-        "delivery-token",
-      ),
-    );
+    for (const to of ["251740038@telegram.example.com", "251740038@telegram.forgath.ru"]) {
+      const response = await POST(
+        request(
+          {
+            expiresAt: "2026-06-11T11:00:00.000Z",
+            kind: "password_reset",
+            resetUrl: "https://forgath.ru/password-reset?token=raw-token",
+            to,
+            userId: "user-1",
+          },
+          "delivery-token",
+        ),
+      );
 
-    expect(response.status).toBe(400);
+      expect(response.status).toBe(400);
+    }
     expect(sendMail).not.toHaveBeenCalled();
   });
 
@@ -141,7 +143,7 @@ describe("internal password reset email route", () => {
     );
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "\"NOF Platform\" <accounts@example.com>",
+        from: "\"NOF Platform\" <accounts@forgath.ru>",
         subject: "Восстановление пароля NOF Platform",
         to: "owner@example.com",
       }),

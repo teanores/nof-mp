@@ -72,6 +72,7 @@ describe("admin secrets page", () => {
     expect(screen.getByText("TELEGRAM_HABIT_BOT_TOKEN")).toBeInTheDocument();
     expect(screen.getAllByText("nof-mp").length).toBeGreaterThan(0);
     expect(screen.getByText("Требует ротации")).toBeInTheDocument();
+    expect(screen.getAllByText("Пауза").length).toBeGreaterThan(0);
     expect(screen.getAllByText("manual").length).toBeGreaterThan(0);
     expect(screen.getAllByText("01.07.2026").length).toBeGreaterThan(0);
     expect(screen.getAllByText("17 дн.").length).toBeGreaterThan(0);
@@ -91,8 +92,9 @@ describe("admin secrets page", () => {
 
     const serviceOptions = screen.getAllByRole("option", { name: /Все сервисы|nof-/ });
     expect(serviceOptions[0]).toHaveTextContent("Все сервисы");
-    const categoryOptions = screen.getAllByRole("option", { name: /Все типы|Боты|БД|Email/ });
+    const categoryOptions = screen.getAllByRole("option", { name: /Все типы|Боты|БД|Почта/ });
     expect(categoryOptions[0]).toHaveTextContent("Все типы");
+    expect(screen.queryByRole("option", { name: "Email" })).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Фильтр по сервису"), "nof-ht");
 

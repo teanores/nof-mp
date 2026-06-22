@@ -54,7 +54,7 @@ export function AdminSecurityPage({
           { href: "/overview", label: "Разделы кузницы" },
           { label: "Безопасность" },
         ]}
-        description="Платформенная панель безопасности: входы, rate-limit, доступы и очищенные edge-события без продуктового footer и внутренних адресов."
+        description="Платформенная панель безопасности: входы, ограничения частоты, доступы и очищенные события периметра без продуктового футера и внутренних адресов."
         eyebrow="Администрирование"
         title="Безопасность платформы"
       />
@@ -66,16 +66,16 @@ export function AdminSecurityPage({
           <p className="mt-3 text-sm leading-6 text-forge-muted">
             {hasEvents
               ? "Сводка построена по очищенным событиям за последние 24 часа. Сырые логи, секреты, cookie и чувствительные значения не отображаются."
-              : "За последние 24 часа событий безопасности не найдено. Если на портале был трафик, проверьте доставку edge-логов и платформенных audit-событий."}
+              : "За последние 24 часа событий безопасности не найдено. Если на портале был трафик, проверьте доставку событий периметра и платформенного аудита."}
           </p>
         </article>
 
         <article className="grid gap-3 sm:grid-cols-3">
           <StatCard label="Успешные входы" value={dashboard.summary.successfulLogins} />
           <StatCard label="Неудачные входы" value={dashboard.summary.failedLogins} />
-          <StatCard label="Rate limit / 429" value={dashboard.summary.rateLimited} />
-          <StatCard label="403 / 401" value={dashboard.summary.forbidden} />
-          <StatCard label="404 / unknown" value={dashboard.summary.notFound} />
+          <StatCard label="Ограничения / 429" value={dashboard.summary.rateLimited} />
+          <StatCard label="Запреты / 403-401" value={dashboard.summary.forbidden} />
+          <StatCard label="Не найдено / 404" value={dashboard.summary.notFound} />
           <StatCard label="Сканы" value={dashboard.summary.suspiciousScans} />
         </article>
       </section>
@@ -87,7 +87,7 @@ export function AdminSecurityPage({
           {[
             ["Сигналы", "Caddy и SSH события читаются отдельным VPS-мониторингом."],
             ["Блокировки", "Автоматическая блокировка выключена: bouncer не установлен."],
-            ["Дашборд", "Эта страница показывает очищенные platform/app/edge audit-события, а не полную консоль CrowdSec."],
+            ["Дашборд", "Эта страница показывает очищенные события платформы, приложения и периметра, а не полную консоль CrowdSec."],
           ].map(([title, text]) => (
             <article key={title} className="rounded-sm border border-forge-line bg-forge-surface p-3">
               <h3 className="heading-tech text-sm font-bold text-forge-ink">{title}</h3>

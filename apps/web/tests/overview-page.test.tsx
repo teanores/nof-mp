@@ -31,6 +31,7 @@ describe("platform overview page", () => {
 
     expect(mocks.requirePortalPageSession).toHaveBeenCalledWith("/overview");
     expect(screen.getByRole("heading", { name: "Narag'Othal Forgath" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Платформа NOF" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Task Tracker" })).toBeInTheDocument();
     expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
     expect(screen.getByText("Портал стримера")).toBeInTheDocument();

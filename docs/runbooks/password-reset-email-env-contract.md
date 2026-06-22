@@ -1,6 +1,6 @@
-# Password Reset Email Environment Contract
+# Platform Email Environment Contract
 
-Status: draft implementation contract for NOF-MP password reset delivery.
+Status: implementation contract for NOF-MP registration code and password reset delivery.
 
 This file documents variable names and behavior only. Do not store real secret values here.
 
@@ -26,14 +26,15 @@ This file documents variable names and behavior only. Do not store real secret v
 `NOF_MP_EMAIL_FROM`
 
 - Owner: email delivery boundary.
-- Purpose: sender address used in password reset emails.
-- Required for: explicit sender identity. If empty, the SMTP user may be used as fallback.
+- Purpose: sender address used in registration code and password reset emails.
+- Production expected value: an approved `@forgath.ru` sender, for example `accounts@forgath.ru`.
+- Required for: explicit sender identity. If empty, the SMTP user may be used as fallback in local/dev only.
 - Security: not usually a secret, but do not paste private mailbox details into public evidence unless approved.
 
 `SMTP_HOST`
 
 - Owner: email delivery boundary.
-- Purpose: SMTP provider hostname for Phase 1 Google/Gmail delivery.
+- Purpose: SMTP provider hostname for Phase 1 Google/Gmail delivery until a NOF-owned mail service is selected.
 - Required for: real email delivery from the internal email endpoint.
 - Security: not a secret, but keep environment-specific values in runtime config/evidence only.
 
@@ -67,7 +68,7 @@ This file documents variable names and behavior only. Do not store real secret v
 
 ## Webhook Request
 
-When configured, nof-mp sends:
+When password reset delivery is configured, nof-mp sends:
 
 ```json
 {
@@ -98,10 +99,25 @@ Foreign HTTPS origins and non-reset platform paths are rejected before SMTP is t
 - The raw token may appear only in the generated reset URL passed to the email delivery boundary.
 - Do not log the raw token or reset URL.
 - Do not log email addresses, SMTP usernames, SMTP passwords, provider response bodies or webhook tokens.
+- Registration codes are sent through the same SMTP boundary and must not log recipient email addresses or SMTP configuration.
 - Public reset request response must be uniform for existing, missing and unresettable accounts.
-- Synthetic placeholder emails such as `*@telegram.forgath.ru` must not receive reset links.
+- Synthetic placeholder emails such as `*@telegram.example.com` and `*@telegram.forgath.ru` must not receive reset links.
 - Phase 1 uses current Google/Gmail SMTP only behind the internal boundary.
 - Do not self-host SMTP for Phase 1; own NOF mail infrastructure is a future development track.
+
+## Sender Domain Readiness
+
+`nof-mp` owns the application contract and runtime behavior. DNS, provider, Kubernetes secret and Helm/runtime rollout are owned by `nof-infra`.
+
+Production readiness requires:
+
+- `NOF_MP_EMAIL_FROM` points to an approved `@forgath.ru` sender.
+- SPF readiness is verified for the selected provider.
+- DMARC readiness is verified for the selected provider.
+- Provider authentication is stored only in runtime secret storage.
+- Evidence contains aggregate status only, never SMTP credentials or real recipient addresses.
+
+Infrastructure handoff: `NOF-INFRA-21`.
 
 ## Delivery Outcome Recording
 
@@ -119,6 +135,10 @@ Allowed diagnostic fields are outcome and platform user id when a reset token wa
 ## Current Phase 1 Architecture
 
 ```text
+/api/public/registration/request
+  -> sendRegistrationCodeEmail
+  -> current Google/Gmail SMTP
+
 /api/public/password-reset/request
   -> PasswordResetDelivery
   -> NOF_MP_EMAIL_WEBHOOK_URL

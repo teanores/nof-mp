@@ -39,7 +39,7 @@ const overviewCopy = {
     open: "Открыть",
     portalState: "Состояние портала",
     portalStateNote: "Платформа является точкой входа для аккаунта, профиля, обзора сервисов и доступа.",
-    portalTitle: "NOF Platform",
+    portalTitle: "Платформа NOF",
     profile: "Профиль",
     signIn: "Войти",
     modules: "Разделы кузницы",

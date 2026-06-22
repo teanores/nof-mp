@@ -65,6 +65,62 @@ function recoveryBlockReason(user: AdminUserListItem): string {
   return "";
 }
 
+function EmailLinkActions({ user }: { user: AdminUserListItem }) {
+  const canPrepareEmailLink = user.recoveryState === "service-email" && user.risks.includes("telegram-placeholder-email") && Boolean(user.telegram?.id);
+  const [status, setStatus] = useState<"idle" | "preparing" | "blocked" | "failed">("idle");
+
+  async function handlePrepareEmailLink() {
+    if (!canPrepareEmailLink) {
+      return;
+    }
+
+    setStatus("preparing");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/email-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("blocked");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  if (!canPrepareEmailLink) {
+    return null;
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Привязка реальной почты</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">Можно подготовить одноразовую ссылку для замены служебной почты на реальную.</p>
+        </div>
+        <button
+          className={compactPrimaryActionClassName(status === "preparing" || status === "blocked", "inline-flex items-center justify-center text-xs")}
+          disabled={status === "preparing" || status === "blocked"}
+          type="button"
+          onClick={() => void handlePrepareEmailLink()}
+        >
+          {status === "preparing" ? "Готовим" : status === "blocked" ? "Ожидает шлюз" : "Подготовить привязку email"}
+        </button>
+      </div>
+      {status === "blocked" ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">Ссылка подготовлена. Отправка пользователю ждёт отдельный шлюз сообщений.</p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Привязку не удалось подготовить. Повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function RecoveryActions({ user }: { user: AdminUserListItem }) {
   const canRecoverByEmail = user.recoveryState === "email-reset-ready" && Boolean(user.email);
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
@@ -116,6 +172,62 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
       {status === "failed" ? (
         <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
           Письмо не отправлено. Повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function AccessActions({ user }: { user: AdminUserListItem }) {
+  const [accessState, setAccessState] = useState(user.accessState);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const isDenied = accessState === "denied";
+
+  async function handleAccessChange() {
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/access`, {
+        body: JSON.stringify({ action: isDenied ? "restore" : "deny", reason: isDenied ? undefined : "admin_review" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      const payload = (await response.json()) as { accessState?: AdminUserListItem["accessState"] };
+      setAccessState(payload.accessState ?? (isDenied ? "active" : "denied"));
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Управление доступом</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">
+            {isDenied ? "Пользователь не может входить в платформу." : "Пользователь может входить при наличии действующих учётных данных."}
+          </p>
+        </div>
+        <button
+          className={
+            isDenied
+              ? compactPrimaryActionClassName(status === "saving", "inline-flex items-center justify-center text-xs")
+              : "tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-red-400/60 bg-transparent px-4 py-2 text-xs font-bold text-red-200 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+          }
+          disabled={status === "saving"}
+          type="button"
+          onClick={() => void handleAccessChange()}
+        >
+          {status === "saving" ? "Сохраняем" : isDenied ? "Вернуть доступ" : "Запретить доступ"}
+        </button>
+      </div>
+      {status === "saved" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Состояние доступа обновлено.</p> : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Состояние доступа не изменено. Повтори позже.
         </p>
       ) : null}
     </section>
@@ -233,6 +345,7 @@ export function AdminUserDetailPage({
         <Field label="Создан" value={formatDate(user.createdAt)} />
         <Field label="Последняя активность" value={formatDate(user.lastSeen)} />
         <Field label="Доступ" value={<StatusBadge ready={user.hasPassword}>{user.hasPassword ? "вход по паролю" : "пароль не задан"}</StatusBadge>} />
+        <Field label="Состояние" value={<StatusBadge ready={user.accessState === "active"}>{user.accessState === "denied" ? "доступ запрещён" : "доступ разрешён"}</StatusBadge>} />
         <Field label="Восстановление" value={<StatusBadge ready={user.recoveryState === "email-reset-ready"}>{recoveryLabels[user.recoveryState]}</StatusBadge>} />
       </section>
 
@@ -250,6 +363,10 @@ export function AdminUserDetailPage({
       <LinkedServices links={serviceLinks} />
 
       <RecentActivity events={recentActivity} />
+
+      <AccessActions user={user} />
+
+      <EmailLinkActions user={user} />
 
       <RecoveryActions user={user} />
     </PortalPageShell>
