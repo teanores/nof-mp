@@ -21,6 +21,7 @@ describe("admin users repository", () => {
   it("lists admin-safe user rows without password hashes", async () => {
     const pool = new FakePool([
       {
+        access_denied: false,
         created_at: "2026-06-01T10:00:00.000Z",
         email: "251740038@telegram.forgath.ru",
         has_password: false,
@@ -39,6 +40,7 @@ describe("admin users repository", () => {
     await expect(repository.listUsers()).resolves.toEqual([
       {
         accountState: "telegram-only",
+        accessState: "active",
         createdAt: "2026-06-01T10:00:00.000Z",
         email: "251740038@telegram.forgath.ru",
         hasPassword: false,
@@ -52,13 +54,16 @@ describe("admin users repository", () => {
         username: "teanore",
       },
     ]);
-    expect(pool.queries[0]?.sql).not.toContain("password_hash AS");
-    expect(pool.queries[0]?.values).toEqual([100]);
+    const selectQuery = pool.queries.find((query) => query.sql.includes("FROM dragon_forge.\"user\" u"));
+    expect(selectQuery?.sql).not.toContain("password_hash AS");
+    expect(selectQuery?.sql).toContain("LEFT JOIN nof_platform.user_access_state access");
+    expect(selectQuery?.values).toEqual([100]);
   });
 
   it("loads one admin-safe user row by id without password hashes", async () => {
     const pool = new FakePool([
       {
+        access_denied: true,
         created_at: "2026-06-01T10:00:00.000Z",
         email: "owner@example.com",
         has_password: true,
@@ -76,20 +81,49 @@ describe("admin users repository", () => {
 
     await expect(repository.getUserById("u-2")).resolves.toMatchObject({
       accountState: "password-login",
+      accessState: "denied",
       email: "owner@example.com",
       id: "u-2",
       username: "owner",
     });
-    expect(pool.queries[0]?.sql).toContain("WHERE u.id::text = $1");
-    expect(pool.queries[0]?.sql).toContain("LIMIT 1");
-    expect(pool.queries[0]?.sql).not.toContain("password_hash AS");
-    expect(pool.queries[0]?.values).toEqual(["u-2"]);
+    const selectQuery = pool.queries.find((query) => query.sql.includes("WHERE u.id::text = $1"));
+    expect(selectQuery?.sql).toContain("LIMIT 1");
+    expect(selectQuery?.sql).not.toContain("password_hash AS");
+    expect(selectQuery?.values).toEqual(["u-2"]);
   });
 
   it("returns null when an admin user detail row is missing", async () => {
     const repository = new AdminUsersRepository(new FakePool([]) as never);
 
     await expect(repository.getUserById("missing")).resolves.toBeNull();
+  });
+
+  it("updates explicit account access state without exposing secrets", async () => {
+    const pool = new FakePool([
+      {
+        access_denied: false,
+        created_at: "2026-06-01T10:00:00.000Z",
+        email: "owner@example.com",
+        has_password: true,
+        id: "u-2",
+        last_seen: null,
+        registration_source: "email",
+        role_display_name: "Администратор",
+        role_name: "admin",
+        telegram_id: null,
+        telegram_username: null,
+        username: "owner",
+      },
+    ]);
+    const repository = new AdminUsersRepository(pool as never);
+
+    await expect(repository.setAccessState({ actorUserId: "admin-1", denied: true, reason: "admin_review", userId: "u-2" })).resolves.toMatchObject({
+      accessState: "active",
+      id: "u-2",
+    });
+
+    expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.user_access_state"))).toBe(true);
+    expect(pool.queries.find((query) => query.sql.includes("INSERT INTO nof_platform.user_access_state"))?.sql).not.toContain("password_hash");
   });
 
   it("marks non-forgath domains as external emails", () => {

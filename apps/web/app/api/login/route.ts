@@ -8,6 +8,7 @@ import {
   nofServiceLoginUrl,
 } from "@/lib/server/nof-service-client";
 import { authRateLimit } from "@/lib/server/auth-abuse-protection";
+import { getAdminUsersRepository } from "@/lib/server/admin-users-repository";
 import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
 import { normalizePortalLanguage } from "@/lib/portal-language";
 import { getPasswordPolicyStateRepository } from "@/lib/server/password-policy-state-repository";
@@ -79,10 +80,22 @@ export async function POST(request: NextRequest) {
     return buildPortalLoginFailedRedirect(next);
   }
 
-  const response = buildPortalLoginRedirect(next);
-  copyAuthCookies(upstream, response);
   const authCookieValue = authCookieValueFromResponse(upstream);
   const userId = authCookieValue ? decodeNofAuthToken(authCookieValue)?.sub : undefined;
+  if (userId && (await getAdminUsersRepository().isAccessDenied(userId))) {
+    await recordSecurityAuditEvent({
+      ...auditContext,
+      actorUserId: userId,
+      actorUsername: username,
+      eventType: "login_access_denied",
+      loginIdentifier: username,
+      statusCode: 403,
+    });
+    return buildPortalLoginFailedRedirect(next);
+  }
+
+  const response = buildPortalLoginRedirect(next);
+  copyAuthCookies(upstream, response);
   if (userId) {
     const passwordPolicyState = await getPasswordPolicyStateRepository().stateForUser(userId);
     if (passwordPolicyState.mustRotatePassword) {

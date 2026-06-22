@@ -8,6 +8,7 @@ import type { AdminUserListItem } from "@/lib/server/admin-users-repository";
 const users: AdminUserListItem[] = [
   {
     accountState: "telegram-only",
+    accessState: "active",
     createdAt: "2026-06-01T10:00:00.000Z",
     email: "251740038@telegram.forgath.ru",
     hasPassword: false,
@@ -22,6 +23,7 @@ const users: AdminUserListItem[] = [
   },
   {
     accountState: "password-login",
+    accessState: "denied",
     createdAt: "2026-06-02T10:00:00.000Z",
     email: "owner@example.com",
     hasPassword: true,
@@ -33,6 +35,7 @@ const users: AdminUserListItem[] = [
   },
   {
     accountState: "password-login",
+    accessState: "active",
     createdAt: "2026-06-03T10:00:00.000Z",
     email: "moderator@forgath.ru",
     hasPassword: true,
@@ -104,6 +107,7 @@ describe("admin users page", () => {
 
     expect(within(screen.getByLabelText("Роль")).getAllByRole("option")[0]).toHaveTextContent("Все роли");
     expect(within(screen.getByLabelText("Доступ")).getAllByRole("option")[0]).toHaveTextContent("Все доступы");
+    expect(within(screen.getByLabelText("Состояние")).getAllByRole("option")[0]).toHaveTextContent("Все состояния");
     expect(within(screen.getByLabelText("Восстановление")).getAllByRole("option")[0]).toHaveTextContent("Все восстановления");
     expect(within(screen.getByLabelText("Признаки")).getAllByRole("option")[0]).toHaveTextContent("Все признаки");
   });
@@ -121,6 +125,11 @@ describe("admin users page", () => {
     expect(screen.queryByRole("link", { name: "owner" })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Доступ"), { target: { value: "all" } });
+    fireEvent.change(screen.getByLabelText("Состояние"), { target: { value: "denied" } });
+    expect(screen.getByRole("link", { name: "owner" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "teanore" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Состояние"), { target: { value: "all" } });
     fireEvent.change(screen.getByLabelText("Восстановление"), { target: { value: "service-email" } });
     expect(screen.getByRole("link", { name: "teanore" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "moderator" })).not.toBeInTheDocument();

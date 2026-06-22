@@ -8,6 +8,7 @@ export type AdminUserRecoveryState = "email-reset-ready" | "missing-email" | "se
 
 export interface AdminUserListItem {
   accountState: "password-login" | "telegram-only";
+  accessState: "active" | "denied";
   createdAt?: string;
   email?: string;
   hasPassword: boolean;
@@ -27,7 +28,15 @@ export interface AdminUserListItem {
   username: string;
 }
 
+export interface AdminUserAccessStateInput {
+  actorUserId: string;
+  denied: boolean;
+  reason?: string;
+  userId: string;
+}
+
 interface AdminUserRow extends QueryResultRow {
+  access_denied: boolean | null;
   created_at: Date | string | null;
   email: string | null;
   has_password: boolean;
@@ -91,6 +100,7 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
     id: row.id,
     username: row.username,
     accountState: row.has_password ? "password-login" : "telegram-only",
+    accessState: row.access_denied ? "denied" : "active",
     ...(row.email ? { email: row.email } : {}),
     hasPassword: row.has_password,
     recoveryState: userRecoveryState(row),
@@ -125,6 +135,7 @@ export class AdminUsersRepository {
   }
 
   async listUsers(limit = 100): Promise<AdminUserListItem[]> {
+    await this.ensureAccessStateSchema();
     const result = await this.pool.query<AdminUserRow>(
       `SELECT
          u.id::text AS id,
@@ -136,10 +147,12 @@ export class AdminUsersRepository {
          u.registration_source,
          u.user_created_at AS created_at,
          u.last_seen,
+         COALESCE(access.access_denied, false) AS access_denied,
          role.name AS role_name,
          role.display_name AS role_display_name
        FROM dragon_forge."user" u
        LEFT JOIN dragon_forge.role role ON role.id = u.role_id
+       LEFT JOIN nof_platform.user_access_state access ON access.user_id = u.id
        ORDER BY u.user_created_at DESC NULLS LAST, u.username ASC
        LIMIT $1`,
       [limit],
@@ -149,6 +162,7 @@ export class AdminUsersRepository {
   }
 
   async getUserById(userId: string): Promise<AdminUserListItem | null> {
+    await this.ensureAccessStateSchema();
     const result = await this.pool.query<AdminUserRow>(
       `SELECT
          u.id::text AS id,
@@ -160,16 +174,72 @@ export class AdminUsersRepository {
          u.registration_source,
          u.user_created_at AS created_at,
          u.last_seen,
+         COALESCE(access.access_denied, false) AS access_denied,
          role.name AS role_name,
          role.display_name AS role_display_name
        FROM dragon_forge."user" u
        LEFT JOIN dragon_forge.role role ON role.id = u.role_id
+       LEFT JOIN nof_platform.user_access_state access ON access.user_id = u.id
        WHERE u.id::text = $1
        LIMIT 1`,
       [userId],
     );
 
     return result.rows[0] ? toAdminUser(result.rows[0]) : null;
+  }
+
+  async setAccessState(input: AdminUserAccessStateInput): Promise<AdminUserListItem | null> {
+    await this.ensureAccessStateSchema();
+    const existing = await this.getUserById(input.userId);
+    if (!existing) {
+      return null;
+    }
+
+    await this.pool.query(
+      `INSERT INTO nof_platform.user_access_state (user_id, access_denied, reason, denied_at, restored_at, updated_by, updated_at)
+       VALUES ($1::uuid, $2, $3, CASE WHEN $2 THEN NOW() ELSE NULL END, CASE WHEN $2 THEN NULL ELSE NOW() END, $4::uuid, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         access_denied = EXCLUDED.access_denied,
+         reason = EXCLUDED.reason,
+         denied_at = CASE WHEN EXCLUDED.access_denied THEN COALESCE(nof_platform.user_access_state.denied_at, NOW()) ELSE NULL END,
+         restored_at = CASE WHEN EXCLUDED.access_denied THEN NULL ELSE NOW() END,
+         updated_by = EXCLUDED.updated_by,
+         updated_at = NOW()`,
+      [input.userId, input.denied, input.reason?.trim() || null, input.actorUserId],
+    );
+
+    return this.getUserById(input.userId);
+  }
+
+  async isAccessDenied(userId: string): Promise<boolean> {
+    await this.ensureAccessStateSchema();
+    const result = await this.pool.query<{ access_denied: boolean }>(
+      `SELECT COALESCE(access_denied, false) AS access_denied
+       FROM nof_platform.user_access_state
+       WHERE user_id = $1::uuid
+       LIMIT 1`,
+      [userId],
+    );
+    return Boolean(result.rows[0]?.access_denied);
+  }
+
+  private async ensureAccessStateSchema(): Promise<void> {
+    await this.pool.query(`CREATE SCHEMA IF NOT EXISTS nof_platform`);
+    await this.pool.query(
+      `CREATE TABLE IF NOT EXISTS nof_platform.user_access_state (
+        user_id uuid PRIMARY KEY,
+        access_denied boolean NOT NULL DEFAULT false,
+        reason text,
+        denied_at timestamptz,
+        restored_at timestamptz,
+        updated_by uuid,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )`,
+    );
+    await this.pool.query(
+      `CREATE INDEX IF NOT EXISTS user_access_state_denied_idx
+       ON nof_platform.user_access_state (access_denied, updated_at DESC)`,
+    );
   }
 }
 

@@ -24,9 +24,16 @@ vi.mock("@/lib/server/security-audit-dashboard", () => ({
 const passwordPolicyState = vi.hoisted(() => ({
   stateForUser: vi.fn(async () => ({ mustRotatePassword: false })),
 }));
+const adminUsersRepository = vi.hoisted(() => ({
+  isAccessDenied: vi.fn(async () => false),
+}));
 
 vi.mock("@/lib/server/password-policy-state-repository", () => ({
   getPasswordPolicyStateRepository: () => passwordPolicyState,
+}));
+
+vi.mock("@/lib/server/admin-users-repository", () => ({
+  getAdminUsersRepository: () => adminUsersRepository,
 }));
 
 vi.mock("@/lib/server/user-preferences-repository", () => ({
@@ -54,6 +61,7 @@ describe("login API security audit", () => {
     vi.clearAllMocks();
     resetAuthAbuseProtectionForTests();
     passwordPolicyState.stateForUser.mockResolvedValue({ mustRotatePassword: false });
+    adminUsersRepository.isAccessDenied.mockResolvedValue(false);
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -104,6 +112,25 @@ describe("login API security audit", () => {
       }),
     );
     expect(JSON.stringify(vi.mocked(recordSecurityAuditEvent).mock.calls)).not.toContain("correct-password");
+  });
+
+  it("blocks successful upstream logins for denied users before copying auth cookies", async () => {
+    adminUsersRepository.isAccessDenied.mockResolvedValue(true);
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { headers: { location: "/" }, status: 302 }));
+
+    const response = await POST(loginRequest({ language: "ru", next: "/overview", password: "correct-password", username: "owner@example.com" }));
+
+    expect(response.headers.get("location")).toBe("/login?error=1");
+    expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "user-1",
+        actorUsername: "owner@example.com",
+        eventType: "login_access_denied",
+        statusCode: 403,
+      }),
+    );
+    const { copyAuthCookies } = await import("@/lib/server/nof-service-client");
+    expect(copyAuthCookies).not.toHaveBeenCalled();
   });
 
   it("redirects successful login to profile when password rotation is required", async () => {

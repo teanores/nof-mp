@@ -18,6 +18,7 @@ const recoveryLabels: Record<AdminUserRecoveryState, string> = {
 };
 const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm border px-2 py-1 text-[10px]";
 type AccountFilter = "all" | "password-login" | "telegram-only";
+type AccessFilter = "all" | "active" | "denied";
 type RecoveryFilter = "all" | AdminUserRecoveryState;
 type RiskFilter = "all" | "has-risks" | "no-risks";
 
@@ -25,6 +26,11 @@ const accountFilterLabels: Record<AccountFilter, string> = {
   all: "Все доступы",
   "password-login": "Вход по паролю",
   "telegram-only": "Пароль не задан",
+};
+const accessFilterLabels: Record<AccessFilter, string> = {
+  all: "Все состояния",
+  active: "Доступ разрешён",
+  denied: "Доступ запрещён",
 };
 const recoveryFilterLabels: Record<RecoveryFilter, string> = {
   all: "Все восстановления",
@@ -80,6 +86,14 @@ function AccountState({ hasPassword }: { hasPassword: boolean }) {
   );
 }
 
+function AccessState({ state }: { state: AdminUserListItem["accessState"] }) {
+  return state === "denied" ? (
+    <span className={`${badgeBaseClass} border-red-400/60 text-red-200`}>доступ запрещён</span>
+  ) : (
+    <span className={`${badgeBaseClass} border-emerald-500/40 text-emerald-300`}>доступ разрешён</span>
+  );
+}
+
 function RecoveryState({ state }: { state: AdminUserRecoveryState }) {
   const isReady = state === "email-reset-ready";
   return (
@@ -105,10 +119,11 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [accountFilter, setAccountFilter] = useState<AccountFilter>("all");
+  const [accessFilter, setAccessFilter] = useState<AccessFilter>("all");
   const [recoveryFilter, setRecoveryFilter] = useState<RecoveryFilter>("all");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
   const riskyUsers = users.filter((user) => user.risks.length > 0).length;
-  const passwordLoginUsers = users.filter((user) => user.hasPassword).length;
+  const deniedUsers = users.filter((user) => user.accessState === "denied").length;
   const emailRecoveryUsers = users.filter((user) => user.recoveryState === "email-reset-ready").length;
   const recoveryAttentionUsers = users.length - emailRecoveryUsers;
   const roleOptions = useMemo(() => {
@@ -141,6 +156,9 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
       if (accountFilter !== "all" && user.accountState !== accountFilter) {
         return false;
       }
+      if (accessFilter !== "all" && user.accessState !== accessFilter) {
+        return false;
+      }
       if (recoveryFilter !== "all" && user.recoveryState !== recoveryFilter) {
         return false;
       }
@@ -152,7 +170,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
       }
       return true;
     });
-  }, [accountFilter, query, recoveryFilter, riskFilter, roleFilter, users]);
+  }, [accessFilter, accountFilter, query, recoveryFilter, riskFilter, roleFilter, users]);
 
   return (
     <PortalPageShell>
@@ -180,8 +198,8 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           <p className="heading-tech mt-2 text-3xl font-bold text-amber-200">{riskyUsers}</p>
         </article>
         <article className="panel p-4">
-          <p className="tech-label text-xs text-forge-muted">Вход по паролю</p>
-          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{passwordLoginUsers}</p>
+          <p className="tech-label text-xs text-forge-muted">Доступ запрещён</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-red-200">{deniedUsers}</p>
         </article>
         <article className="panel p-4">
           <p className="tech-label text-xs text-forge-muted">Восстановление по почте</p>
@@ -192,7 +210,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
 
       <PortalActionBar eyebrow="Администрирование" title="Аккаунты платформы" />
 
-      <section className="panel grid gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_repeat(4,minmax(160px,220px))]">
+      <section className="panel grid gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_repeat(5,minmax(150px,210px))]">
         <label className="block">
           <span className="tech-label text-[10px] text-forge-muted">Поиск</span>
           <input
@@ -233,6 +251,20 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           </select>
         </label>
         <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Состояние</span>
+          <select
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            onChange={(event) => setAccessFilter(event.target.value as AccessFilter)}
+            value={accessFilter}
+          >
+            {(["all", "active", "denied"] as const).map((value) => (
+              <option key={value} value={value}>
+                {accessFilterLabels[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
           <span className="tech-label text-[10px] text-forge-muted">Восстановление</span>
           <select
             className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
@@ -260,7 +292,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
             ))}
           </select>
         </label>
-        <p className="tech-label text-xs text-forge-muted lg:col-span-5">
+        <p className="tech-label text-xs text-forge-muted lg:col-span-6">
           Показано: {filteredUsers.length} из {users.length}
         </p>
       </section>
@@ -276,6 +308,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                 <th className="px-4 py-3">Telegram</th>
                 <th className="px-4 py-3">Последняя активность</th>
                 <th className="px-4 py-3">Доступ</th>
+                <th className="px-4 py-3">Состояние</th>
                 <th className="px-4 py-3">Восстановление</th>
                 <th className="px-4 py-3">Признаки</th>
                 <th className="px-4 py-3">Действия</th>
@@ -308,6 +341,9 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   <td className="px-4 py-4 text-forge-muted">{formatDate(user.lastSeen)}</td>
                   <td className="px-4 py-4">
                     <AccountState hasPassword={user.hasPassword} />
+                  </td>
+                  <td className="px-4 py-4">
+                    <AccessState state={user.accessState} />
                   </td>
                   <td className="px-4 py-4">
                     <RecoveryState state={user.recoveryState} />

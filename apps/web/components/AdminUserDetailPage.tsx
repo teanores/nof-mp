@@ -122,6 +122,62 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function AccessActions({ user }: { user: AdminUserListItem }) {
+  const [accessState, setAccessState] = useState(user.accessState);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const isDenied = accessState === "denied";
+
+  async function handleAccessChange() {
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/access`, {
+        body: JSON.stringify({ action: isDenied ? "restore" : "deny", reason: isDenied ? undefined : "admin_review" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      const payload = (await response.json()) as { accessState?: AdminUserListItem["accessState"] };
+      setAccessState(payload.accessState ?? (isDenied ? "active" : "denied"));
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Управление доступом</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">
+            {isDenied ? "Пользователь не может входить в платформу." : "Пользователь может входить при наличии действующих учётных данных."}
+          </p>
+        </div>
+        <button
+          className={
+            isDenied
+              ? compactPrimaryActionClassName(status === "saving", "inline-flex items-center justify-center text-xs")
+              : "tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-red-400/60 bg-transparent px-4 py-2 text-xs font-bold text-red-200 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+          }
+          disabled={status === "saving"}
+          type="button"
+          onClick={() => void handleAccessChange()}
+        >
+          {status === "saving" ? "Сохраняем" : isDenied ? "Вернуть доступ" : "Запретить доступ"}
+        </button>
+      </div>
+      {status === "saved" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Состояние доступа обновлено.</p> : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Состояние доступа не изменено. Повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
   return (
     <section className="panel p-4">
@@ -233,6 +289,7 @@ export function AdminUserDetailPage({
         <Field label="Создан" value={formatDate(user.createdAt)} />
         <Field label="Последняя активность" value={formatDate(user.lastSeen)} />
         <Field label="Доступ" value={<StatusBadge ready={user.hasPassword}>{user.hasPassword ? "вход по паролю" : "пароль не задан"}</StatusBadge>} />
+        <Field label="Состояние" value={<StatusBadge ready={user.accessState === "active"}>{user.accessState === "denied" ? "доступ запрещён" : "доступ разрешён"}</StatusBadge>} />
         <Field label="Восстановление" value={<StatusBadge ready={user.recoveryState === "email-reset-ready"}>{recoveryLabels[user.recoveryState]}</StatusBadge>} />
       </section>
 
@@ -250,6 +307,8 @@ export function AdminUserDetailPage({
       <LinkedServices links={serviceLinks} />
 
       <RecentActivity events={recentActivity} />
+
+      <AccessActions user={user} />
 
       <RecoveryActions user={user} />
     </PortalPageShell>
