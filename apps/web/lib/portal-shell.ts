@@ -44,7 +44,7 @@ export const portalModules: PortalModule[] = [
 
 export const systemHealthCards: SystemHealthCard[] = [
   { label: "Публичный адрес", value: "forgath.ru", note: "точка входа" },
-  { label: "Учётная запись", value: "NOF Main Platform", note: "единый профиль" },
+  { label: "Учётная запись", value: "Платформа NOF", note: "единый профиль" },
   { label: "Рабочее пространство", value: "Task Tracker", note: "задачи и Wiki" },
 ];
 

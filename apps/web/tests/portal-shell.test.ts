@@ -34,7 +34,7 @@ describe("platform shell manifest", () => {
     expect(systemHealthCards).toContainEqual({
       label: "Учётная запись",
       note: "единый профиль",
-      value: "NOF Main Platform",
+      value: "Платформа NOF",
     });
     expect(systemHealthCards).toContainEqual({
       label: "Рабочее пространство",

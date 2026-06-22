@@ -88,6 +88,9 @@ describe("admin security page", () => {
     expect(screen.getByRole("heading", { name: "Безопасность платформы" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Проверить пользователя" })).toBeInTheDocument();
     expect(screen.getByText("Неудачные входы")).toBeInTheDocument();
+    expect(screen.getByText("Ограничения / 429")).toBeInTheDocument();
+    expect(screen.getByText("Запреты / 403-401")).toBeInTheDocument();
+    expect(screen.getByText("Не найдено / 404")).toBeInTheDocument();
     expect(screen.getByText("Логин: a***n@forgath.ru")).toBeInTheDocument();
     expect(screen.getByText("Неудачный вход")).toBeInTheDocument();
     expect(screen.getByText("MCP agent client")).toBeInTheDocument();
@@ -100,6 +103,9 @@ describe("admin security page", () => {
     expect(screen.getByText(/Автоматическая блокировка выключена/)).toBeInTheDocument();
     expect(screen.getByText(/bouncer не установлен/)).toBeInTheDocument();
     expect(screen.getByText(/не полную консоль CrowdSec/)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Rate limit");
+    expect(document.body).not.toHaveTextContent("404 / unknown");
+    expect(document.body).not.toHaveTextContent("edge-события");
     expect(screen.getAllByText("203.0.113.10")).toHaveLength(2);
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Профиль teanore" })).toHaveTextContent("TE");
@@ -147,6 +153,6 @@ describe("admin security page", () => {
     );
 
     expect(screen.getByText(/За последние 24 часа событий безопасности не найдено/)).toBeInTheDocument();
-    expect(screen.getByText(/проверьте доставку edge-логов/)).toBeInTheDocument();
+    expect(screen.getByText(/проверьте доставку событий периметра/)).toBeInTheDocument();
   });
 });

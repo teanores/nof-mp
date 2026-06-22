@@ -10,9 +10,9 @@ type SecretCategory = "all" | "oauth" | "bot" | "database" | "email" | "mcp" | "
 type SecretSort = "risk" | "service" | "status" | "next-rotation";
 
 const statusLabels: Record<SecretRotationStatus, string> = {
-  hold: "HOLD",
+  hold: "Пауза",
   "needs-rotation": "Требует ротации",
-  ok: "OK",
+  ok: "В порядке",
   planned: "Запланировано",
 };
 
@@ -27,9 +27,9 @@ const categoryLabels: Record<SecretCategory, string> = {
   all: "Все типы",
   bot: "Боты",
   database: "БД",
-  edge: "Edge",
-  email: "Email",
-  legacy: "Legacy",
+  edge: "Периметр",
+  email: "Почта",
+  legacy: "Legacy-сервисы",
   mcp: "MCP",
   oauth: "OAuth",
   other: "Прочее",
@@ -63,7 +63,7 @@ function formatDate(value: string | null): string {
 
 function formatDaysLeft(value: number | null): string {
   if (value === null) {
-    return "HOLD";
+    return "Пауза";
   }
 
   if (value < 0) {
