@@ -69,14 +69,16 @@ describe("platform password reset repository", () => {
   });
 
   it("does not create reset tokens for synthetic telegram placeholder email accounts", async () => {
-    const pool = new FakePool();
+    for (const email of ["251740038@telegram.example.com", "251740038@telegram.forgath.ru"]) {
+      const pool = new FakePool();
 
-    await expect(repository(pool).requestReset({ email: "251740038@telegram.forgath.ru" })).resolves.toEqual({
-      ok: true,
-      reason: "missing_or_unresettable",
-    });
+      await expect(repository(pool).requestReset({ email })).resolves.toEqual({
+        ok: true,
+        reason: "missing_or_unresettable",
+      });
 
-    expect(pool.queries.some((query) => query.sql.includes("dragon_forge"))).toBe(false);
+      expect(pool.queries.some((query) => query.sql.includes("dragon_forge"))).toBe(false);
+    }
   });
 
   it("confirms an unused token, marks it used and stores only a password hash", async () => {

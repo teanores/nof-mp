@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 import { Pool, type QueryResultRow } from "pg";
 
+import { isResettableEmail, normalizePlatformEmail } from "@/lib/server/email-address-policy";
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import { hashPlatformPassword, platformPasswordPolicyErrors, type PlatformPasswordPolicyError } from "@/lib/server/platform-password";
 
@@ -36,15 +37,11 @@ export type PasswordResetTokenVerificationResult =
   | { ok: false; reason: "invalid_or_expired_token" };
 
 export function normalizePasswordResetEmail(email: string): string {
-  return email.trim().toLowerCase();
+  return normalizePlatformEmail(email);
 }
 
 export function hashPasswordResetToken(token: string): string {
   return crypto.createHash("sha256").update(token, "utf8").digest("hex");
-}
-
-function isResettableEmail(email: string): boolean {
-  return Boolean(email) && !/^\d+@telegram\.forgath\.ru$/.test(email);
 }
 
 export class PlatformPasswordResetRepository {

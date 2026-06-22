@@ -99,7 +99,16 @@ describe("admin users repository", () => {
 
   it("derives password recovery readiness from email shape", () => {
     expect(userRecoveryState({ email: "owner@example.com" })).toBe("email-reset-ready");
+    expect(userRecoveryState({ email: "251740038@telegram.example.com" })).toBe("service-email");
     expect(userRecoveryState({ email: "251740038@telegram.forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: null })).toBe("missing-email");
+  });
+
+  it("marks telegram placeholder domains as service-email risks", () => {
+    expect(userRisks({ email: "251740038@telegram.example.com", has_password: true })).toEqual([
+      "external-email",
+      "telegram-placeholder-email",
+    ]);
+    expect(userRisks({ email: "251740038@telegram.forgath.ru", has_password: true })).toEqual(["telegram-placeholder-email"]);
   });
 });

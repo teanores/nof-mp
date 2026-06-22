@@ -1,5 +1,6 @@
 import { Pool, type QueryResultRow } from "pg";
 
+import { isServiceEmail, isTelegramPlaceholderEmail } from "@/lib/server/email-address-policy";
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 
 export type AdminUserRisk = "missing-password" | "external-email" | "telegram-placeholder-email";
@@ -65,15 +66,11 @@ export function userRisks(row: Pick<AdminUserRow, "email" | "has_password">): Ad
   if (email && !/@(?:[a-z0-9-]+\.)?forgath\.ru$/.test(email)) {
     risks.push("external-email");
   }
-  if (/^\d+@telegram\.forgath\.ru$/.test(email)) {
+  if (isTelegramPlaceholderEmail(email)) {
     risks.push("telegram-placeholder-email");
   }
 
   return risks;
-}
-
-function isServiceEmail(email: string): boolean {
-  return /^\d+@telegram\.forgath\.ru$/.test(email);
 }
 
 export function userRecoveryState(row: Pick<AdminUserRow, "email">): AdminUserRecoveryState {
