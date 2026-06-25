@@ -11,7 +11,6 @@ const user: AdminUserListItem = {
   accountState: "telegram-only",
   accessState: "active",
   createdAt: "2026-06-01T10:00:00.000Z",
-  email: "251740038@telegram.forgath.ru",
   hasPassword: false,
   id: "u-1",
   lastSeen: "2026-06-01T11:00:00.000Z",
@@ -86,7 +85,8 @@ describe("admin user detail page", () => {
 
     expect(screen.getByRole("heading", { name: "Карточка пользователя" })).toBeInTheDocument();
     expect(screen.getByText("teanore")).toBeInTheDocument();
-    expect(screen.getByText("251740038@telegram.forgath.ru")).toBeInTheDocument();
+    expect(screen.getByText("почта не указана")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("251740038@telegram.forgath.ru");
     expect(screen.getByText("Администратор")).toBeInTheDocument();
     expect(screen.getByText("@teanore")).toBeInTheDocument();
     expect(screen.getByText("пароль не задан")).toBeInTheDocument();

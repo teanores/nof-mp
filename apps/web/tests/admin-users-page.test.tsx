@@ -117,7 +117,7 @@ describe("admin users page", () => {
 
     expect(screen.getByText("Сверка пользователей")).toBeInTheDocument();
     expect(screen.getByText("Реальная почта")).toBeInTheDocument();
-    expect(screen.getByText("Telegram-only")).toBeInTheDocument();
+    expect(screen.getByText("Только Telegram")).toBeInTheDocument();
     expect(screen.getAllByText("Служебная почта").length).toBeGreaterThan(0);
     expect(screen.getByText("Готовы к сверке nof-ht")).toBeInTheDocument();
     expect(screen.getAllByText("Ручная проверка").length).toBeGreaterThan(0);
@@ -135,6 +135,13 @@ describe("admin users page", () => {
     expect(screen.getByRole("link", { name: "teanore" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "owner" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "moderator" })).not.toBeInTheDocument();
+  });
+
+  it("uses account merge language instead of calling related accounts duplicates", () => {
+    render(<AdminUsersPage users={users} />);
+
+    expect(screen.getByText("К объединению/dev")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Дубли/dev");
   });
 
   it("filters users by search text, access, recovery and risk state", () => {

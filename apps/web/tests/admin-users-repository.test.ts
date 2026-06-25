@@ -54,7 +54,6 @@ describe("admin users repository", () => {
         accountState: "telegram-only",
         accessState: "active",
         createdAt: "2026-06-01T10:00:00.000Z",
-        email: "251740038@telegram.forgath.ru",
         hasPassword: false,
         id: "u-1",
         lastSeen: "2026-06-01T11:00:00.000Z",
@@ -298,6 +297,7 @@ describe("admin users repository", () => {
     expect(userRecoveryState({ email: "owner@example.com" })).toBe("email-reset-ready");
     expect(userRecoveryState({ email: "251740038@telegram.example.com" })).toBe("service-email");
     expect(userRecoveryState({ email: "251740038@telegram.forgath.ru" })).toBe("service-email");
+    expect(userRecoveryState({ email: "1000320432telegram.forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: null })).toBe("missing-email");
   });
 
@@ -307,6 +307,10 @@ describe("admin users repository", () => {
       "telegram-placeholder-email",
     ]);
     expect(userRisks({ email: "251740038@telegram.forgath.ru", has_password: true })).toEqual(["telegram-placeholder-email"]);
+    expect(userRisks({ email: "1000320432telegram.forgath.ru", has_password: true })).toEqual([
+      "external-email",
+      "telegram-placeholder-email",
+    ]);
   });
 
   it("summarizes a read-only reconciliation inventory for nof-mp and nof-ht alignment", () => {

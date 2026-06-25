@@ -47,7 +47,7 @@ const riskFilterLabels: Record<RiskFilter, string> = {
 };
 const reconciliationFilterLabels: Record<ReconciliationFilter, string> = {
   all: "Все сверки",
-  "duplicate-dev": "Дубли/dev",
+  "duplicate-dev": "К объединению/dev",
   "manual-review": "Ручная проверка",
   "nof-ht-ready": "Готовы к nof-ht",
 };
@@ -238,7 +238,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
           <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{reconciliation.realEmailUsers}</p>
         </article>
         <article className="panel p-4">
-          <p className="tech-label text-xs text-forge-muted">Telegram-only</p>
+          <p className="tech-label text-xs text-forge-muted">Только Telegram</p>
           <p className="heading-tech mt-2 text-3xl font-bold text-amber-200">{reconciliation.telegramOnlyUsers}</p>
         </article>
         <article className="panel p-4">

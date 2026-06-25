@@ -119,13 +119,14 @@ export function userRecoveryState(row: Pick<AdminUserRow, "email">): AdminUserRe
 
 function toAdminUser(row: AdminUserRow): AdminUserListItem {
   const telegramId = toOptionalNumber(row.telegram_id);
+  const displayEmail = row.email && !isServiceEmail(row.email) ? row.email : undefined;
 
   return {
     id: row.id,
     username: row.username,
     accountState: row.has_password ? "password-login" : "telegram-only",
     accessState: row.access_denied ? "denied" : "active",
-    ...(row.email ? { email: row.email } : {}),
+    ...(displayEmail ? { email: displayEmail } : {}),
     hasPassword: row.has_password,
     recoveryState: userRecoveryState(row),
     risks: userRisks(row),
@@ -277,7 +278,7 @@ export class AdminUsersRepository {
            email = CASE
              WHEN (target.email IS NULL OR target.email = '')
               AND source.email IS NOT NULL
-              AND source.email !~ '^[0-9]+@telegram\\.(example\\.com|forgath\\.ru)$'
+              AND source.email !~ '^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$'
              THEN source.email
              ELSE target.email
            END,

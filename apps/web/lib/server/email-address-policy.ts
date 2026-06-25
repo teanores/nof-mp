@@ -8,7 +8,7 @@ export function isValidEmailShape(email: string): boolean {
 
 export function isTelegramPlaceholderEmail(email: string): boolean {
   const normalized = normalizePlatformEmail(email);
-  return /^\d+@telegram\.(?:example\.com|forgath\.ru)$/.test(normalized);
+  return /^\d+@?telegram\.(?:example\.com|forgath\.ru)$/.test(normalized);
 }
 
 export function isServiceEmail(email: string): boolean {
