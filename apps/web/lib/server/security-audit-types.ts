@@ -11,6 +11,7 @@ export type SecurityAuditEventType =
   | "admin_user_access_updated"
   | "admin_user_deleted"
   | "admin_user_detail_view"
+  | "admin_user_identity_link_updated"
   | "admin_user_merged"
   | "profile_service_unlinked"
   | "registration_attempt"

@@ -186,6 +186,36 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("secret");
   });
 
+  it("lets an admin manually repair email and Telegram identity link", async () => {
+    render(<AdminUserDetailPage user={user} />);
+
+    expect(screen.getByRole("heading", { name: "Email и Telegram" })).toBeInTheDocument();
+    await userEvent.clear(screen.getByLabelText("Реальная электронная почта"));
+    await userEvent.type(screen.getByLabelText("Реальная электронная почта"), "owner@example.com");
+    await userEvent.clear(screen.getByLabelText("Telegram ID"));
+    await userEvent.type(screen.getByLabelText("Telegram ID"), "251740038");
+    await userEvent.clear(screen.getByLabelText("Telegram username"));
+    await userEvent.type(screen.getByLabelText("Telegram username"), "teanore");
+    await userEvent.click(screen.getByRole("button", { name: "Сохранить связь" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-1/identity-link",
+        expect.objectContaining({
+          body: JSON.stringify({
+            email: "owner@example.com",
+            telegramId: "251740038",
+            telegramUsername: "teanore",
+          }),
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Email и Telegram сохранены для выбранной учётной записи.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("password_hash");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
   it("prevents duplicate recovery email clicks after a successful send", async () => {
     render(<AdminUserDetailPage user={recoverableUser} />);
 

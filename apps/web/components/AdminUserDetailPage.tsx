@@ -356,6 +356,90 @@ function CanonicalMergeActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function IdentityLinkActions({ user }: { user: AdminUserListItem }) {
+  const [email, setEmail] = useState(user.email ?? "");
+  const [telegramId, setTelegramId] = useState(user.telegram?.id ? String(user.telegram.id) : "");
+  const [telegramUsername, setTelegramUsername] = useState(user.telegram?.username ?? "");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const canSubmit = email.trim().length > 0 && telegramId.trim().length > 0 && status !== "saving" && status !== "saved";
+
+  async function handleSave() {
+    if (!canSubmit) {
+      return;
+    }
+
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/identity-link`, {
+        body: JSON.stringify({
+          email: email.trim(),
+          telegramId: telegramId.trim(),
+          telegramUsername: telegramUsername.trim(),
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel p-4">
+      <h2 className="heading-tech text-lg font-bold text-forge-ink">Email и Telegram</h2>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <label className="block">
+          <span className="tech-label text-xs text-forge-muted">Реальная электронная почта</span>
+          <input
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            disabled={status === "saving" || status === "saved"}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="tech-label text-xs text-forge-muted">Telegram ID</span>
+          <input
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            disabled={status === "saving" || status === "saved"}
+            value={telegramId}
+            onChange={(event) => setTelegramId(event.target.value)}
+          />
+        </label>
+        <label className="block">
+          <span className="tech-label text-xs text-forge-muted">Telegram username</span>
+          <input
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            disabled={status === "saving" || status === "saved"}
+            value={telegramUsername}
+            onChange={(event) => setTelegramUsername(event.target.value)}
+          />
+        </label>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button
+          className={compactPrimaryActionClassName(!canSubmit, "inline-flex items-center justify-center text-xs")}
+          disabled={!canSubmit}
+          type="button"
+          onClick={() => void handleSave()}
+        >
+          {status === "saving" ? "Сохраняем" : status === "saved" ? "Связь сохранена" : "Сохранить связь"}
+        </button>
+      </div>
+      {status === "saved" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Email и Telegram сохранены для выбранной учётной записи.</p> : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Email и Telegram не сохранены. Проверь значения и повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
   return (
     <section className="panel p-4">
@@ -491,6 +575,8 @@ export function AdminUserDetailPage({
       <EmailLinkActions user={user} />
 
       <RecoveryActions user={user} />
+
+      <IdentityLinkActions user={user} />
 
       <CanonicalMergeActions user={user} />
 
