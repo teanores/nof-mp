@@ -147,6 +147,9 @@ function activityLabelFor(eventType: string, path: string): string {
   if (eventType === "admin_settings_updated") {
     return "Изменение настроек платформы";
   }
+  if (eventType === "admin_user_access_updated") {
+    return "Изменение доступа пользователя";
+  }
   if (eventType === "admin_user_detail_view") {
     return "Просмотр карточки пользователя";
   }

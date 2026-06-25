@@ -33,6 +33,33 @@ const events = [
     path: "/api/logout",
     statusCode: 303,
   },
+  {
+    activityLabel: "Удаление пользователя",
+    actorLabel: "Пользователь: admin",
+    createdAt: "2026-06-20T08:33:00.000Z",
+    id: "event-4",
+    method: "DELETE",
+    path: "/api/admin/users/u-2/delete",
+    statusCode: 200,
+  },
+  {
+    activityLabel: "Слияние учётных записей",
+    actorLabel: "Пользователь: admin",
+    createdAt: "2026-06-20T08:34:00.000Z",
+    id: "event-5",
+    method: "POST",
+    path: "/api/admin/users/u-2/merge",
+    statusCode: 200,
+  },
+  {
+    activityLabel: "Изменение email и Telegram",
+    actorLabel: "Пользователь: admin",
+    createdAt: "2026-06-20T08:35:00.000Z",
+    id: "event-6",
+    method: "POST",
+    path: "/api/admin/users/u-2/identity-link",
+    statusCode: 200,
+  },
 ];
 
 describe("admin events page", () => {
@@ -43,7 +70,7 @@ describe("admin events page", () => {
 
     expect(screen.getByRole("heading", { name: "Журнал событий" })).toBeInTheDocument();
     expect(screen.getByLabelText("Тип события")).toHaveDisplayValue("Все события");
-    expect(screen.getByText("Пользователь: admin")).toBeInTheDocument();
+    expect(screen.getAllByText("Пользователь: admin").length).toBeGreaterThan(0);
     expect(screen.getByText("Администратор отправил восстановление")).toBeInTheDocument();
     expect(screen.getByText("/api/admin/users/u-1/password-reset")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("password=");
@@ -81,5 +108,16 @@ describe("admin events page", () => {
     expect(screen.getByText("Выход из аккаунта")).toBeInTheDocument();
     expect(screen.queryByText("Отключение связи сервиса")).not.toBeInTheDocument();
     expect(screen.queryByText("Администратор отправил восстановление")).not.toBeInTheDocument();
+  });
+
+  it("filters user lifecycle admin actions as one category", async () => {
+    render(<AdminEventsPage events={events} />);
+
+    await userEvent.selectOptions(screen.getByLabelText("Тип события"), "Управление пользователями");
+
+    expect(screen.getByText("Удаление пользователя")).toBeInTheDocument();
+    expect(screen.getByText("Слияние учётных записей")).toBeInTheDocument();
+    expect(screen.getByText("Изменение email и Telegram")).toBeInTheDocument();
+    expect(screen.queryByText("Выход из аккаунта")).not.toBeInTheDocument();
   });
 });

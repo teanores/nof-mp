@@ -16,12 +16,15 @@ function formatDate(value: string): string {
 const eventFilters = [
   { label: "Все события", value: "all" },
   { label: "Восстановление", value: "Администратор отправил восстановление" },
+  { label: "Управление пользователями", value: "user-lifecycle" },
   { label: "Карточки пользователей", value: "Просмотр карточки пользователя" },
   { label: "Связи сервисов", value: "Отключение связи сервиса" },
   { label: "Входы", value: "Успешный вход" },
   { label: "Выходы", value: "Выход" },
   { label: "Авторизованные запросы", value: "Авторизованный" },
 ] as const;
+
+const userLifecycleLabels = new Set(["Удаление пользователя", "Слияние учётных записей", "Изменение email и Telegram", "Изменение доступа пользователя"]);
 
 export function AdminEventsPage({ events }: { events: UserSecurityAuditActivity[] }) {
   const [eventFilter, setEventFilter] = useState<(typeof eventFilters)[number]["value"]>("all");
@@ -30,7 +33,9 @@ export function AdminEventsPage({ events }: { events: UserSecurityAuditActivity[
   const filteredEvents = useMemo(
     () =>
       events.filter((event) => {
-        const matchesFilter = eventFilter === "all" || event.activityLabel.includes(eventFilter);
+        const matchesFilter =
+          eventFilter === "all" ||
+          (eventFilter === "user-lifecycle" ? userLifecycleLabels.has(event.activityLabel) : event.activityLabel.includes(eventFilter));
         const haystack = `${event.actorLabel ?? ""} ${event.activityLabel} ${event.method} ${event.path} ${event.statusCode}`.toLowerCase();
         return matchesFilter && (!normalizedSearch || haystack.includes(normalizedSearch));
       }),
