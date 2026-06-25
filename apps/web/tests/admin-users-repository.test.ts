@@ -247,6 +247,7 @@ describe("admin users repository", () => {
     const sql = pool.queries.map((query) => query.sql).join("\n");
     expect(sql).toContain("CREATE TABLE IF NOT EXISTS nof_platform.user_identity_merge");
     expect(sql).toContain("UPDATE dragon_forge.\"user\" target");
+    expect(sql).toContain("^user[0-9]+@?forgath");
     expect(sql).toContain("INSERT INTO nof_platform.user_access_state");
     expect(sql).toContain("duplicate_merged");
     expect(sql).not.toContain("password_hash AS");

@@ -97,6 +97,17 @@ describe("admin user identity link route", () => {
     expect(adminUsersRepository.updateUserIdentityLink).not.toHaveBeenCalled();
   });
 
+  it("rejects legacy user-id forged email as a real mailbox", async () => {
+    const response = await POST(request({ email: "user614815689@forgath.ru", telegramId: "614815689" }), {
+      params: Promise.resolve({ userId: "user-1" }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "real_email_required" });
+    expect(adminUsersRepository.updateUserIdentityLink).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid Telegram id", async () => {
     const response = await POST(request({ email: "owner@example.com", telegramId: "not-a-number" }), {
       params: Promise.resolve({ userId: "user-1" }),
