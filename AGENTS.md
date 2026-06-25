@@ -67,12 +67,16 @@ Agents do not deploy by default.
 
 This repository must not store, print or use an SSH key to hbl for routine production deploys. NOF MP release execution belongs to `nof-infra`.
 
-The approved routine path is:
+The approved routine path for owner-owned `nof-mp` releases is:
 
 1. nof-mp prepares code, tests, semver tag and GitHub Release;
-2. the owner gives explicit approval in the current conversation;
-3. `nof-infra` runs `.github/workflows/release-builder.yml` with `service=nof-mp`, the approved semver tag, `approval_id` and `execute_deploy=true`;
+2. the service-local GitHub Release workflow requests `nof-infra` `.github/workflows/release-builder.yml` through `workflow_dispatch` with fixed `service=nof-mp`, the published semver tag, `approval_id` derived from the release, and `execute_deploy=true`;
+3. `nof-infra` validates and runs the deploy on the infra-owned hbl runner through release-builder;
 4. nof-mp reads the nof-infra/release-builder evidence, performs public smoke and asks the owner for UAT.
+
+The service-local release workflow is only a request bridge. It must not SSH to hbl, run Helm/Kubernetes commands, or duplicate nof-infra release-builder logic.
+
+Manual `nof-infra` workflow_dispatch remains available for supervised releases, rollback and emergencies.
 
 Direct SSH/manual release-builder execution from a nof-mp session is a break-glass exception only for an explicitly approved incident or automation outage. If used, it must be named `manual release-builder` in chat/tracker evidence and followed by a nof-infra hardening task. It is not the normal deploy path.
 
