@@ -17,6 +17,17 @@ class FakePool {
   }
 }
 
+class QueuePool {
+  readonly queries: Array<{ sql: string; values?: unknown[] }> = [];
+
+  constructor(private readonly results: unknown[][]) {}
+
+  async query<T>(sql: string, values?: unknown[]): Promise<FakeQueryResult<T>> {
+    this.queries.push({ sql, values });
+    return { rows: (this.results.shift() ?? []) as T[] };
+  }
+}
+
 describe("admin users repository", () => {
   it("lists admin-safe user rows without password hashes", async () => {
     const pool = new FakePool([
@@ -124,6 +135,58 @@ describe("admin users repository", () => {
 
     expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.user_access_state"))).toBe(true);
     expect(pool.queries.find((query) => query.sql.includes("INSERT INTO nof_platform.user_access_state"))?.sql).not.toContain("password_hash");
+  });
+
+  it("deletes a selected user after cleaning optional platform records", async () => {
+    const userRow = {
+      access_denied: false,
+      created_at: "2026-06-01T10:00:00.000Z",
+      email: "test@example.com",
+      has_password: true,
+      id: "u-2",
+      last_seen: null,
+      registration_source: "email",
+      role_display_name: "Пользователь",
+      role_name: "user",
+      telegram_id: null,
+      telegram_username: null,
+      username: "test-user",
+    };
+    const pool = new QueuePool([
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [userRow],
+      [],
+      [],
+      [{ table_exists: true }],
+      [],
+      [{ table_exists: false }],
+      [{ table_exists: true }],
+      [],
+      [{ table_exists: true }],
+      [],
+      [],
+      [],
+    ]);
+    const repository = new AdminUsersRepository(pool as never);
+
+    await expect(repository.deleteUser({ actorUserId: "admin-1", userId: "u-2" })).resolves.toEqual({
+      id: "u-2",
+      username: "test-user",
+    });
+
+    expect(pool.queries.some((query) => query.sql === "BEGIN")).toBe(true);
+    expect(pool.queries.some((query) => query.sql === "COMMIT")).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.user_access_state"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.email_link_tokens"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.mcp_tokens"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.platform_service_links"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM dragon_forge.\"user\""))).toBe(true);
+    expect(pool.queries.map((query) => query.sql).join("\n")).not.toContain("password_hash AS");
   });
 
   it("marks non-forgath domains as external emails", () => {

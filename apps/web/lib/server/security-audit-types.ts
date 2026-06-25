@@ -9,6 +9,7 @@ export type SecurityAuditEventType =
   | "admin_password_reset_requested"
   | "admin_settings_updated"
   | "admin_user_access_updated"
+  | "admin_user_deleted"
   | "admin_user_detail_view"
   | "profile_service_unlinked"
   | "registration_attempt"

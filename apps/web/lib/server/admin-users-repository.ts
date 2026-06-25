@@ -35,6 +35,11 @@ export interface AdminUserAccessStateInput {
   userId: string;
 }
 
+export interface AdminUserDeleteInput {
+  actorUserId: string;
+  userId: string;
+}
+
 interface AdminUserRow extends QueryResultRow {
   access_denied: boolean | null;
   created_at: Date | string | null;
@@ -209,6 +214,38 @@ export class AdminUsersRepository {
     );
 
     return this.getUserById(input.userId);
+  }
+
+  async deleteUser(input: AdminUserDeleteInput): Promise<Pick<AdminUserListItem, "id" | "username"> | null> {
+    await this.ensureAccessStateSchema();
+    const existing = await this.getUserById(input.userId);
+    if (!existing) {
+      return null;
+    }
+
+    await this.pool.query("BEGIN");
+    try {
+      await this.pool.query(`DELETE FROM nof_platform.user_access_state WHERE user_id = $1::uuid`, [input.userId]);
+      await this.deleteFromOptionalTable("nof_platform.email_link_tokens", "user_id", input.userId);
+      await this.deleteFromOptionalTable("nof_platform.password_reset_tokens", "user_id", input.userId);
+      await this.deleteFromOptionalTable("nof_platform.mcp_tokens", "user_id", input.userId);
+      await this.deleteFromOptionalTable("nof_platform.platform_service_links", "platform_user_id", input.userId);
+      await this.pool.query(`DELETE FROM dragon_forge."user" WHERE id = $1::uuid`, [input.userId]);
+      await this.pool.query("COMMIT");
+    } catch (error) {
+      await this.pool.query("ROLLBACK");
+      throw error;
+    }
+
+    return { id: existing.id, username: existing.username };
+  }
+
+  private async deleteFromOptionalTable(tableName: string, userColumn: string, userId: string): Promise<void> {
+    const exists = await this.pool.query<{ table_exists: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS table_exists`, [tableName]);
+    if (!exists.rows[0]?.table_exists) {
+      return;
+    }
+    await this.pool.query(`DELETE FROM ${tableName} WHERE ${userColumn} = $1::uuid`, [userId]);
   }
 
   async isAccessDenied(userId: string): Promise<boolean> {

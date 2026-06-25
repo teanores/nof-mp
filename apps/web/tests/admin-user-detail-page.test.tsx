@@ -140,6 +140,30 @@ describe("admin user detail page", () => {
     expect(screen.getByRole("button", { name: "Вернуть доступ" })).toBeInTheDocument();
   });
 
+  it("lets an admin delete a selected user after explicit confirmation", async () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    expect(screen.getByRole("heading", { name: "Удаление пользователя" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Удалить пользователя" })).toBeDisabled();
+
+    await userEvent.click(screen.getByLabelText("Я понимаю, что действие необратимо"));
+    await userEvent.click(screen.getByRole("button", { name: "Удалить пользователя" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-2/delete",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Пользователь удалён. Вернись к списку пользователей.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Пользователь удалён" })).toBeDisabled();
+    expect(document.body).not.toHaveTextContent("password_hash");
+    expect(document.body).not.toHaveTextContent("token");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
   it("prevents duplicate recovery email clicks after a successful send", async () => {
     render(<AdminUserDetailPage user={recoverableUser} />);
 

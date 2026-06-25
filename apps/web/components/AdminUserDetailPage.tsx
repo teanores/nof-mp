@@ -234,6 +234,65 @@ function AccessActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function DeleteActions({ user }: { user: AdminUserListItem }) {
+  const [confirmed, setConfirmed] = useState(false);
+  const [status, setStatus] = useState<"idle" | "deleting" | "deleted" | "failed">("idle");
+
+  async function handleDelete() {
+    if (!confirmed || status === "deleted") {
+      return;
+    }
+
+    setStatus("deleting");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/delete`, {
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("deleted");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel border-red-400/40 p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Удаление пользователя</h2>
+          <label className="mt-3 flex items-center gap-2 text-sm text-forge-muted">
+            <input
+              checked={confirmed}
+              className="h-4 w-4 accent-red-400"
+              disabled={status === "deleting" || status === "deleted"}
+              type="checkbox"
+              onChange={(event) => setConfirmed(event.target.checked)}
+            />
+            <span>Я понимаю, что действие необратимо</span>
+          </label>
+        </div>
+        <button
+          className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-red-400/60 bg-transparent px-4 py-2 text-xs font-bold text-red-200 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={!confirmed || status === "deleting" || status === "deleted"}
+          type="button"
+          onClick={() => void handleDelete()}
+        >
+          {status === "deleting" ? "Удаляем" : status === "deleted" ? "Пользователь удалён" : "Удалить пользователя"}
+        </button>
+      </div>
+      {status === "deleted" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Пользователь удалён. Вернись к списку пользователей.</p> : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Пользователь не удалён. Проверь связи аккаунта и повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
   return (
     <section className="panel p-4">
@@ -369,6 +428,8 @@ export function AdminUserDetailPage({
       <EmailLinkActions user={user} />
 
       <RecoveryActions user={user} />
+
+      <DeleteActions user={user} />
     </PortalPageShell>
   );
 }
