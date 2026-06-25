@@ -293,6 +293,69 @@ function DeleteActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function CanonicalMergeActions({ user }: { user: AdminUserListItem }) {
+  const [targetUserId, setTargetUserId] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const canSubmit = targetUserId.trim().length > 0 && targetUserId.trim() !== user.id && status !== "saving" && status !== "saved";
+
+  async function handleMerge() {
+    if (!canSubmit) {
+      return;
+    }
+
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/merge`, {
+        body: JSON.stringify({ targetUserId: targetUserId.trim() }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="block flex-1">
+          <label className="tech-label text-xs text-forge-muted" htmlFor="canonical-user-id">
+            ID канонического пользователя
+          </label>
+          <h2 className="heading-tech mt-1 text-lg font-bold text-forge-ink">Каноническая учётная запись</h2>
+          <input
+            id="canonical-user-id"
+            className="mt-3 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            disabled={status === "saving" || status === "saved"}
+            value={targetUserId}
+            onChange={(event) => setTargetUserId(event.target.value)}
+          />
+        </div>
+        <button
+          className={compactPrimaryActionClassName(!canSubmit, "inline-flex items-center justify-center text-xs")}
+          disabled={!canSubmit}
+          type="button"
+          onClick={() => void handleMerge()}
+        >
+          {status === "saving" ? "Переносим" : status === "saved" ? "Связи перенесены" : "Перенести связи"}
+        </button>
+      </div>
+      {status === "saved" ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">Учётная запись помечена как дубль, связи перенесены на каноническую запись.</p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Связи не перенесены. Проверь ID канонического пользователя.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
   return (
     <section className="panel p-4">
@@ -428,6 +491,8 @@ export function AdminUserDetailPage({
       <EmailLinkActions user={user} />
 
       <RecoveryActions user={user} />
+
+      <CanonicalMergeActions user={user} />
 
       <DeleteActions user={user} />
     </PortalPageShell>

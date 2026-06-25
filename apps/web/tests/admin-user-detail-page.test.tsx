@@ -164,6 +164,28 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("secret");
   });
 
+  it("lets an admin mark an account as duplicate and move it into a canonical user", async () => {
+    render(<AdminUserDetailPage user={user} />);
+
+    expect(screen.getByRole("heading", { name: "Каноническая учётная запись" })).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("ID канонического пользователя"), "target-user-1");
+    await userEvent.click(screen.getByRole("button", { name: "Перенести связи" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-1/merge",
+        expect.objectContaining({
+          body: JSON.stringify({ targetUserId: "target-user-1" }),
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Учётная запись помечена как дубль, связи перенесены на каноническую запись.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("password_hash");
+    expect(document.body).not.toHaveTextContent("token");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
   it("prevents duplicate recovery email clicks after a successful send", async () => {
     render(<AdminUserDetailPage user={recoverableUser} />);
 
