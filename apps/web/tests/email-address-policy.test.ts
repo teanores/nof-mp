@@ -13,6 +13,7 @@ describe("email address policy", () => {
       "251740038@telegram.forgath.ru",
       "1000320432telegram.forgath.ru",
       "user614815689forgath.ru",
+      "user614815689@forgath.ru",
     ]) {
       expect(isTelegramPlaceholderEmail(email)).toBe(true);
       expect(isServiceEmail(email)).toBe(true);

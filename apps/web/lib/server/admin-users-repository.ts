@@ -126,6 +126,8 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
   const telegramId = toOptionalNumber(row.telegram_id);
   const telegramUsername = normalizeTelegramUsername(row.telegram_username);
   const displayEmail = row.email && !isServiceEmail(row.email) ? row.email : undefined;
+  const hasTelegramSignal = Boolean(row.telegram_id || telegramUsername);
+  const registrationSource = row.registration_source || (hasTelegramSignal ? "telegram" : undefined);
 
   return {
     id: row.id,
@@ -148,7 +150,7 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
       ...(telegramId ? { id: telegramId } : {}),
       ...(telegramUsername ? { username: telegramUsername } : {}),
     },
-    ...(row.registration_source ? { registrationSource: row.registration_source } : {}),
+    ...(registrationSource ? { registrationSource } : {}),
     ...(toIso(row.created_at) ? { createdAt: toIso(row.created_at) } : {}),
     ...(toIso(row.last_seen) ? { lastSeen: toIso(row.last_seen) } : {}),
   };

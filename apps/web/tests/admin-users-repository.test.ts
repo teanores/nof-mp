@@ -308,6 +308,7 @@ describe("admin users repository", () => {
     expect(userRecoveryState({ email: "251740038@telegram.forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: "1000320432telegram.forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: "user614815689forgath.ru" })).toBe("service-email");
+    expect(userRecoveryState({ email: "user614815689@forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: null })).toBe("missing-email");
   });
 
@@ -325,6 +326,7 @@ describe("admin users repository", () => {
       "external-email",
       "telegram-placeholder-email",
     ]);
+    expect(userRisks({ email: "user614815689@forgath.ru", has_password: true })).toEqual(["telegram-placeholder-email"]);
   });
 
   it("does not expose legacy user-id synthetic email or mixed Telegram identity fields", async () => {
@@ -332,11 +334,11 @@ describe("admin users repository", () => {
       {
         access_denied: false,
         created_at: "2026-06-01T10:00:00.000Z",
-        email: "user614815689forgath.ru",
+        email: "user614815689@forgath.ru",
         has_password: false,
         id: "u-legacy",
         last_seen: null,
-        registration_source: "telegram",
+        registration_source: null,
         role_display_name: null,
         role_name: null,
         telegram_id: "@legacy_username",
@@ -349,14 +351,15 @@ describe("admin users repository", () => {
     await expect(repository.listUsers()).resolves.toMatchObject([
       {
         id: "u-legacy",
+        registrationSource: "telegram",
         recoveryState: "service-email",
-        risks: ["missing-password", "external-email", "telegram-placeholder-email"],
+        risks: ["missing-password", "telegram-placeholder-email"],
         telegram: { username: "clean_me" },
       },
     ]);
     await expect(repository.listUsers()).resolves.not.toMatchObject([
       {
-        email: "user614815689forgath.ru",
+        email: "user614815689@forgath.ru",
         telegram: { id: expect.anything() },
       },
     ]);
