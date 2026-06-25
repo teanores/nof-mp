@@ -74,6 +74,30 @@ describe("platform email link repository", () => {
     expect(JSON.stringify(insert?.values)).not.toContain("raw-email-link-token");
   });
 
+  it("creates a hash-only email link token for a telegram account without email", async () => {
+    const pool = new FakePool([
+      {
+        rows: [
+          {
+            email: null,
+            id: "00000000-0000-0000-0000-000000000001",
+            telegram_id: 251740038,
+            telegram_username: "teanore",
+            username: "teanore",
+          },
+        ],
+      },
+      { rows: [], rowCount: 2 },
+      { rows: [], rowCount: 1 },
+    ]);
+
+    await expect(repository(pool).issueLink({ actorUserId: "admin-1", userId: "00000000-0000-0000-0000-000000000001" })).resolves.toMatchObject({
+      ok: true,
+      reason: "token_created",
+      userId: "00000000-0000-0000-0000-000000000001",
+    });
+  });
+
   it("does not create email link tokens for accounts without telegram placeholders", async () => {
     const pool = new FakePool([
       {
@@ -97,12 +121,12 @@ describe("platform email link repository", () => {
     expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.email_link_tokens"))).toBe(false);
   });
 
-  it("consumes an unused token, replaces the placeholder email and sets password login", async () => {
+  it.each(["251740038@telegram.forgath.ru", null])("consumes an unused token for %s and sets a real email plus password login", async (currentEmail) => {
     const pool = new FakePool([
       {
         rows: [
           {
-            email: "251740038@telegram.forgath.ru",
+            email: currentEmail,
             expires_at: new Date("2026-06-22T10:30:00.000Z"),
             id: "10000000-0000-0000-0000-000000000001",
             telegram_id: 251740038,

@@ -167,6 +167,7 @@ export class AdminUsersRepository {
 
   async listUsers(limit = 100): Promise<AdminUserListItem[]> {
     await this.ensureAccessStateSchema();
+    await this.cleanupSyntheticTelegramEmails();
     const result = await this.pool.query<AdminUserRow>(
       `SELECT
          u.id::text AS id,
@@ -194,6 +195,7 @@ export class AdminUsersRepository {
 
   async getUserById(userId: string): Promise<AdminUserListItem | null> {
     await this.ensureAccessStateSchema();
+    await this.cleanupSyntheticTelegramEmails();
     const result = await this.pool.query<AdminUserRow>(
       `SELECT
          u.id::text AS id,
@@ -395,6 +397,14 @@ export class AdminUsersRepository {
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS user_identity_merge_source_idx
        ON nof_platform.user_identity_merge (source_user_id, created_at DESC)`,
+    );
+  }
+
+  private async cleanupSyntheticTelegramEmails(): Promise<void> {
+    await this.pool.query(
+      `UPDATE dragon_forge."user"
+       SET email = NULL
+       WHERE email ~* '(^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$|^user[0-9]+forgath\\.ru$)'`,
     );
   }
 }

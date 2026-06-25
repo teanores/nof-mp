@@ -75,7 +75,7 @@ export class PlatformEmailLinkRepository {
     if (!user.telegram_id) {
       return { ok: false, reason: "missing_telegram" };
     }
-    if (!user.email || !isTelegramPlaceholderEmail(user.email)) {
+    if (user.email && !isTelegramPlaceholderEmail(user.email)) {
       return { ok: false, reason: "not_telegram_placeholder" };
     }
 
@@ -118,7 +118,7 @@ export class PlatformEmailLinkRepository {
       [tokenHash, this.now()],
     );
     const token = tokenResult.rows[0];
-    if (!token?.email || !isTelegramPlaceholderEmail(token.email) || !token.telegram_id) {
+    if (!token?.telegram_id || (token.email && !isTelegramPlaceholderEmail(token.email))) {
       return { ok: false, reason: "invalid_or_expired_token" };
     }
 
