@@ -10,7 +10,6 @@ const users: AdminUserListItem[] = [
     accountState: "telegram-only",
     accessState: "active",
     createdAt: "2026-06-01T10:00:00.000Z",
-    email: "251740038@telegram.forgath.ru",
     hasPassword: false,
     id: "u-1",
     lastSeen: "2026-06-01T11:00:00.000Z",
@@ -45,7 +44,7 @@ const users: AdminUserListItem[] = [
     registrationSource: "email",
     risks: [],
     role: { displayName: "Модератор", name: "moderator" },
-    telegram: { username: "mod_nof" },
+    telegram: { id: 614815689, username: "mod_nof" },
     username: "moderator",
   },
 ];
@@ -75,9 +74,7 @@ describe("admin users page", () => {
         expect(element).toHaveClass("whitespace-nowrap");
       }
     }
-    for (const label of screen.getAllByText("Открыть")) {
-      expect(label).toHaveClass("whitespace-nowrap");
-    }
+    expect(screen.queryByText("Открыть")).not.toBeInTheDocument();
   });
 
   it("uses Russian fallback text for unknown registration source", () => {
@@ -88,18 +85,26 @@ describe("admin users page", () => {
     expect(document.body).not.toHaveTextContent("telegram email");
   });
 
-  it("links each user row to a read-only account detail page", () => {
+  it("opens account detail from the username without a redundant action column", () => {
     render(<AdminUsersPage users={users} />);
 
-    expect(screen.getByRole("link", { name: "Открыть teanore" })).toHaveAttribute("href", "/admin/users/u-1");
-    expect(screen.getByRole("link", { name: "Открыть owner" })).toHaveAttribute("href", "/admin/users/u-2");
-  });
-
-  it("makes the first-column username itself a visible detail link", () => {
-    render(<AdminUsersPage users={users} />);
-
+    expect(screen.queryByText("Действия")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "teanore" })).toHaveAttribute("href", "/admin/users/u-1");
     expect(screen.getByRole("link", { name: "owner" })).toHaveAttribute("href", "/admin/users/u-2");
+  });
+
+  it("keeps Telegram id and username visible as separate fields", () => {
+    render(<AdminUsersPage users={users} />);
+
+    const teanoreRow = screen.getByRole("link", { name: "teanore" }).closest("tr");
+    expect(teanoreRow).not.toBeNull();
+    expect(within(teanoreRow as HTMLElement).getByText("ID: 251740038")).toBeInTheDocument();
+    expect(within(teanoreRow as HTMLElement).getByText("Username: @teanore")).toBeInTheDocument();
+
+    const moderatorRow = screen.getByRole("link", { name: "moderator" }).closest("tr");
+    expect(moderatorRow).not.toBeNull();
+    expect(within(moderatorRow as HTMLElement).getByText("ID: 614815689")).toBeInTheDocument();
+    expect(within(moderatorRow as HTMLElement).getByText("Username: @mod_nof")).toBeInTheDocument();
   });
 
   it("keeps all-filter options first in every dropdown", () => {

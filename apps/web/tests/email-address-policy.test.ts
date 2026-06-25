@@ -8,7 +8,12 @@ describe("email address policy", () => {
   });
 
   it("treats telegram placeholder domains as service emails, not user mailboxes", () => {
-    for (const email of ["251740038@telegram.example.com", "251740038@telegram.forgath.ru", "1000320432telegram.forgath.ru"]) {
+    for (const email of [
+      "251740038@telegram.example.com",
+      "251740038@telegram.forgath.ru",
+      "1000320432telegram.forgath.ru",
+      "user614815689forgath.ru",
+    ]) {
       expect(isTelegramPlaceholderEmail(email)).toBe(true);
       expect(isServiceEmail(email)).toBe(true);
       expect(isResettableEmail(email)).toBe(false);

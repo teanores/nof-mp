@@ -298,6 +298,7 @@ describe("admin users repository", () => {
     expect(userRecoveryState({ email: "251740038@telegram.example.com" })).toBe("service-email");
     expect(userRecoveryState({ email: "251740038@telegram.forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: "1000320432telegram.forgath.ru" })).toBe("service-email");
+    expect(userRecoveryState({ email: "user614815689forgath.ru" })).toBe("service-email");
     expect(userRecoveryState({ email: null })).toBe("missing-email");
   });
 
@@ -310,6 +311,45 @@ describe("admin users repository", () => {
     expect(userRisks({ email: "1000320432telegram.forgath.ru", has_password: true })).toEqual([
       "external-email",
       "telegram-placeholder-email",
+    ]);
+    expect(userRisks({ email: "user614815689forgath.ru", has_password: true })).toEqual([
+      "external-email",
+      "telegram-placeholder-email",
+    ]);
+  });
+
+  it("does not expose legacy user-id synthetic email or mixed Telegram identity fields", async () => {
+    const pool = new FakePool([
+      {
+        access_denied: false,
+        created_at: "2026-06-01T10:00:00.000Z",
+        email: "user614815689forgath.ru",
+        has_password: false,
+        id: "u-legacy",
+        last_seen: null,
+        registration_source: "telegram",
+        role_display_name: null,
+        role_name: null,
+        telegram_id: "@legacy_username",
+        telegram_username: "@clean_me",
+        username: "legacy",
+      },
+    ]);
+    const repository = new AdminUsersRepository(pool as never);
+
+    await expect(repository.listUsers()).resolves.toMatchObject([
+      {
+        id: "u-legacy",
+        recoveryState: "service-email",
+        risks: ["missing-password", "external-email", "telegram-placeholder-email"],
+        telegram: { username: "clean_me" },
+      },
+    ]);
+    await expect(repository.listUsers()).resolves.not.toMatchObject([
+      {
+        email: "user614815689forgath.ru",
+        telegram: { id: expect.anything() },
+      },
     ]);
   });
 

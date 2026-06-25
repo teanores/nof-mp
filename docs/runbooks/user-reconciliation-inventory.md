@@ -35,5 +35,12 @@ Telegram-origin users may have a synthetic placeholder in the platform email col
 - `123456@telegram.forgath.ru`
 - `123456@telegram.example.com`
 - legacy malformed values such as `123456telegram.forgath.ru`
+- legacy generated values such as `user123456forgath.ru`
 
 The admin flow should guide these users toward linking a real email to the same canonical platform account instead of creating another account or sending password reset mail to the placeholder.
+
+Telegram identity fields must stay separated:
+
+- `telegram_id` is numeric only;
+- `telegram_username` is the username without a leading `@`;
+- UI may display `@username`, but storage and admin-safe models must not mix username text into the Telegram ID field.

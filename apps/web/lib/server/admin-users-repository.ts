@@ -89,6 +89,11 @@ function toOptionalNumber(value: number | string | null): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function normalizeTelegramUsername(value: string | null): string | undefined {
+  const normalized = value?.trim().replace(/^@+/, "");
+  return normalized || undefined;
+}
+
 export function userRisks(row: Pick<AdminUserRow, "email" | "has_password">): AdminUserRisk[] {
   const risks: AdminUserRisk[] = [];
   const email = row.email?.toLowerCase() ?? "";
@@ -119,6 +124,7 @@ export function userRecoveryState(row: Pick<AdminUserRow, "email">): AdminUserRe
 
 function toAdminUser(row: AdminUserRow): AdminUserListItem {
   const telegramId = toOptionalNumber(row.telegram_id);
+  const telegramUsername = normalizeTelegramUsername(row.telegram_username);
   const displayEmail = row.email && !isServiceEmail(row.email) ? row.email : undefined;
 
   return {
@@ -140,7 +146,7 @@ function toAdminUser(row: AdminUserRow): AdminUserListItem {
       : {}),
     telegram: {
       ...(telegramId ? { id: telegramId } : {}),
-      ...(row.telegram_username ? { username: row.telegram_username } : {}),
+      ...(telegramUsername ? { username: telegramUsername } : {}),
     },
     ...(row.registration_source ? { registrationSource: row.registration_source } : {}),
     ...(toIso(row.created_at) ? { createdAt: toIso(row.created_at) } : {}),
@@ -278,7 +284,7 @@ export class AdminUsersRepository {
            email = CASE
              WHEN (target.email IS NULL OR target.email = '')
               AND source.email IS NOT NULL
-              AND source.email !~ '^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$'
+              AND source.email !~ '(^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$|^user[0-9]+forgath\\.ru$)'
              THEN source.email
              ELSE target.email
            END,

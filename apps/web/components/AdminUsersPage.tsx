@@ -111,18 +111,6 @@ function RecoveryState({ state }: { state: AdminUserRecoveryState }) {
   );
 }
 
-function AdminActionState({ user }: { user: AdminUserListItem }) {
-  return (
-    <Link
-      aria-label={`Открыть ${user.username}`}
-      className="tech-label inline-flex whitespace-nowrap rounded-sm border border-forge-line px-3 py-2 text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
-      href={`/admin/users/${encodeURIComponent(user.id)}`}
-    >
-      Открыть
-    </Link>
-  );
-}
-
 export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -372,7 +360,6 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                 <th className="px-4 py-3">Состояние</th>
                 <th className="px-4 py-3">Восстановление</th>
                 <th className="px-4 py-3">Признаки</th>
-                <th className="px-4 py-3">Действия</th>
               </tr>
             </thead>
             <tbody>
@@ -397,7 +384,10 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   <td className="px-4 py-4 text-forge-muted">{user.email ?? "почта не указана"}</td>
                   <td className="px-4 py-4 text-forge-muted">{user.role?.displayName ?? user.role?.name ?? "без роли"}</td>
                   <td className="px-4 py-4 text-forge-muted">
-                    {user.telegram?.username ? `@${user.telegram.username}` : user.telegram?.id ? `id ${user.telegram.id}` : "нет"}
+                    <div className="space-y-1">
+                      <p>ID: {user.telegram?.id ?? "нет"}</p>
+                      <p>Username: {user.telegram?.username ? `@${user.telegram.username}` : "нет"}</p>
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-forge-muted">{formatDate(user.lastSeen)}</td>
                   <td className="px-4 py-4">
@@ -411,9 +401,6 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   </td>
                   <td className="px-4 py-4">
                     <UserRiskBadges risks={user.risks} />
-                  </td>
-                  <td className="px-4 py-4">
-                    <AdminActionState user={user} />
                   </td>
                 </tr>
               ))}
