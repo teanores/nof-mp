@@ -112,6 +112,31 @@ describe("admin users page", () => {
     expect(within(screen.getByLabelText("Признаки")).getAllByRole("option")[0]).toHaveTextContent("Все признаки");
   });
 
+  it("shows read-only reconciliation inventory counters without exposing service secrets", () => {
+    render(<AdminUsersPage users={users} />);
+
+    expect(screen.getByText("Сверка пользователей")).toBeInTheDocument();
+    expect(screen.getByText("Реальная почта")).toBeInTheDocument();
+    expect(screen.getByText("Telegram-only")).toBeInTheDocument();
+    expect(screen.getAllByText("Служебная почта").length).toBeGreaterThan(0);
+    expect(screen.getByText("Готовы к сверке nof-ht")).toBeInTheDocument();
+    expect(screen.getAllByText("Ручная проверка").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(document.body).not.toHaveTextContent("token");
+    expect(document.body).not.toHaveTextContent("secret");
+    expect(document.body).not.toHaveTextContent("password_hash");
+  });
+
+  it("filters users that need manual reconciliation review", () => {
+    render(<AdminUsersPage users={users} />);
+
+    fireEvent.change(screen.getByLabelText("Сверка"), { target: { value: "manual-review" } });
+
+    expect(screen.getByRole("link", { name: "teanore" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "owner" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "moderator" })).not.toBeInTheDocument();
+  });
+
   it("filters users by search text, access, recovery and risk state", () => {
     render(<AdminUsersPage users={users} />);
 

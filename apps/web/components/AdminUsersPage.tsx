@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { useMemo, useState } from "react";
 
 import { PortalActionBar, PortalHeader, PortalPageShell } from "@/components/PortalLayout";
+import { summarizeUserReconciliation } from "@/lib/admin-user-reconciliation";
 import type { AdminUserListItem, AdminUserRecoveryState, AdminUserRisk } from "@/lib/server/admin-users-repository";
 
 const riskLabels: Record<AdminUserRisk, string> = {
@@ -20,6 +21,7 @@ const badgeBaseClass = "tech-label inline-flex whitespace-nowrap rounded-sm bord
 type AccountFilter = "all" | "password-login" | "telegram-only";
 type AccessFilter = "all" | "active" | "denied";
 type RecoveryFilter = "all" | AdminUserRecoveryState;
+type ReconciliationFilter = "all" | "manual-review" | "nof-ht-ready" | "duplicate-dev";
 type RiskFilter = "all" | "has-risks" | "no-risks";
 
 const accountFilterLabels: Record<AccountFilter, string> = {
@@ -42,6 +44,12 @@ const riskFilterLabels: Record<RiskFilter, string> = {
   all: "Все признаки",
   "has-risks": "Требуют внимания",
   "no-risks": "Без признаков",
+};
+const reconciliationFilterLabels: Record<ReconciliationFilter, string> = {
+  all: "Все сверки",
+  "duplicate-dev": "Дубли/dev",
+  "manual-review": "Ручная проверка",
+  "nof-ht-ready": "Готовы к nof-ht",
 };
 
 function formatDate(value?: string): string {
@@ -121,7 +129,9 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
   const [accountFilter, setAccountFilter] = useState<AccountFilter>("all");
   const [accessFilter, setAccessFilter] = useState<AccessFilter>("all");
   const [recoveryFilter, setRecoveryFilter] = useState<RecoveryFilter>("all");
+  const [reconciliationFilter, setReconciliationFilter] = useState<ReconciliationFilter>("all");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
+  const reconciliation = summarizeUserReconciliation(users);
   const riskyUsers = users.filter((user) => user.risks.length > 0).length;
   const deniedUsers = users.filter((user) => user.accessState === "denied").length;
   const emailRecoveryUsers = users.filter((user) => user.recoveryState === "email-reset-ready").length;
@@ -168,9 +178,21 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
       if (riskFilter === "no-risks" && user.risks.length > 0) {
         return false;
       }
+      if (reconciliationFilter === "manual-review" && user.risks.length === 0) {
+        return false;
+      }
+      if (reconciliationFilter === "nof-ht-ready" && (!user.telegram?.id || user.recoveryState === "missing-email")) {
+        return false;
+      }
+      if (
+        reconciliationFilter === "duplicate-dev" &&
+        !(user.accessState === "denied" && ((user.registrationSource ?? "").toLowerCase().includes("dev") || user.username.toLowerCase().includes("dev") || user.role?.name === "admin"))
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [accessFilter, accountFilter, query, recoveryFilter, riskFilter, roleFilter, users]);
+  }, [accessFilter, accountFilter, query, reconciliationFilter, recoveryFilter, riskFilter, roleFilter, users]);
 
   return (
     <PortalPageShell>
@@ -208,9 +230,34 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
         </article>
       </section>
 
+      <PortalActionBar eyebrow="Только чтение" title="Сверка пользователей" />
+
+      <section className="grid gap-4 md:grid-cols-5">
+        <article className="panel p-4">
+          <p className="tech-label text-xs text-forge-muted">Реальная почта</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{reconciliation.realEmailUsers}</p>
+        </article>
+        <article className="panel p-4">
+          <p className="tech-label text-xs text-forge-muted">Telegram-only</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-amber-200">{reconciliation.telegramOnlyUsers}</p>
+        </article>
+        <article className="panel p-4">
+          <p className="tech-label text-xs text-forge-muted">Служебная почта</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-amber-200">{reconciliation.serviceEmailUsers}</p>
+        </article>
+        <article className="panel p-4">
+          <p className="tech-label text-xs text-forge-muted">Готовы к сверке nof-ht</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-forge-ink">{reconciliation.nofHtMatchReadyUsers}</p>
+        </article>
+        <article className="panel p-4">
+          <p className="tech-label text-xs text-forge-muted">Ручная проверка</p>
+          <p className="heading-tech mt-2 text-3xl font-bold text-red-200">{reconciliation.manualReviewUsers}</p>
+        </article>
+      </section>
+
       <PortalActionBar eyebrow="Администрирование" title="Аккаунты платформы" />
 
-      <section className="panel grid gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_repeat(5,minmax(150px,210px))]">
+      <section className="panel grid gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_repeat(6,minmax(140px,190px))]">
         <label className="block">
           <span className="tech-label text-[10px] text-forge-muted">Поиск</span>
           <input
@@ -292,7 +339,21 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
             ))}
           </select>
         </label>
-        <p className="tech-label text-xs text-forge-muted lg:col-span-6">
+        <label className="block">
+          <span className="tech-label text-[10px] text-forge-muted">Сверка</span>
+          <select
+            className="mt-2 w-full rounded-sm border border-forge-line bg-forge-bg px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+            onChange={(event) => setReconciliationFilter(event.target.value as ReconciliationFilter)}
+            value={reconciliationFilter}
+          >
+            {Object.entries(reconciliationFilterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="tech-label text-xs text-forge-muted lg:col-span-7">
           Показано: {filteredUsers.length} из {users.length}
         </p>
       </section>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { summarizeUserReconciliation } from "@/lib/admin-user-reconciliation";
 import { AdminUsersRepository, userRecoveryState, userRisks } from "@/lib/server/admin-users-repository";
 
 interface FakeQueryResult<T> {
@@ -306,5 +307,56 @@ describe("admin users repository", () => {
       "telegram-placeholder-email",
     ]);
     expect(userRisks({ email: "251740038@telegram.forgath.ru", has_password: true })).toEqual(["telegram-placeholder-email"]);
+  });
+
+  it("summarizes a read-only reconciliation inventory for nof-mp and nof-ht alignment", () => {
+    expect(
+      summarizeUserReconciliation([
+        {
+          accountState: "telegram-only",
+          accessState: "active",
+          email: "251740038@telegram.forgath.ru",
+          hasPassword: false,
+          id: "u-1",
+          recoveryState: "service-email",
+          registrationSource: "telegram",
+          risks: ["missing-password", "telegram-placeholder-email"],
+          telegram: { id: 251740038, username: "teanore" },
+          username: "teanore",
+        },
+        {
+          accountState: "password-login",
+          accessState: "denied",
+          email: "wrong-admin@forgath.ru",
+          hasPassword: true,
+          id: "u-2",
+          recoveryState: "email-reset-ready",
+          registrationSource: "dev",
+          risks: [],
+          role: { displayName: "Администратор", name: "admin" },
+          username: "wrong-admin",
+        },
+        {
+          accountState: "password-login",
+          accessState: "active",
+          email: "owner@example.com",
+          hasPassword: true,
+          id: "u-3",
+          recoveryState: "email-reset-ready",
+          risks: ["external-email"],
+          telegram: { id: 100 },
+          username: "owner",
+        },
+      ]),
+    ).toEqual({
+      deniedUsers: 1,
+      duplicateOrDevCandidates: 1,
+      manualReviewUsers: 2,
+      nofHtMatchReadyUsers: 2,
+      realEmailUsers: 2,
+      serviceEmailUsers: 1,
+      telegramOnlyUsers: 1,
+      totalUsers: 3,
+    });
   });
 });
