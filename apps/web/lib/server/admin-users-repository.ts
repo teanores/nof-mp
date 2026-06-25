@@ -167,7 +167,6 @@ export class AdminUsersRepository {
 
   async listUsers(limit = 100): Promise<AdminUserListItem[]> {
     await this.ensureAccessStateSchema();
-    await this.cleanupSyntheticTelegramEmails();
     const result = await this.pool.query<AdminUserRow>(
       `SELECT
          u.id::text AS id,
@@ -195,7 +194,6 @@ export class AdminUsersRepository {
 
   async getUserById(userId: string): Promise<AdminUserListItem | null> {
     await this.ensureAccessStateSchema();
-    await this.cleanupSyntheticTelegramEmails();
     const result = await this.pool.query<AdminUserRow>(
       `SELECT
          u.id::text AS id,
@@ -400,13 +398,6 @@ export class AdminUsersRepository {
     );
   }
 
-  private async cleanupSyntheticTelegramEmails(): Promise<void> {
-    await this.pool.query(
-      `UPDATE dragon_forge."user"
-       SET email = NULL
-       WHERE email ~* '(^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$|^user[0-9]+forgath\\.ru$)'`,
-    );
-  }
 }
 
 let repository: AdminUsersRepository | undefined;

@@ -73,7 +73,7 @@ describe("admin users repository", () => {
       },
     ]);
     const selectQuery = pool.queries.find((query) => query.sql.includes("FROM dragon_forge.\"user\" u"));
-    expect(pool.queries.some((query) => query.sql.includes("UPDATE dragon_forge.\"user\"") && query.sql.includes("SET email = NULL"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("SET email = NULL"))).toBe(false);
     expect(selectQuery?.sql).not.toContain("password_hash AS");
     expect(selectQuery?.sql).toContain("LEFT JOIN nof_platform.user_access_state access");
     expect(selectQuery?.values).toEqual([100]);
@@ -106,7 +106,7 @@ describe("admin users repository", () => {
       username: "owner",
     });
     const selectQuery = pool.queries.find((query) => query.sql.includes("WHERE u.id::text = $1"));
-    expect(pool.queries.some((query) => query.sql.includes("UPDATE dragon_forge.\"user\"") && query.sql.includes("SET email = NULL"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("SET email = NULL"))).toBe(false);
     expect(selectQuery?.sql).toContain("LIMIT 1");
     expect(selectQuery?.sql).not.toContain("password_hash AS");
     expect(selectQuery?.values).toEqual(["u-2"]);
