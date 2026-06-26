@@ -16,6 +16,19 @@ describe("platform shell manifest", () => {
     expect(protectedPortalRoutes).toContain("/profile");
   });
 
+  it("keeps every admin page in the protected route manifest", () => {
+    expect(protectedPortalRoutes).toEqual(
+      expect.arrayContaining([
+        "/admin",
+        "/admin/events",
+        "/admin/secrets",
+        "/admin/security",
+        "/admin/settings",
+        "/admin/users",
+      ]),
+    );
+  });
+
   it("opens service preview pages instead of product internals", () => {
     expect(portalModules.find((module) => module.key === "tracker")?.href).toBe("/services/task-tracker");
     expect(portalModules.find((module) => module.key === "habits")?.href).toBe("/services/habit-tracker");
