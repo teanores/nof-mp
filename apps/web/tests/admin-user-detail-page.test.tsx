@@ -36,6 +36,24 @@ const recoverableUser: AdminUserListItem = {
   role: { displayName: "Администратор", name: "admin" },
   username: "owner",
 };
+const canonicalCandidates: AdminUserListItem[] = [
+  user,
+  recoverableUser,
+  {
+    accountState: "password-login",
+    accessState: "active",
+    createdAt: "2026-06-03T10:00:00.000Z",
+    email: "other@forgath.ru",
+    hasPassword: true,
+    id: "u-3",
+    lastSeen: "2026-06-03T11:00:00.000Z",
+    recoveryState: "email-reset-ready",
+    registrationSource: "email",
+    risks: [],
+    telegram: { id: 614815689, username: "other_user" },
+    username: "other",
+  },
+];
 const connectedLinks: ForgeServiceLink[] = [
   {
     serviceKey: "nof-ht",
@@ -165,17 +183,19 @@ describe("admin user detail page", () => {
   });
 
   it("lets an admin mark an account as duplicate and move it into a canonical user", async () => {
-    render(<AdminUserDetailPage user={user} />);
+    render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
 
     expect(screen.getByRole("heading", { name: "Каноническая учётная запись" })).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText("ID канонического пользователя"), "target-user-1");
+    expect(screen.queryByText("u-1")).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Найти канонического пользователя"), "owner");
+    await userEvent.click(screen.getByRole("button", { name: /owner owner@example.com/i }));
     await userEvent.click(screen.getByRole("button", { name: "Перенести связи" }));
 
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
         "/api/admin/users/u-1/merge",
         expect.objectContaining({
-          body: JSON.stringify({ targetUserId: "target-user-1" }),
+          body: JSON.stringify({ targetUserId: "u-2" }),
           method: "POST",
         }),
       ),

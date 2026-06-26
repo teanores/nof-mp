@@ -29,9 +29,10 @@ export default async function AdminUserDetailRoute({ params }: { params: Promise
   });
 
   const serviceLinks = [await fetchNofHtLink(user.id)];
+  const canonicalCandidates = await getAdminUsersRepository().listUsers();
   const recentActivity = await getSecurityAuditDashboardRepository()
     .recentEventsForActor(user.id)
     .catch(() => []);
 
-  return <AdminUserDetailPage recentActivity={recentActivity} serviceLinks={serviceLinks} user={user} />;
+  return <AdminUserDetailPage canonicalCandidates={canonicalCandidates} recentActivity={recentActivity} serviceLinks={serviceLinks} user={user} />;
 }

@@ -6,6 +6,7 @@ import type { ForgePortalSession } from "@/lib/types";
 const mocks = vi.hoisted(() => ({
   fetchNofHtLink: vi.fn(),
   getUserById: vi.fn<(id: string) => Promise<AdminUserListItem | null>>(),
+  listUsers: vi.fn<() => Promise<AdminUserListItem[]>>(),
   recentEventsForActor: vi.fn(),
   recordSecurityAuditEvent: vi.fn(),
   notFound: vi.fn(() => {
@@ -23,7 +24,7 @@ vi.mock("@/lib/server/portal-auth-gate", () => ({
 }));
 
 vi.mock("@/lib/server/admin-users-repository", () => ({
-  getAdminUsersRepository: () => ({ getUserById: mocks.getUserById }),
+  getAdminUsersRepository: () => ({ getUserById: mocks.getUserById, listUsers: mocks.listUsers }),
 }));
 
 vi.mock("@/lib/server/service-links-contract", () => ({
@@ -62,6 +63,27 @@ describe("admin user detail route", () => {
       risks: [],
       username: "owner",
     });
+    mocks.listUsers.mockResolvedValue([
+      {
+        accountState: "password-login",
+        accessState: "active",
+        hasPassword: true,
+        id: "u-1",
+        recoveryState: "email-reset-ready",
+        risks: [],
+        username: "owner",
+      },
+      {
+        accountState: "password-login",
+        accessState: "active",
+        email: "canonical@example.com",
+        hasPassword: true,
+        id: "u-2",
+        recoveryState: "email-reset-ready",
+        risks: [],
+        username: "canonical",
+      },
+    ]);
     mocks.fetchNofHtLink.mockResolvedValue({
       serviceKey: "nof-ht",
       serviceName: "Habit Tracker",
@@ -96,6 +118,7 @@ describe("admin user detail route", () => {
     );
     expect(result.type.name).toBe("AdminUserDetailPage");
     expect(result.props.user.id).toBe("u-1");
+    expect(result.props.canonicalCandidates).toHaveLength(2);
     expect(result.props.serviceLinks).toHaveLength(1);
     expect(result.props.recentActivity).toHaveLength(1);
   });
@@ -119,6 +142,7 @@ describe("admin user detail route", () => {
       risks: [],
       username: "owner",
     });
+    mocks.listUsers.mockResolvedValue([]);
     mocks.fetchNofHtLink.mockResolvedValue({
       serviceKey: "nof-ht",
       serviceName: "Habit Tracker",
