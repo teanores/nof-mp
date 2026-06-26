@@ -2,7 +2,17 @@ import crypto from "node:crypto";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
+import { decodeNofAuthToken, NofPortalAuthRepository } from "@/lib/server/nof-portal-auth";
+
+class FakePool {
+  constructor(private readonly rows: unknown[]) {}
+
+  async query() {
+    return { rows: this.rows };
+  }
+
+  async end() {}
+}
 
 function encodePart(value: object): string {
   return Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -96,5 +106,42 @@ describe("nof portal auth token", () => {
       sub: "11111111-1111-1111-1111-111111111111",
       username: "teanore",
     });
+  });
+
+  it("treats access-denied users as unauthenticated even when their cookie is still valid", async () => {
+    process.env.SECRET_KEY = "session-secret";
+    const token = sign({ sub: "11111111-1111-1111-1111-111111111111", username: "blocked", exp: 4_102_444_800 }, "session-secret");
+    const repository = new NofPortalAuthRepository(
+      new FakePool([
+        {
+          about_me: null,
+          access_denied: true,
+          created_at: null,
+          email: "blocked@example.com",
+          email_verified: true,
+          experience: 0,
+          id: "11111111-1111-1111-1111-111111111111",
+          last_seen: null,
+          level_id: null,
+          level_name: null,
+          level_number: null,
+          rank_id: null,
+          rank_name: null,
+          rank_number: null,
+          registration_source: "nof-mp-email",
+          role_display_name: null,
+          role_id: null,
+          role_name: null,
+          telegram_firstname: null,
+          telegram_id: null,
+          telegram_language_code: null,
+          telegram_lastname: null,
+          telegram_username: null,
+          username: "blocked",
+        },
+      ]) as never,
+    );
+
+    await expect(repository.sessionFromCookie(token)).resolves.toEqual({ authenticated: false, loginUrl: "/login" });
   });
 });

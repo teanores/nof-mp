@@ -17,6 +17,7 @@ interface JwtPayload {
 
 interface PortalUserRow extends QueryResultRow {
   about_me: string | null;
+  access_denied: boolean | null;
   created_at: Date | string | null;
   email: string | null;
   email_verified: boolean | string | null;
@@ -213,6 +214,7 @@ export class NofPortalAuthRepository {
          u.id::text AS id,
          u.username,
          u.email,
+         COALESCE(access.access_denied, false) AS access_denied,
          (to_jsonb(u)->>'email_verified') AS email_verified,
          u.about_me,
          u.experience,
@@ -234,6 +236,7 @@ export class NofPortalAuthRepository {
          role.name AS role_name,
          role.display_name AS role_display_name
        FROM dragon_forge."user" u
+       LEFT JOIN nof_platform.user_access_state access ON access.user_id = u.id
        LEFT JOIN dragon_forge.level l ON l.id = u.level_id
        LEFT JOIN dragon_forge.rank r ON r.id = u.rank_id
        LEFT JOIN dragon_forge.role role ON role.id = u.role_id
@@ -242,7 +245,12 @@ export class NofPortalAuthRepository {
       [userId],
     );
 
-    return result.rows[0] ? toPortalUser(result.rows[0]) : undefined;
+    const row = result.rows[0];
+    if (!row || row.access_denied) {
+      return undefined;
+    }
+
+    return toPortalUser(row);
   }
 
   async sessionFromCookie(token?: string): Promise<ForgePortalSession> {
