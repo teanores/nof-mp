@@ -1,22 +1,22 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
-  buildPublicRegistrationConfirmUrl,
-  buildPublicRegistrationRequestUrl,
   normalizeRegistrationEmail,
+  redirectToLoginAfterRegistration,
   redirectToRegistrationRequestError,
 } from "@/lib/server/public-registration";
 
 describe("public registration api helpers", () => {
-  it("builds NOF service public registration URLs from the internal base URL", () => {
-    const baseUrl = "http://nof-service-internal:5000";
+  it("keeps registration helper contract native to nof-mp without legacy nof-service URLs", () => {
+    const moduleText = readFileSync(join(process.cwd(), "lib", "server", "public-registration.ts"), "utf8");
 
-    expect(buildPublicRegistrationRequestUrl(baseUrl)).toBe(
-      "http://nof-service-internal:5000/api/public/registration/request",
-    );
-    expect(buildPublicRegistrationConfirmUrl(baseUrl)).toBe(
-      "http://nof-service-internal:5000/api/public/registration/confirm",
-    );
+    expect(moduleText).not.toContain("nof-service-internal");
+    expect(moduleText).not.toContain("NOF_SERVICE_INTERNAL_URL");
+    expect(moduleText).not.toContain("buildPublicRegistrationRequestUrl");
+    expect(moduleText).not.toContain("buildPublicRegistrationConfirmUrl");
   });
 
   it("normalizes registration email before redirecting to the confirmation step", () => {
@@ -28,5 +28,12 @@ describe("public registration api helpers", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/register?error=unavailable");
+  });
+
+  it("redirects successful native registration to login", () => {
+    const response = redirectToLoginAfterRegistration();
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/login?registered=1");
   });
 });

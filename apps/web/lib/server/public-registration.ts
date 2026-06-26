@@ -1,21 +1,7 @@
 import { NextResponse } from "next/server";
 
-const defaultNofServiceUrl = "http://nof-service-internal:5000";
-
 export function normalizeRegistrationEmail(email: string): string {
   return email.trim().toLowerCase();
-}
-
-export function buildPublicRegistrationRequestUrl(
-  baseUrl = process.env.NOF_SERVICE_INTERNAL_URL ?? defaultNofServiceUrl,
-): string {
-  return new URL("/api/public/registration/request", baseUrl).toString();
-}
-
-export function buildPublicRegistrationConfirmUrl(
-  baseUrl = process.env.NOF_SERVICE_INTERNAL_URL ?? defaultNofServiceUrl,
-): string {
-  return new URL("/api/public/registration/confirm", baseUrl).toString();
 }
 
 export function redirectToRegistrationRequestError(error = "unavailable"): NextResponse {
