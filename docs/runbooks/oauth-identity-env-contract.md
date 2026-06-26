@@ -19,15 +19,6 @@ Do not store or paste real secret values here.
 - Rotation: coordinate with legacy `nof-service` secret store. Remove or reduce the legacy fallback only after the dual-key transition has passed UAT and `NOF-MP-16` is ready to close.
 - Secret handling: never expose to browser JavaScript, logs, Wiki, tracker comments or build output.
 
-`NOF_PLATFORM_MCP_TOKEN_SECRET`
-
-- Owner: `nof-mp`.
-- Purpose: HMAC-SHA256 key for hashing and verifying MCP tokens stored in `mcp_tokens` table.
-- Consumers: `apps/web/lib/server/mcp-token-repository.ts` → `tokenSecret()`.
-- Fallback: falls back to `SECRET_KEY`, then a local dev default.
-- Rotation: invalidates all existing MCP tokens — coordinate with token holders.
-- Secret handling: never expose to browser JavaScript, logs, Wiki, tracker comments or build output.
-
 `NOF_PLATFORM_OAUTH_JWT_SECRET`
 
 - Owner: `nof-mp`.

@@ -1,34 +1,14 @@
-import { randomUUID } from "node:crypto";
-
 import { type NextRequest, NextResponse } from "next/server";
 
-import { isOAuthManagedProduct } from "@/lib/server/oauth-client-registry";
+import { nofHtOidcAuthorizeHref } from "@/lib/server/nof-ht-oidc-handoff";
+import { nofTtOidcStartHref } from "@/lib/server/nof-tt-oidc-handoff";
 import { portalLoginUrl, portalSessionFromRequest, safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 import { getProductAccessRepository, subjectFromPortalSession } from "@/lib/server/product-access-repository";
-import { getProductExchangeRepository } from "@/lib/server/product-exchange-repository";
 
 export const dynamic = "force-dynamic";
 
 interface ProductLaunchContext {
   params: Promise<{ productKey: string }>;
-}
-
-function productCallbackOrigin(productKey: string): string {
-  if (productKey === "nof-tt") {
-    return process.env.NOF_TT_ORIGIN ?? process.env.NEXT_PUBLIC_NOF_TT_ORIGIN ?? "http://localhost:3001";
-  }
-
-  return process.env.NOF_DEFAULT_PRODUCT_ORIGIN ?? "http://localhost:3001";
-}
-
-function oauthManagedProductServicePath(productKey: string): string {
-  if (productKey === "nof-tt") {
-    return "/services/task-tracker";
-  }
-  if (productKey === "nof-ht") {
-    return "/services/habit-tracker";
-  }
-  return "/overview";
 }
 
 export async function GET(request: NextRequest, context: ProductLaunchContext): Promise<NextResponse> {
@@ -53,30 +33,19 @@ export async function GET(request: NextRequest, context: ProductLaunchContext): 
   if (!product.access.allowed) {
     return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
   }
-  if (isOAuthManagedProduct(productKey)) {
-    const servicePath = oauthManagedProductServicePath(productKey);
+  if (productKey === "nof-ht") {
     return new NextResponse(null, {
-      headers: { location: `${servicePath}?launch=oauth` },
+      headers: { location: nofHtOidcAuthorizeHref("/") },
+      status: 303,
+    });
+  }
+  if (productKey === "nof-tt") {
+    const returnTo = safePortalReturnTo(request.nextUrl.searchParams.get("next") ?? "/projects");
+    return new NextResponse(null, {
+      headers: { location: nofTtOidcStartHref(returnTo) },
       status: 303,
     });
   }
 
-  const returnTo = safePortalReturnTo(request.nextUrl.searchParams.get("next") ?? "/");
-  const state = randomUUID();
-  const issued = await getProductExchangeRepository().issue({
-    platformUserId: session.user.id,
-    productKey,
-    returnTo,
-    state,
-    ttlSeconds: 120,
-  });
-  const callbackUrl = new URL("/auth/platform/callback", productCallbackOrigin(productKey));
-  callbackUrl.searchParams.set("code", issued.code);
-  callbackUrl.searchParams.set("state", state);
-  callbackUrl.searchParams.set("next", returnTo);
-
-  return new NextResponse(null, {
-    headers: { location: callbackUrl.toString() },
-    status: 303,
-  });
+  return NextResponse.json({ error: "standard_oauth_required", ok: false, productKey }, { status: 410 });
 }

@@ -109,7 +109,6 @@ DB_PASS=nof_local
 SECRET_KEY=nof-local-secret-key-change-me
 NOF_AUTH_SECRET_KEY=nof-local-nof-service-secret-change-me
 NOF_PLATFORM_OAUTH_JWT_SECRET=nof-local-oauth-jwt-secret-change-me
-NOF_PLATFORM_MCP_TOKEN_SECRET=nof-local-mcp-token-secret-change-me
 NEXT_PUBLIC_PLATFORM_ORIGIN=http://localhost:3000
 NOF_HT_ORIGIN=http://localhost:3001
 NEXT_PUBLIC_NOF_HT_ORIGIN=http://localhost:3001`);

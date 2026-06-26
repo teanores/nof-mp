@@ -56,23 +56,6 @@ export interface ForgePortalSession {
   user?: ForgePortalUser;
 }
 
-export interface ForgeMcpToken {
-  id: string;
-  name: string;
-  projectKey: string;
-  tokenPrefix: string;
-  scopes: string[];
-  createdAt: string;
-  lastUsedAt?: string;
-  revokedAt?: string;
-}
-
-export interface CreateMcpTokenInput {
-  name: string;
-  projectKey?: string;
-  scopes?: string[];
-}
-
 export interface ForgeServiceLink {
   serviceKey: "nof-ht" | "nof-tt";
   serviceName: string;

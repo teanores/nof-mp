@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ForgePortalSession } from "@/lib/types";
 
 const adminUsersRepository = vi.hoisted(() => ({
-  updateUserIdentityLink: vi.fn(),
+  getUserById: vi.fn(),
+}));
+
+const canonicalIdentityRepository = vi.hoisted(() => ({
+  claimAliasesForPlatformUser: vi.fn(),
 }));
 
 const audit = vi.hoisted(() => ({
@@ -26,6 +30,10 @@ const authSession = vi.hoisted(() => ({
 
 vi.mock("@/lib/server/admin-users-repository", () => ({
   getAdminUsersRepository: () => adminUsersRepository,
+}));
+
+vi.mock("@/lib/server/canonical-identity-repository", () => ({
+  getCanonicalIdentityRepository: () => canonicalIdentityRepository,
 }));
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({
@@ -53,14 +61,15 @@ function request(body: Record<string, unknown>): NextRequest {
 describe("admin user identity link route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    adminUsersRepository.updateUserIdentityLink.mockResolvedValue({
+    adminUsersRepository.getUserById.mockResolvedValue({
       email: "owner@example.com",
       id: "user-1",
       telegram: { id: 251740038, username: "teanore" },
     });
+    canonicalIdentityRepository.claimAliasesForPlatformUser.mockResolvedValue({ aliasIds: ["alias-1"], ok: true, personId: "person-1" });
   });
 
-  it("updates real email and Telegram association for a selected user", async () => {
+  it("claims real email and Telegram aliases for a selected user without legacy field update", async () => {
     const response = await POST(request({ email: "Owner@Example.com", telegramId: "251740038", telegramUsername: "teanore" }), {
       params: Promise.resolve({ userId: "user-1" }),
     });
@@ -68,12 +77,29 @@ describe("admin user identity link route", () => {
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ ok: true, userId: "user-1" });
-    expect(adminUsersRepository.updateUserIdentityLink).toHaveBeenCalledWith({
+    expect(adminUsersRepository.getUserById).toHaveBeenCalledWith("user-1");
+    expect(canonicalIdentityRepository.claimAliasesForPlatformUser).toHaveBeenCalledWith({
       actorUserId: "admin-1",
-      email: "owner@example.com",
-      telegramId: 251740038,
-      telegramUsername: "teanore",
-      userId: "user-1",
+      aliases: [
+        {
+          aliasKind: "email",
+          aliasValue: "owner@example.com",
+          verificationState: "unverified",
+        },
+        {
+          aliasKind: "telegram_id",
+          aliasProvider: "telegram",
+          aliasValue: 251740038,
+          verificationState: "unverified",
+        },
+        {
+          aliasKind: "telegram_username",
+          aliasProvider: "telegram",
+          aliasValue: "teanore",
+          verificationState: "unverified",
+        },
+      ],
+      platformUserId: "user-1",
     });
     expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -94,7 +120,7 @@ describe("admin user identity link route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "real_email_required" });
-    expect(adminUsersRepository.updateUserIdentityLink).not.toHaveBeenCalled();
+    expect(canonicalIdentityRepository.claimAliasesForPlatformUser).not.toHaveBeenCalled();
   });
 
   it("rejects legacy user-id forged email as a real mailbox", async () => {
@@ -105,7 +131,7 @@ describe("admin user identity link route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "real_email_required" });
-    expect(adminUsersRepository.updateUserIdentityLink).not.toHaveBeenCalled();
+    expect(canonicalIdentityRepository.claimAliasesForPlatformUser).not.toHaveBeenCalled();
   });
 
   it("rejects invalid Telegram id", async () => {
@@ -116,5 +142,18 @@ describe("admin user identity link route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "telegram_id_required" });
+  });
+
+  it("returns conflict when an alias already belongs to another canonical person", async () => {
+    canonicalIdentityRepository.claimAliasesForPlatformUser.mockResolvedValue({ ok: false, reason: "alias_conflict" });
+
+    const response = await POST(request({ email: "owner@example.com", telegramId: "251740038" }), {
+      params: Promise.resolve({ userId: "user-1" }),
+    });
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload).toEqual({ error: "alias_conflict" });
+    expect(audit.recordSecurityAuditEvent).not.toHaveBeenCalled();
   });
 });

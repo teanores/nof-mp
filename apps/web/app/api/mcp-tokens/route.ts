@@ -1,10 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getMcpTokenRepository } from "@/lib/server/mcp-token-repository";
 import { portalSessionFromRequest, requirePortalApiSession } from "@/lib/server/portal-auth-gate";
-import type { CreateMcpTokenInput } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+function deprecatedMcpTokenResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      error: "mcp_tokens_owned_by_nof_tt",
+      mcpUrl: "https://task-tracker.forgath.ru/api/mcp",
+      owner: "nof-tt",
+    },
+    { status: 410 },
+  );
+}
 
 export async function GET(request: NextRequest) {
   const authError = await requirePortalApiSession(request);
@@ -18,8 +27,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Authenticated user was not loaded" }, { status: 401 });
   }
 
-  const tokens = await getMcpTokenRepository().listActive(userId);
-  return NextResponse.json({ tokens });
+  return deprecatedMcpTokenResponse();
 }
 
 export async function POST(request: NextRequest) {
@@ -34,19 +42,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Authenticated user was not loaded" }, { status: 401 });
   }
 
-  const input = (await request.json().catch(() => ({}))) as Partial<CreateMcpTokenInput>;
-  if (typeof input.name !== "string" || !input.name.trim()) {
-    return NextResponse.json({ error: "Token name is required" }, { status: 400 });
-  }
-
-  try {
-    const created = await getMcpTokenRepository().create(userId, {
-      name: input.name,
-      projectKey: input.projectKey,
-      scopes: input.scopes,
-    });
-    return NextResponse.json(created, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "MCP token was not created" }, { status: 400 });
-  }
+  return deprecatedMcpTokenResponse();
 }

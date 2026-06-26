@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ForgePortalSession } from "@/lib/types";
 
 const adminUsersRepository = vi.hoisted(() => ({
-  mergeUserIntoCanonical: vi.fn(),
+  getUserById: vi.fn(),
+}));
+
+const canonicalIdentityRepository = vi.hoisted(() => ({
+  claimAliasesForPlatformUser: vi.fn(),
 }));
 
 const audit = vi.hoisted(() => ({
@@ -26,6 +30,10 @@ const authSession = vi.hoisted(() => ({
 
 vi.mock("@/lib/server/admin-users-repository", () => ({
   getAdminUsersRepository: () => adminUsersRepository,
+}));
+
+vi.mock("@/lib/server/canonical-identity-repository", () => ({
+  getCanonicalIdentityRepository: () => canonicalIdentityRepository,
 }));
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({
@@ -53,32 +61,57 @@ function request(body: Record<string, unknown>): NextRequest {
 describe("admin user canonical merge route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    adminUsersRepository.mergeUserIntoCanonical.mockResolvedValue({
-      sourceUserId: "source-1",
-      targetUserId: "target-1",
-    });
+    adminUsersRepository.getUserById
+      .mockResolvedValueOnce({
+        email: undefined,
+        id: "source-1",
+        telegram: { id: 251740038, username: "teanore" },
+      })
+      .mockResolvedValueOnce({
+        email: "owner@example.com",
+        id: "target-1",
+        telegram: undefined,
+      });
+    canonicalIdentityRepository.claimAliasesForPlatformUser.mockResolvedValue({ aliasIds: ["alias-1"], ok: true, personId: "person-1" });
   });
 
-  it("moves a selected source account into a canonical target and records audit", async () => {
+  it("links source and target users through canonical aliases without legacy field transfer", async () => {
     const response = await POST(request({ targetUserId: "target-1" }), { params: Promise.resolve({ userId: "source-1" }) });
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(payload).toEqual({ ok: true, sourceUserId: "source-1", targetUserId: "target-1" });
-    expect(adminUsersRepository.mergeUserIntoCanonical).toHaveBeenCalledWith({
+    expect(payload).toEqual({ ok: true, personId: "person-1", sourceUserId: "source-1", targetUserId: "target-1" });
+    expect(canonicalIdentityRepository.claimAliasesForPlatformUser).toHaveBeenNthCalledWith(1, {
       actorUserId: "admin-1",
-      sourceUserId: "source-1",
-      targetUserId: "target-1",
+      aliases: [
+        {
+          aliasKind: "email",
+          aliasValue: "owner@example.com",
+          verificationState: "unverified",
+        },
+      ],
+      platformUserId: "target-1",
     });
-    expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actorUserId: "admin-1",
-        actorUsername: "admin",
-        eventType: "admin_user_merged",
-        path: "/api/admin/users/source-1/merge",
-        statusCode: 200,
-      }),
-    );
+    expect(canonicalIdentityRepository.claimAliasesForPlatformUser).toHaveBeenNthCalledWith(2, {
+      actorUserId: "admin-1",
+      aliases: [
+        {
+          aliasKind: "telegram_id",
+          aliasProvider: "telegram",
+          aliasValue: 251740038,
+          verificationState: "unverified",
+        },
+        {
+          aliasKind: "telegram_username",
+          aliasProvider: "telegram",
+          aliasValue: "teanore",
+          verificationState: "unverified",
+        },
+      ],
+      personId: "person-1",
+      platformUserId: "source-1",
+    });
+    expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "admin_user_identity_link_updated" }));
   });
 
   it("rejects merging an account into itself", async () => {
@@ -87,7 +120,6 @@ describe("admin user canonical merge route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "cannot_merge_self" });
-    expect(adminUsersRepository.mergeUserIntoCanonical).not.toHaveBeenCalled();
   });
 
   it("requires a target canonical user id", async () => {
@@ -96,5 +128,18 @@ describe("admin user canonical merge route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "target_user_required" });
+  });
+
+  it("returns a conflict when aliases belong to different people", async () => {
+    canonicalIdentityRepository.claimAliasesForPlatformUser
+      .mockResolvedValueOnce({ aliasIds: ["alias-1"], ok: true, personId: "person-1" })
+      .mockResolvedValueOnce({ ok: false, reason: "alias_conflict" });
+
+    const response = await POST(request({ targetUserId: "target-1" }), { params: Promise.resolve({ userId: "source-1" }) });
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload).toEqual({ error: "alias_conflict" });
+    expect(audit.recordSecurityAuditEvent).not.toHaveBeenCalled();
   });
 });

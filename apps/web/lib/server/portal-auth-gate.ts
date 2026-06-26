@@ -4,12 +4,29 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import {
   AUTH_COOKIE_NAME,
+  decodeExpiredNofAuthToken,
   getNofPortalAuthRepository,
 } from "@/lib/server/nof-portal-auth";
+import { appendExpiredPortalAuthCookies } from "@/lib/server/logout";
+import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
 import type { ForgePortalSession } from "@/lib/types";
 
 const portalOrigin = "http://portal.local";
 const portalLoginPath = "/login";
+const sessionExpiredAuditCookieName = "nof_session_expired_audit";
+
+function appendSessionExpiredAuditCookie(response: NextResponse): void {
+  response.headers.append(
+    "Set-Cookie",
+    [
+      `${sessionExpiredAuditCookieName}=1`,
+      "Path=/",
+      "Max-Age=300",
+      "HttpOnly",
+      "SameSite=lax",
+    ].join("; "),
+  );
+}
 
 export function safePortalReturnTo(returnTo?: string): string {
   if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
@@ -52,6 +69,33 @@ export async function portalSessionFromRequest(request: NextRequest): Promise<Fo
 }
 
 export async function requirePortalApiSession(request: NextRequest): Promise<NextResponse | undefined> {
+  const cookieValue = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const expiredPayload = cookieValue ? decodeExpiredNofAuthToken(cookieValue) : undefined;
+  if (expiredPayload?.sub) {
+    if (!request.cookies.has(sessionExpiredAuditCookieName)) {
+      await recordSecurityAuditEvent({
+        actorUserId: expiredPayload.sub,
+        actorUsername: expiredPayload.username,
+        eventType: "session_expired",
+        method: request.method,
+        path: `${request.nextUrl.pathname}${request.nextUrl.search}`,
+        statusCode: 401,
+      });
+    }
+
+    const response = NextResponse.json(
+      {
+        authenticated: false,
+        error: "Authentication required",
+        loginUrl: portalLoginUrl(`${request.nextUrl.pathname}${request.nextUrl.search}`),
+      },
+      { status: 401 },
+    );
+    appendExpiredPortalAuthCookies(response);
+    appendSessionExpiredAuditCookie(response);
+    return response;
+  }
+
   const session = await portalSessionFromRequest(request);
   if (session.authenticated) {
     return undefined;

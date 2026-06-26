@@ -103,10 +103,4 @@ export const platformTableSpecs: PlatformTableSpec[] = [
     owner: "nof-mp",
     storesSecrets: false,
   },
-  {
-    name: "nof_platform.mcp_tokens",
-    purpose: "Hashed MCP tokens issued from the platform profile and scoped to products/projects.",
-    owner: "nof-mp",
-    storesSecrets: true,
-  },
 ];

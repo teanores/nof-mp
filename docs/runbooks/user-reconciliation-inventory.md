@@ -28,6 +28,46 @@ NOF-MP-35 does not mutate nof-ht users and does not write to any nof-ht database
 
 Actual nof-ht account changes require a separate nof-ht-owned task or a future identity reconciliation gateway.
 
+## Merge Boundary
+
+The old admin action that treated one user as a source and another user as a target is disabled. That action is not the target
+architecture because a real person may legitimately own several aliases: more than one email address, Telegram identity, and
+service-local accounts.
+
+Before any production merge or claim operation is enabled, the implementation must provide:
+
+- a canonical person record;
+- an alias table for email, Telegram id, Telegram username and service account ids;
+- reversible audit records for every claim/link/unlink action;
+- local Docker-Postgres migration evidence;
+- owner-approved UAT scenarios for administrator-initiated and user-initiated linking.
+
+## Target Model
+
+The target model is canonical person plus append-only identity aliases.
+
+Minimum records:
+
+- `nof_platform.canonical_person`: one stable person id, lifecycle status, created/updated audit metadata;
+- `nof_platform.identity_alias`: one row per claim such as email, Telegram id, Telegram username, platform user id, nof-ht user id or nof-tt user id;
+- `nof_platform.identity_alias_event`: immutable audit trail for claim, verify, link, unlink, supersede and deny decisions;
+- `nof_platform.person_account_link`: migration bridge between the canonical person and existing `dragon_forge."user"` rows while legacy tables still exist.
+
+Invariants:
+
+- one real person may own multiple verified emails;
+- one real person may own multiple messenger identities across Telegram, MAX, Discord, VK or future messengers;
+- synthetic Telegram placeholder email is never a real email alias;
+- adding an alias must not overwrite another alias;
+- source accounts are not deleted or denied merely because they were linked;
+- account denial remains a separate access-control decision, not a merge side effect;
+- nof-mp owns the canonical person and alias registry;
+- nof-ht and nof-tt keep service-local users and consume platform identity through OIDC/service links;
+- cross-service reconciliation is evidence-first and must not mutate nof-ht or nof-tt directly from nof-mp.
+
+The first implementation step after this runbook is a local-only migration draft and repository tests. Production data migration
+requires explicit owner approval after local Docker-Postgres evidence.
+
 ## Telegram Placeholder Email Rule
 
 Telegram-origin users may have a synthetic placeholder in the platform email column. These values are not user mailboxes and must not be treated as recoverable email:

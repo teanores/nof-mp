@@ -34,6 +34,15 @@ vi.mock("@/lib/server/product-access-repository", () => ({
       {
         access: { allowed: true, reason: "registered-user" },
         createdAt: "2026-05-28T00:00:00.000Z",
+        description: "Coffee bot",
+        key: "nof-cb",
+        name: "Coffee Bot",
+        status: "active",
+        visibility: "registered",
+      },
+      {
+        access: { allowed: true, reason: "registered-user" },
+        createdAt: "2026-05-28T00:00:00.000Z",
         description: "Habit tracker",
         key: "nof-ht",
         name: "Habit Tracker",
@@ -70,6 +79,7 @@ function launchRequest(pathname: string): NextRequest {
 
 describe("product launch route", () => {
   beforeEach(() => {
+    vi.stubEnv("NOF_TT_ORIGIN", "https://task-tracker.forgath.ru");
     authSession.value = {
       authenticated: true,
       loginUrl: "/login",
@@ -81,22 +91,24 @@ describe("product launch route", () => {
     };
   });
 
-  it("redirects Task Tracker legacy launch to the canonical OAuth service page", async () => {
+  it("redirects Task Tracker launch directly to the product OIDC handoff", async () => {
     const response = await launchProduct(launchRequest("/products/nof-tt/launch?next=/projects/nof-tt"), {
       params: Promise.resolve({ productKey: "nof-tt" }),
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("/services/task-tracker?launch=oauth");
+    expect(response.headers.get("location")).toBe(
+      "https://task-tracker.forgath.ru/auth/platform/start?next=%2Fprojects%2Fnof-tt",
+    );
   });
 
-  it("redirects Habit Tracker legacy launch to the canonical OAuth service page", async () => {
+  it("redirects Habit Tracker launch directly to the product OIDC handoff", async () => {
     const response = await launchProduct(launchRequest("/products/nof-ht/launch?next=/"), {
       params: Promise.resolve({ productKey: "nof-ht" }),
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("/services/habit-tracker?launch=oauth");
+    expect(response.headers.get("location")).toBe("https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F");
   });
 
   it("redirects guests to platform login before launching the product", async () => {
@@ -129,6 +141,19 @@ describe("product launch route", () => {
       error: "access_denied",
       ok: false,
       reason: "invitation-required",
+    });
+  });
+
+  it("fails closed instead of issuing legacy exchange codes for products without OIDC launch", async () => {
+    const response = await launchProduct(launchRequest("/products/nof-cb/launch"), {
+      params: Promise.resolve({ productKey: "nof-cb" }),
+    });
+
+    expect(response.status).toBe(410);
+    await expect(response.json()).resolves.toEqual({
+      error: "standard_oauth_required",
+      ok: false,
+      productKey: "nof-cb",
     });
   });
 });

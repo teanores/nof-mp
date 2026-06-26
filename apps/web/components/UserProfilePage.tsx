@@ -11,15 +11,13 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 import {
   changeProfilePassword,
-  createMcpToken,
-  fetchMcpTokens,
   fetchPlatformProjects,
   fetchPortalSession,
   fetchProfileServiceLinks,
-  revokeMcpToken,
   unlinkProfileService,
+  updatePortalProfile,
 } from "@/lib/platform-api";
-import type { ForgeMcpToken, ForgePortalSession, ForgePortalUser, ForgeProject, ForgeServiceLink } from "@/lib/types";
+import type { ForgePortalSession, ForgePortalUser, ForgeProject, ForgeServiceLink } from "@/lib/types";
 
 function avatarInitials(user?: ForgePortalUser): string {
   const username = user?.username?.trim();
@@ -59,6 +57,8 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
 const profileCopy = {
   en: {
     aboutFallback: "Profile description is not filled yet.",
+    aboutMe: "About me",
+    displayName: "Display name",
     identity: "Core profile",
     language: "Portal language",
     languageNote: "The interface language is saved in your profile and applied to portal shell labels.",
@@ -71,6 +71,10 @@ const profileCopy = {
     repeatNewPassword: "Repeat new password",
     changePassword: "Change password",
     passwordChanged: "Password changed. Use the new password on your next sign-in.",
+    profileSave: "Save profile",
+    profileSaved: "Profile saved.",
+    profileSaveFailed: "Profile was not saved. Check the fields and retry.",
+    profileUsernameInvalid: "Display name must be 2-64 characters.",
     passwordHideCurrent: "Hide current password",
     passwordHideNew: "Hide new password",
     passwordHideRepeat: "Hide repeated password",
@@ -96,36 +100,25 @@ const profileCopy = {
     passwordRuleDifferentFromCurrent: "Different from current password",
     passwordRuleRepeatedMatch: "Repeated password matches",
     loading: "Loading profile...",
-    close: "Done / close",
-    copyJson: "Copy JSON",
-    copyToken: "Copy token",
-    deleteToken: "Delete",
-    hideToken: "Hide",
-    issueMcpKey: "ISSUE MCP KEY",
     labelCreated: "CREATED",
     labelEmail: "email:",
     labelLastSeen: "LAST SEEN",
     labelLevel: "LEVEL",
     labelRank: "RANK",
     labelUserId: "USER ID",
-    mcpDescription: "The full token is shown only once. Keep it in agent secrets, not in Git, documentation or chat.",
-    mcpEmpty: "No active MCP keys yet.",
-    mcpTitle: "Agent access to projects",
+    mcpDescription: "Task Tracker owns MCP tokens. Use it to issue, rotate and revoke project-scoped agent keys.",
+    mcpTitle: "Agent MCP access",
     mcpEyebrow: "MCP access keys",
     personalSettings: "Personal settings",
     profile: "Profile",
     profileClosed: "Sign in required",
     project: "Project",
-    rotateToken: "Rotate",
-    selectProject: "Select a project",
-    showToken: "Show",
     signIn: "Sign in",
     signInNote: "Sign in to open your profile, settings and available platform modules.",
     signInTitle: "Sign in to the platform",
     theme: "Theme",
     themeNote: "The color scheme is stored in the browser separately for each user.",
     title: "Profile",
-    tokenName: "Key name",
     logout: "Log out",
     openService: "Open",
     serviceConnected: "Connected",
@@ -137,6 +130,8 @@ const profileCopy = {
   },
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
+    aboutMe: "О себе",
+    displayName: "Имя",
     identity: "Основные параметры",
     language: "Язык портала",
     languageNote: "Язык интерфейса сохраняется в профиле и применяется к системным названиям портала.",
@@ -149,6 +144,10 @@ const profileCopy = {
     repeatNewPassword: "Повтори новый пароль",
     changePassword: "Сменить пароль",
     passwordChanged: "Пароль изменён. При следующем входе используй новый пароль.",
+    profileSave: "Сохранить профиль",
+    profileSaved: "Профиль сохранён.",
+    profileSaveFailed: "Профиль не был сохранён. Проверь поля и повтори попытку.",
+    profileUsernameInvalid: "Имя должно быть от 2 до 64 символов.",
     passwordHideCurrent: "Скрыть текущий пароль",
     passwordHideNew: "Скрыть новый пароль",
     passwordHideRepeat: "Скрыть повтор пароля",
@@ -174,36 +173,25 @@ const profileCopy = {
     passwordRuleDifferentFromCurrent: "Отличается от текущего пароля",
     passwordRuleRepeatedMatch: "Повтор пароля совпадает",
     loading: "Загружаю профиль...",
-    close: "Готово / закрыть",
-    copyJson: "Копировать JSON",
-    copyToken: "Копировать токен",
-    deleteToken: "Удалить",
-    hideToken: "Скрыть",
-    issueMcpKey: "ВЫПУСТИТЬ MCP-КЛЮЧ",
     labelCreated: "Создан",
     labelEmail: "email:",
     labelLastSeen: "Последний вход",
     labelLevel: "Уровень",
     labelRank: "Ранг",
     labelUserId: "ID пользователя",
-    mcpDescription: "Полный токен показывается только один раз. Храни его в секретах агента, не в Git, документации или чате.",
-    mcpEmpty: "Активных MCP-ключей пока нет.",
-    mcpTitle: "Доступ агентов к проектам",
+    mcpDescription: "MCP-ключами владеет Task Tracker. Там нужно выпускать, перевыпускать и отзывать проектные ключи агентов.",
+    mcpTitle: "MCP-доступ агентов",
     mcpEyebrow: "MCP-ключи доступа",
     personalSettings: "Персональные настройки",
     profile: "Профиль",
     profileClosed: "Требуется вход",
     project: "Проект",
-    rotateToken: "Перевыпустить",
-    selectProject: "Выбери проект",
-    showToken: "Показать",
     signIn: "Войти",
     signInNote: "Войди, чтобы открыть профиль, настройки и доступные разделы платформы.",
     signInTitle: "Вход в платформу",
     theme: "Тема",
     themeNote: "Световая схема хранится в браузере отдельно для каждого пользователя.",
     title: "Профиль",
-    tokenName: "Имя ключа",
     logout: "Выйти",
     openService: "Открыть",
     serviceConnected: "Подключён",
@@ -214,22 +202,6 @@ const profileCopy = {
     unlinkingService: "Отключаем связь",
   },
 } as const;
-
-function mcpConfig(fullToken: string, projectKey: string): string {
-  return JSON.stringify(
-    {
-      mcpServers: {
-        [mcpServerName(projectKey)]: {
-          type: "http",
-          url: mcpServerUrl,
-          headers: { "x-api-key": fullToken },
-        },
-      },
-    },
-    null,
-    2,
-  );
-}
 
 const mcpServerUrl = "https://task-tracker.forgath.ru/api/mcp";
 
@@ -277,26 +249,31 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const copy = profileCopy[usePortalLanguage()];
   const [error, setError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(!initialSession);
-  const [isTokenBusy, setIsTokenBusy] = useState(false);
+  const [isProfileBusy, setIsProfileBusy] = useState(false);
   const [isPasswordBusy, setIsPasswordBusy] = useState(false);
-  const [mcpTokens, setMcpTokens] = useState<ForgeMcpToken[]>([]);
   const [projects, setProjects] = useState<ForgeProject[]>([]);
   const [serviceLinks, setServiceLinks] = useState<ForgeServiceLink[]>([]);
   const [unlinkingServiceKey, setUnlinkingServiceKey] = useState<ForgeServiceLink["serviceKey"] | undefined>();
-  const [newTokenName, setNewTokenName] = useState("");
-  const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
+  const [profileAboutDraft, setProfileAboutDraft] = useState(initialSession?.user?.aboutMe ?? "");
+  const [profileError, setProfileError] = useState<string | undefined>();
+  const [profileNotice, setProfileNotice] = useState<string | undefined>();
+  const [profileUsernameDraft, setProfileUsernameDraft] = useState(initialSession?.user?.username ?? "");
   const [currentPasswordDraft, setCurrentPasswordDraft] = useState("");
   const [newPasswordDraft, setNewPasswordDraft] = useState("");
   const [repeatedPasswordDraft, setRepeatedPasswordDraft] = useState("");
   const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false);
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isRepeatedPasswordVisible, setIsRepeatedPasswordVisible] = useState(false);
-  const [savedTokenNotice, setSavedTokenNotice] = useState<string | undefined>();
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const [passwordNotice, setPasswordNotice] = useState<string | undefined>();
-  const [createdToken, setCreatedToken] = useState<{ fullToken: string; token: ForgeMcpToken } | undefined>();
-  const [isCreatedTokenVisible, setIsCreatedTokenVisible] = useState(false);
   const [session, setSession] = useState<ForgePortalSession | undefined>(initialSession);
+
+  useEffect(() => {
+    if (session?.user) {
+      setProfileUsernameDraft(session.user.username);
+      setProfileAboutDraft(session.user.aboutMe ?? "");
+    }
+  }, [session?.user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -308,8 +285,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
         if (isMounted) {
           setSession(nextSession);
           if (nextSession.user) {
-            const [tokens, nextProjects, links] = await Promise.all([fetchMcpTokens(), fetchPlatformProjects(), fetchProfileServiceLinks()]);
-            setMcpTokens(tokens);
+            const [nextProjects, links] = await Promise.all([fetchPlatformProjects(), fetchProfileServiceLinks()]);
             setProjects(nextProjects);
             setServiceLinks(links);
           }
@@ -335,117 +311,13 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const user = session?.user;
   const telegramLabel = user?.telegram?.username ? `@${user.telegram.username}` : user?.telegram?.id ? `id:${user.telegram.id}` : "-";
   const accessibleMcpProjects = projects.filter((project) => project.access.allowed);
-  const hasMcpAccess = accessibleMcpProjects.length > 0 || mcpTokens.length > 0;
-
-  function defaultTokenName(projectKey: string): string {
-    return `${projectKey.toUpperCase().replaceAll("-", "_")}_MCP_TOKEN`;
-  }
-
-  function handleProjectChange(projectKey: string) {
-    setNewTokenProjectKey(projectKey);
-    setNewTokenName((current) => current.trim() || (projectKey ? defaultTokenName(projectKey) : ""));
-  }
-
-  async function handleCreateMcpToken() {
-    setError(undefined);
-    setIsTokenBusy(true);
-    try {
-      const nextToken = await createMcpToken({ name: newTokenName, projectKey: newTokenProjectKey });
-      setCreatedToken(nextToken);
-      setIsCreatedTokenVisible(false);
-      setSavedTokenNotice(undefined);
-      setMcpTokens((current) => [nextToken.token, ...current]);
-    } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "MCP-ключ не был создан");
-    } finally {
-      setIsTokenBusy(false);
-    }
-  }
-
-  async function copyText(payload: string, successMessage: string) {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      if (navigator.clipboard?.writeText && window.isSecureContext) {
-        await navigator.clipboard.writeText(payload);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = payload;
-        textarea.setAttribute("readonly", "true");
-        textarea.style.position = "fixed";
-        textarea.style.left = "-9999px";
-        textarea.style.top = "0";
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        const copied = document.execCommand("copy");
-        document.body.removeChild(textarea);
-        if (!copied) {
-          throw new Error("execCommand copy failed");
-        }
-      }
-      setSavedTokenNotice(successMessage);
-    } catch {
-      setSavedTokenNotice("Буфер обмена недоступен. Открой токен и скопируй его вручную.");
-    }
-  }
-
-  async function handleCopyCreatedToken() {
-    if (!createdToken) {
-      return;
-    }
-
-    await copyText(createdToken.fullToken, "Токен скопирован в буфер обмена.");
-  }
-
-  async function handleCopyCreatedConfig() {
-    if (!createdToken) {
-      return;
-    }
-
-    await copyText(mcpConfig(createdToken.fullToken, createdToken.token.projectKey), "JSON-конфиг агента скопирован в буфер обмена.");
-  }
-
-  function handleCloseCreatedToken() {
-    setCreatedToken(undefined);
-    setIsCreatedTokenVisible(false);
-    setSavedTokenNotice("MCP-ключ сохранён. Одноразовая панель с секретом закрыта.");
-  }
-
-  async function handleRotateMcpToken(token: ForgeMcpToken) {
-    setError(undefined);
-    setIsTokenBusy(true);
-    try {
-      const nextToken = await createMcpToken({ name: token.name, projectKey: token.projectKey, scopes: token.scopes });
-      await revokeMcpToken(token.id);
-      setCreatedToken(nextToken);
-      setIsCreatedTokenVisible(false);
-      setSavedTokenNotice(undefined);
-      setMcpTokens((current) => [nextToken.token, ...current.filter((item) => item.id !== token.id)]);
-    } catch (rotateError) {
-      setError(rotateError instanceof Error ? rotateError.message : "MCP-ключ не был перевыпущен");
-    } finally {
-      setIsTokenBusy(false);
-    }
-  }
-
-  async function handleDeleteMcpToken(tokenId: string) {
-    setError(undefined);
-    setIsTokenBusy(true);
-    try {
-      await revokeMcpToken(tokenId);
-      setMcpTokens((current) => current.filter((token) => token.id !== tokenId));
-      if (createdToken?.token.id === tokenId) {
-        setCreatedToken(undefined);
-      }
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "MCP-ключ не был удалён");
-    } finally {
-      setIsTokenBusy(false);
-    }
-  }
+  const hasMcpAccess = accessibleMcpProjects.some((project) => project.key === "nof-tt");
+  const canSaveProfile =
+    Boolean(user) &&
+    !isProfileBusy &&
+    profileUsernameDraft.trim().length >= 2 &&
+    profileUsernameDraft.trim().length <= 64 &&
+    (profileUsernameDraft.trim() !== user?.username || profileAboutDraft.trim() !== (user?.aboutMe ?? ""));
 
   async function handleUnlinkService(serviceKey: ForgeServiceLink["serviceKey"]) {
     if (unlinkingServiceKey) {
@@ -461,6 +333,42 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
       setError(unlinkError instanceof Error ? unlinkError.message : "Связь сервиса не была отключена");
     } finally {
       setUnlinkingServiceKey(undefined);
+    }
+  }
+
+  async function handleProfileSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!user) {
+      return;
+    }
+
+    setError(undefined);
+    setProfileError(undefined);
+    setProfileNotice(undefined);
+    setIsProfileBusy(true);
+    try {
+      const nextProfile = await updatePortalProfile({
+        aboutMe: profileAboutDraft,
+        username: profileUsernameDraft,
+      });
+      setSession((current) =>
+        current?.user
+          ? {
+              ...current,
+              user: {
+                ...current.user,
+                aboutMe: nextProfile.aboutMe,
+                username: nextProfile.username,
+              },
+            }
+          : current,
+      );
+      setProfileNotice(copy.profileSaved);
+    } catch (profileUpdateError) {
+      const reason = profileUpdateError instanceof Error ? profileUpdateError.message : "";
+      setProfileError(reason === "invalid_username" ? copy.profileUsernameInvalid : copy.profileSaveFailed);
+    } finally {
+      setIsProfileBusy(false);
     }
   }
 
@@ -582,7 +490,51 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                     </span>
                   </div>
                   <p className="tech-label mt-1 truncate text-[10px] text-forge-muted">{user.username}</p>
-                  <p className="mt-1 text-xs leading-5 text-forge-muted">{user.aboutMe || copy.aboutFallback}</p>
+
+                  <form className="mt-3 grid gap-3" onSubmit={(event) => void handleProfileSubmit(event)}>
+                    <label className="grid gap-2">
+                      <span className="tech-label text-[10px] text-forge-muted">{copy.displayName}</span>
+                      <input
+                        className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        maxLength={64}
+                        minLength={2}
+                        name="username"
+                        required
+                        value={profileUsernameDraft}
+                        onChange={(event) => {
+                          setProfileNotice(undefined);
+                          setProfileError(undefined);
+                          setProfileUsernameDraft(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <label className="grid gap-2">
+                      <span className="tech-label text-[10px] text-forge-muted">{copy.aboutMe}</span>
+                      <textarea
+                        className="min-h-20 w-full resize-y rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        maxLength={280}
+                        name="aboutMe"
+                        placeholder={copy.aboutFallback}
+                        value={profileAboutDraft}
+                        onChange={(event) => {
+                          setProfileNotice(undefined);
+                          setProfileError(undefined);
+                          setProfileAboutDraft(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button className={compactPrimaryActionClassName(!canSaveProfile, "min-w-[150px]")} disabled={!canSaveProfile} type="submit">
+                        {copy.profileSave}
+                      </button>
+                      {profileError ? (
+                        <p className="text-xs font-semibold leading-5 text-forge-amber" role="alert">
+                          {profileError}
+                        </p>
+                      ) : null}
+                      {profileNotice ? <p className="text-xs leading-5 text-forge-muted">{profileNotice}</p> : null}
+                    </div>
+                  </form>
 
                   <div className="mt-3 space-y-2">
                     <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
@@ -786,130 +738,27 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
               <p className="mt-2 text-sm leading-6 text-forge-muted">{copy.mcpDescription}</p>
 
               <div className="mt-4 grid gap-3">
-                <label className="grid gap-2">
-                  <span className="tech-label text-[10px] text-forge-muted">{copy.project}</span>
-                  <select
-                    className="rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-                    value={newTokenProjectKey}
-                    onChange={(event) => handleProjectChange(event.target.value)}
-                  >
-                    <option value="">{copy.selectProject}</option>
-                    {accessibleMcpProjects.map((project) => (
-                      <option key={project.key} value={project.key}>
-                        {project.key} - {project.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-xs leading-5 text-forge-muted">Ключ проекта выбирается из существующих проектов портала.</span>
-                </label>
-                <label className="grid gap-2">
-                  <span className="tech-label text-[10px] text-forge-muted">{copy.tokenName}</span>
-                  <input
-                    className="rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-                    placeholder={newTokenProjectKey ? defaultTokenName(newTokenProjectKey) : "Сначала выбери проект"}
-                    value={newTokenName}
-                    onChange={(event) => setNewTokenName(event.target.value)}
-                  />
-                </label>
-                <button
-                  className={compactPrimaryActionClassName(
-                    isTokenBusy || !newTokenName.trim() || !newTokenProjectKey.trim() || accessibleMcpProjects.length === 0,
-                    "min-h-11 px-4 py-3 text-xs",
-                  )}
-                  disabled={isTokenBusy || !newTokenName.trim() || !newTokenProjectKey.trim() || accessibleMcpProjects.length === 0}
-                  type="button"
-                  onClick={() => void handleCreateMcpToken()}
+                <a
+                  className="tech-label inline-flex min-h-10 w-fit items-center justify-center rounded-sm border border-forge-accent bg-forge-accent px-4 py-2 text-xs font-bold text-black transition"
+                  href="https://task-tracker.forgath.ru/profile"
                 >
-                  {copy.issueMcpKey}
-                </button>
-              </div>
-
-              {createdToken ? (
-                <article className="mt-4 rounded-sm border border-forge-accent bg-forge-surface p-4">
-                  <p className="tech-label text-xs text-forge-accent">ОДНОРАЗОВЫЙ СЕКРЕТ</p>
-                  <code className="mt-3 block break-all rounded-sm border border-forge-line bg-forge-panel p-3 text-xs text-forge-ink">
-                    {isCreatedTokenVisible ? createdToken.fullToken : `${createdToken.token.tokenPrefix}...${"*".repeat(16)}`}
-                  </code>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-center text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
-                      type="button"
-                      onClick={() => setIsCreatedTokenVisible((current) => !current)}
-                    >
-                      {isCreatedTokenVisible ? copy.hideToken : copy.showToken}
-                    </button>
-                    <button
-                      className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-accent bg-forge-accent px-3 py-2 text-center text-[10px] font-bold text-black transition"
-                      type="button"
-                      onClick={() => void handleCopyCreatedToken()}
-                    >
-                      {copy.copyToken}
-                    </button>
-                    <button
-                      className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-accent bg-forge-accent px-3 py-2 text-center text-[10px] font-bold text-black transition"
-                      type="button"
-                      onClick={() => void handleCopyCreatedConfig()}
-                    >
-                      {copy.copyJson}
-                    </button>
-                    <button
-                      className="tech-label min-h-10 min-w-[132px] rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-center text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
-                      type="button"
-                      onClick={handleCloseCreatedToken}
-                    >
-                      {copy.close}
-                    </button>
-                  </div>
-                  <p className="mt-3 rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-xs leading-5 text-forge-muted">
-                    Ключ уже сохранён в портале. Скопируй секрет сейчас: после закрытия этой панели полный токен больше
-                    не будет показан.
-                  </p>
-                  {savedTokenNotice ? <p className="mt-2 text-xs leading-5 text-forge-muted">{savedTokenNotice}</p> : null}
-                </article>
-              ) : null}
-              {!createdToken && savedTokenNotice ? <p className="mt-3 text-xs leading-5 text-forge-muted">{savedTokenNotice}</p> : null}
-
-              <div className="mt-4 grid gap-2">
-                {mcpTokens.length === 0 ? <p className="text-sm text-forge-muted">{copy.mcpEmpty}</p> : null}
-                {mcpTokens.map((token) => (
-                  <article key={token.id} className="rounded-sm border border-forge-line bg-forge-surface p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-forge-ink">{token.name}</p>
-                        <p className="tech-label mt-1 text-[10px] text-forge-muted">
-                          {token.projectKey} / {token.tokenPrefix}...
-                        </p>
-                        <p className="mt-1 text-xs text-forge-muted">Создан: {formatDate(token.createdAt)}</p>
-                      </div>
-                      <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                        <button
-                          className={compactPrimaryActionClassName(isTokenBusy, "min-w-[120px] px-3")}
-                          disabled={isTokenBusy}
-                          type="button"
-                          onClick={() => void handleRotateMcpToken(token)}
-                        >
-                          {copy.rotateToken}
-                        </button>
-                        <button
-                          className="tech-label min-h-10 min-w-[120px] rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-center text-[10px] text-forge-muted transition hover:border-forge-accent hover:text-forge-accent disabled:cursor-not-allowed disabled:opacity-60"
-                          disabled={isTokenBusy}
-                          type="button"
-                          onClick={() => void handleDeleteMcpToken(token.id)}
-                        >
-                          {copy.deleteToken}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+                  Открыть управление MCP в Task Tracker
+                </a>
+                <div className="flex flex-wrap gap-2">
+                  {accessibleMcpProjects.map((project) => (
+                    <span key={project.key} className="tech-label rounded-sm border border-forge-line bg-forge-surface px-2 py-1 text-[10px] text-forge-muted">
+                      {project.key}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               <section className="mt-5 border-t border-forge-line pt-4">
                 <p className="tech-label text-xs text-forge-accent">НАСТРОЙКА MCP-КЛИЕНТОВ</p>
                 <h3 className="heading-tech mt-2 text-base font-bold text-forge-ink">Конфигурация агентов</h3>
                 <p className="mt-2 text-sm leading-6 text-forge-muted">
-                  Токен показывается только один раз после выпуска. Храни его в хранилище секретов агента и передавай как
-                  <code> x-api-key</code>. Не сохраняй токен в Git, Wiki или чате.
+                  Выпусти ключ в Task Tracker, сохрани его в хранилище секретов агента и передавай как <code> x-api-key</code>.
+                  nof-mp не хранит и не показывает значения MCP-ключей.
                 </p>
                 <div className="mt-4 grid gap-3">
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
@@ -919,7 +768,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                       <code> {"${MCP_TOKEN}"}</code> значением из переменной окружения или хранилища секретов.
                     </p>
                     <pre className="mt-3 overflow-x-auto rounded-sm border border-forge-line bg-forge-panel p-3 text-xs text-forge-ink">
-                      {agentJsonExample(newTokenProjectKey || "nof-tt")}
+                      {agentJsonExample("nof-tt")}
                     </pre>
                   </article>
                   <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
