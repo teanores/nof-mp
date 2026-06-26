@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { type NextRequest, NextResponse } from "next/server";
 
+import { nofHtOidcAuthorizeHref } from "@/lib/server/nof-ht-oidc-handoff";
 import { isOAuthManagedProduct } from "@/lib/server/oauth-client-registry";
 import { portalLoginUrl, portalSessionFromRequest, safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 import { getProductAccessRepository, subjectFromPortalSession } from "@/lib/server/product-access-repository";
@@ -24,9 +25,6 @@ function productCallbackOrigin(productKey: string): string {
 function oauthManagedProductServicePath(productKey: string): string {
   if (productKey === "nof-tt") {
     return "/services/task-tracker";
-  }
-  if (productKey === "nof-ht") {
-    return "/services/habit-tracker";
   }
   return "/overview";
 }
@@ -52,6 +50,12 @@ export async function GET(request: NextRequest, context: ProductLaunchContext): 
   }
   if (!product.access.allowed) {
     return NextResponse.json({ error: "access_denied", ok: false, reason: product.access.reason }, { status: 403 });
+  }
+  if (productKey === "nof-ht") {
+    return new NextResponse(null, {
+      headers: { location: nofHtOidcAuthorizeHref("/") },
+      status: 303,
+    });
   }
   if (isOAuthManagedProduct(productKey)) {
     const servicePath = oauthManagedProductServicePath(productKey);

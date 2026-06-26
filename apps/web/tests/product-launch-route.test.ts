@@ -90,13 +90,13 @@ describe("product launch route", () => {
     expect(response.headers.get("location")).toBe("/services/task-tracker?launch=oauth");
   });
 
-  it("redirects Habit Tracker legacy launch to the canonical OAuth service page", async () => {
+  it("redirects Habit Tracker launch directly to the product OIDC handoff", async () => {
     const response = await launchProduct(launchRequest("/products/nof-ht/launch?next=/"), {
       params: Promise.resolve({ productKey: "nof-ht" }),
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("/services/habit-tracker?launch=oauth");
+    expect(response.headers.get("location")).toBe("https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F");
   });
 
   it("redirects guests to platform login before launching the product", async () => {

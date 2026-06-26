@@ -1,4 +1,5 @@
 import { oauthIssuer, signOAuthJwt } from "@/lib/server/oauth-token-signer";
+import { nofHtOidcAuthorizeHref } from "@/lib/server/nof-ht-oidc-handoff";
 import type { ForgeServiceLink } from "@/lib/types";
 
 type ServiceLinkContractResponse = {
@@ -8,12 +9,6 @@ type ServiceLinkContractResponse = {
 
 function nofHtOrigin(): string {
   return process.env.NOF_HT_ORIGIN ?? process.env.NEXT_PUBLIC_NOF_HT_ORIGIN ?? "https://habit-tracker.forgath.ru";
-}
-
-function nofHtOpenHref(): string {
-  const url = new URL("/api/auth/platform/authorize", nofHtOrigin());
-  url.searchParams.set("callbackUrl", "/");
-  return url.toString();
 }
 
 function serviceLinksToken(platformUserId: string, scope: string): string {
@@ -35,7 +30,7 @@ function unavailableNofHtLink(): ForgeServiceLink {
     serviceName: "Habit Tracker",
     status: "unavailable",
     canUnlink: false,
-    openHref: nofHtOpenHref(),
+    openHref: nofHtOidcAuthorizeHref(),
   };
 }
 
@@ -62,7 +57,7 @@ export async function fetchNofHtLink(platformUserId: string): Promise<ForgeServi
     const body = (await response.json()) as ServiceLinkContractResponse;
     if (!body.ok || !body.link) return unavailableNofHtLink();
 
-    return { ...body.link, openHref: nofHtOpenHref() };
+    return { ...body.link, openHref: nofHtOidcAuthorizeHref() };
   } catch {
     return unavailableNofHtLink();
   }
@@ -81,5 +76,5 @@ export async function unlinkNofHt(platformUserId: string): Promise<ForgeServiceL
   const body = (await response.json()) as ServiceLinkContractResponse;
   if (!body.ok || !body.link) return unavailableNofHtLink();
 
-  return { ...body.link, openHref: nofHtOpenHref() };
+  return { ...body.link, openHref: nofHtOidcAuthorizeHref() };
 }
