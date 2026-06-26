@@ -33,6 +33,7 @@ vi.mock("@/lib/server/security-audit-dashboard", () => ({
 
 vi.stubEnv("NOF_PLATFORM_OAUTH_JWT_SECRET", "test-oauth-jwt-secret");
 vi.stubEnv("NOF_HT_ORIGIN", "https://habit-tracker.forgath.ru");
+vi.stubEnv("NOF_TT_ORIGIN", "https://task-tracker.forgath.ru");
 
 import { DELETE, GET } from "@/app/api/profile/service-links/route";
 
@@ -90,7 +91,7 @@ describe("profile service links route", () => {
           serviceName: "Task Tracker",
           status: "connected",
           canUnlink: false,
-          openHref: "/products/nof-tt/launch?next=/projects/nof-tt",
+          openHref: "https://task-tracker.forgath.ru/auth/platform/start?next=%2Fprojects%2Fnof-tt",
         },
         {
           serviceKey: "nof-ht",
@@ -122,7 +123,7 @@ describe("profile service links route", () => {
           serviceName: "Task Tracker",
           status: "connected",
           canUnlink: false,
-          openHref: "/products/nof-tt/launch?next=/projects/nof-tt",
+          openHref: "https://task-tracker.forgath.ru/auth/platform/start?next=%2Fprojects%2Fnof-tt",
         },
         {
           serviceKey: "nof-ht",

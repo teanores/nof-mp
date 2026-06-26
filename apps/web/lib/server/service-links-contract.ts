@@ -1,5 +1,6 @@
 import { oauthIssuer, signOAuthJwt } from "@/lib/server/oauth-token-signer";
 import { nofHtOidcAuthorizeHref } from "@/lib/server/nof-ht-oidc-handoff";
+import { nofTtOidcStartHref } from "@/lib/server/nof-tt-oidc-handoff";
 import type { ForgeServiceLink } from "@/lib/types";
 
 type ServiceLinkContractResponse = {
@@ -40,7 +41,7 @@ export function fetchNofTtLink(): ForgeServiceLink {
     serviceName: "Task Tracker",
     status: "connected",
     canUnlink: false,
-    openHref: "/products/nof-tt/launch?next=/projects/nof-tt",
+    openHref: nofTtOidcStartHref("/projects/nof-tt"),
   };
 }
 
