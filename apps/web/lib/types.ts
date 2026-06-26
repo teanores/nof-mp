@@ -17,6 +17,7 @@ export interface ForgePortalUser {
   id: string;
   username: string;
   email?: string;
+  emailVerified?: boolean;
   aboutMe?: string;
   experience: number;
   level?: {

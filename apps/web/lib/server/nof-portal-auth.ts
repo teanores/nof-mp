@@ -19,6 +19,7 @@ interface PortalUserRow extends QueryResultRow {
   about_me: string | null;
   created_at: Date | string | null;
   email: string | null;
+  email_verified: boolean | string | null;
   experience: number | null;
   id: string;
   last_seen: Date | string | null;
@@ -124,11 +125,35 @@ function toOptionalNumber(value: number | string | null): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function toOptionalBoolean(value: boolean | string | null): boolean | undefined {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    if (value.toLowerCase() === "true") {
+      return true;
+    }
+    if (value.toLowerCase() === "false") {
+      return false;
+    }
+  }
+  return undefined;
+}
+
+function emailVerified(row: PortalUserRow): boolean {
+  const explicit = toOptionalBoolean(row.email_verified);
+  if (typeof explicit === "boolean") {
+    return explicit;
+  }
+  return row.registration_source === "nof-mp-email" || row.registration_source === "telegram-email-link";
+}
+
 function toPortalUser(row: PortalUserRow): ForgePortalUser {
   return {
     id: row.id,
     username: row.username,
     ...(row.email ? { email: row.email } : {}),
+    ...(row.email ? { emailVerified: emailVerified(row) } : {}),
     ...(row.about_me ? { aboutMe: row.about_me } : {}),
     experience: row.experience ?? 0,
     ...(row.level_name
@@ -188,6 +213,7 @@ export class NofPortalAuthRepository {
          u.id::text AS id,
          u.username,
          u.email,
+         (to_jsonb(u)->>'email_verified') AS email_verified,
          u.about_me,
          u.experience,
          u.telegram_id,
