@@ -29,6 +29,7 @@ export interface ClaimCanonicalAliasInput {
 export interface ClaimCanonicalAliasBatchInput {
   actorUserId?: string;
   aliases: Array<Omit<ClaimCanonicalAliasInput, "actorUserId" | "personId" | "platformUserId">>;
+  personId?: string;
   platformUserId: string;
 }
 
@@ -247,18 +248,37 @@ export class CanonicalIdentityRepository {
       return { ok: false, reason: "alias_conflict" };
     }
 
-    const personId = existingResult.rows[0]?.person_id ?? crypto.randomUUID();
+    if (input.personId && personIds.size === 1 && !personIds.has(input.personId)) {
+      return { ok: false, reason: "alias_conflict" };
+    }
+
+    const personId = input.personId ?? existingResult.rows[0]?.person_id ?? crypto.randomUUID();
     const existingByKey = new Map(existingResult.rows.map((row) => [`${row.alias_kind}:${row.alias_provider}:${row.alias_value_hash}`, row]));
     const aliasIds: string[] = [];
 
     await this.pool.query("BEGIN");
     try {
       if (existingResult.rows.length === 0) {
-        await this.pool.query(
-          `INSERT INTO nof_platform.canonical_person (id, created_by, updated_by)
-           VALUES ($1::uuid, $2::uuid, $2::uuid)`,
-          [personId, input.actorUserId ?? null],
-        );
+        if (input.personId) {
+          const person = await this.pool.query<PersonRow>(
+            `SELECT id::text AS id
+             FROM nof_platform.canonical_person
+             WHERE id = $1::uuid
+               AND lifecycle_status = 'active'
+             LIMIT 1`,
+            [input.personId],
+          );
+          if (!person.rows[0]) {
+            await this.pool.query("ROLLBACK");
+            return { ok: false, reason: "alias_conflict" };
+          }
+        } else {
+          await this.pool.query(
+            `INSERT INTO nof_platform.canonical_person (id, created_by, updated_by)
+             VALUES ($1::uuid, $2::uuid, $2::uuid)`,
+            [personId, input.actorUserId ?? null],
+          );
+        }
       }
 
       for (const alias of aliases) {

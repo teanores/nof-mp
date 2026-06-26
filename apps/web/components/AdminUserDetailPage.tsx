@@ -359,11 +359,37 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
   const availableCandidates = candidates.filter((candidate) => candidate.id !== user.id);
   const [targetUserId, setTargetUserId] = useState("");
   const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "conflict" | "failed">("idle");
   const selectedCandidate = availableCandidates.find((candidate) => candidate.id === targetUserId);
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCandidates = availableCandidates
     .filter((candidate) => !normalizedQuery || candidateLabel(candidate).toLowerCase().includes(normalizedQuery))
     .slice(0, 6);
+  const canLink = Boolean(selectedCandidate) && status !== "saving" && status !== "saved";
+
+  async function handleLinkAccounts() {
+    if (!selectedCandidate) {
+      return;
+    }
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/merge`, {
+        body: JSON.stringify({ targetUserId: selectedCandidate.id }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (response.status === 409) {
+        setStatus("conflict");
+        return;
+      }
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
 
   return (
     <section className="panel p-4">
@@ -409,20 +435,29 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
         </div>
         <div className="flex items-end justify-end">
           <button
-            className={compactPrimaryActionClassName(true, "inline-flex items-center justify-center text-xs")}
-            disabled
+            className={compactPrimaryActionClassName(!canLink, "inline-flex items-center justify-center text-xs")}
+            disabled={!canLink}
             type="button"
+            onClick={() => void handleLinkAccounts()}
           >
-            Связывание ждёт модель связей
+            {status === "saving" ? "Связываем" : status === "saved" ? "Связь сохранена" : "Связать учётные записи"}
           </button>
         </div>
       </div>
       {availableCandidates.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-forge-muted">Нет доступных кандидатов для выбора канонической записи.</p>
       ) : null}
-      <p className="mt-3 text-sm leading-6 text-forge-muted">
-        Связь аккаунтов не выполняется старым переносом исходная -&gt; целевая. Нужна утверждённая модель нескольких связей.
-      </p>
+      {status === "saved" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Учётные записи связаны через модель aliases без переноса или удаления аккаунтов.</p> : null}
+      {status === "conflict" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Связь не сохранена: один из признаков уже принадлежит другой мастер-записи.
+        </p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Связь не сохранена. Проверь выбранные аккаунты и повтори позже.
+        </p>
+      ) : null}
     </section>
   );
 }
