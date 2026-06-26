@@ -61,7 +61,7 @@ function authVerificationSecrets(explicitSecret?: string): string[] {
   return [...new Set(candidates.filter((value): value is string => Boolean(value)))];
 }
 
-function decodeNofAuthTokenWithSecret(token: string, secret: string): JwtPayload | undefined {
+function decodeNofAuthTokenWithSecret(token: string, secret: string, options: { allowExpired?: boolean } = {}): JwtPayload | undefined {
   const [encodedHeader, encodedPayload, signature] = token.split(".");
   if (!encodedHeader || !encodedPayload || !signature) {
     return undefined;
@@ -93,7 +93,7 @@ function decodeNofAuthTokenWithSecret(token: string, secret: string): JwtPayload
   if (!payload.sub || !payload.username) {
     return undefined;
   }
-  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+  if (!options.allowExpired && payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
     return undefined;
   }
 
@@ -104,6 +104,17 @@ export function decodeNofAuthToken(token: string, secret?: string): JwtPayload |
   for (const candidate of authVerificationSecrets(secret)) {
     const payload = decodeNofAuthTokenWithSecret(token, candidate);
     if (payload) {
+      return payload;
+    }
+  }
+
+  return undefined;
+}
+
+export function decodeExpiredNofAuthToken(token: string, secret?: string): JwtPayload | undefined {
+  for (const candidate of authVerificationSecrets(secret)) {
+    const payload = decodeNofAuthTokenWithSecret(token, candidate, { allowExpired: true });
+    if (payload?.exp && payload.exp < Math.floor(Date.now() / 1000)) {
       return payload;
     }
   }
