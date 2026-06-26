@@ -178,6 +178,58 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function PasswordRotationActions({ user }: { user: AdminUserListItem }) {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+
+  async function handleRequireRotation() {
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/password-rotation`, {
+        body: JSON.stringify({ reason: "admin_required_rotation" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Смена пароля</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">
+            {user.hasPassword ? "Можно потребовать смену пароля при следующем входе." : "У пользователя нет пароля для входа."}
+          </p>
+        </div>
+        {user.hasPassword ? (
+          <button
+            className={compactPrimaryActionClassName(status === "saving" || status === "saved", "inline-flex items-center justify-center text-xs")}
+            disabled={status === "saving" || status === "saved"}
+            type="button"
+            onClick={() => void handleRequireRotation()}
+          >
+            {status === "saving" ? "Сохраняем" : status === "saved" ? "Смена пароля требуется" : "Потребовать смену пароля"}
+          </button>
+        ) : null}
+      </div>
+      {status === "saved" ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">При следующем входе пользователь будет направлен на смену пароля.</p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Требование смены пароля не сохранено. Повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function AccessActions({ user }: { user: AdminUserListItem }) {
   const [accessState, setAccessState] = useState(user.accessState);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
@@ -293,9 +345,26 @@ function DeleteActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
-function CanonicalMergeActions({ user }: { user: AdminUserListItem }) {
+function candidateLabel(candidate: AdminUserListItem): string {
+  const parts = [
+    candidate.username,
+    candidate.email,
+    candidate.telegram?.username ? `@${candidate.telegram.username}` : undefined,
+    candidate.telegram?.id ? `id ${candidate.telegram.id}` : undefined,
+  ].filter(Boolean);
+  return parts.join(" ");
+}
+
+function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUserListItem[]; user: AdminUserListItem }) {
+  const availableCandidates = candidates.filter((candidate) => candidate.id !== user.id);
   const [targetUserId, setTargetUserId] = useState("");
+  const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const selectedCandidate = availableCandidates.find((candidate) => candidate.id === targetUserId);
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleCandidates = availableCandidates
+    .filter((candidate) => !normalizedQuery || candidateLabel(candidate).toLowerCase().includes(normalizedQuery))
+    .slice(0, 6);
   const canSubmit = targetUserId.trim().length > 0 && targetUserId.trim() !== user.id && status !== "saving" && status !== "saved";
 
   async function handleMerge() {
@@ -321,35 +390,68 @@ function CanonicalMergeActions({ user }: { user: AdminUserListItem }) {
 
   return (
     <section className="panel p-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div className="block flex-1">
-          <label className="tech-label text-xs text-forge-muted" htmlFor="canonical-user-id">
-            ID канонического пользователя
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Каноническая учётная запись</h2>
+          <label className="mt-4 block" htmlFor="canonical-user-search">
+            <span className="tech-label text-xs text-forge-muted">Найти канонического пользователя</span>
+            <input
+              id="canonical-user-search"
+              className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition placeholder:text-forge-muted focus:border-forge-accent"
+              disabled={status === "saving" || status === "saved"}
+              placeholder="Имя, email или Telegram"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
           </label>
-          <h2 className="heading-tech mt-1 text-lg font-bold text-forge-ink">Каноническая учётная запись</h2>
-          <input
-            id="canonical-user-id"
-            className="mt-3 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
-            disabled={status === "saving" || status === "saved"}
-            value={targetUserId}
-            onChange={(event) => setTargetUserId(event.target.value)}
-          />
+          <div className="mt-3 grid gap-2">
+            {visibleCandidates.map((candidate) => {
+              const selected = candidate.id === targetUserId;
+              return (
+                <button
+                  key={candidate.id}
+                  className={`rounded-sm border px-3 py-2 text-left text-sm transition ${
+                    selected ? "border-forge-accent bg-forge-accent/10 text-forge-ink" : "border-forge-line bg-forge-surface text-forge-muted hover:border-forge-accent hover:text-forge-ink"
+                  }`}
+                  disabled={status === "saving" || status === "saved"}
+                  type="button"
+                  onClick={() => setTargetUserId(candidate.id)}
+                >
+                  <span className="font-semibold text-forge-ink">{candidate.username}</span>
+                  <span className="ml-2">{candidate.email ?? "почта не указана"}</span>
+                  {candidate.telegram?.username ? <span className="ml-2">@{candidate.telegram.username}</span> : null}
+                  {candidate.telegram?.id ? <span className="ml-2">ID {candidate.telegram.id}</span> : null}
+                </button>
+              );
+            })}
+            {visibleCandidates.length === 0 ? <p className="text-sm text-forge-muted">Кандидаты по поиску не найдены.</p> : null}
+          </div>
+          {selectedCandidate ? (
+            <p className="mt-3 text-sm leading-6 text-forge-muted">
+              Выбрана каноническая запись: <span className="font-semibold text-forge-ink">{candidateLabel(selectedCandidate)}</span>
+            </p>
+          ) : null}
         </div>
-        <button
-          className={compactPrimaryActionClassName(!canSubmit, "inline-flex items-center justify-center text-xs")}
-          disabled={!canSubmit}
-          type="button"
-          onClick={() => void handleMerge()}
-        >
-          {status === "saving" ? "Переносим" : status === "saved" ? "Связи перенесены" : "Перенести связи"}
-        </button>
+        <div className="flex items-end justify-end">
+          <button
+            className={compactPrimaryActionClassName(!canSubmit, "inline-flex items-center justify-center text-xs")}
+            disabled={!canSubmit}
+            type="button"
+            onClick={() => void handleMerge()}
+          >
+            {status === "saving" ? "Переносим" : status === "saved" ? "Связи перенесены" : "Перенести связи"}
+          </button>
+        </div>
       </div>
+      {availableCandidates.length === 0 ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">Нет доступных кандидатов для выбора канонической записи.</p>
+      ) : null}
       {status === "saved" ? (
         <p className="mt-3 text-sm leading-6 text-forge-muted">Учётная запись помечена как дубль, связи перенесены на каноническую запись.</p>
       ) : null}
       {status === "failed" ? (
         <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
-          Связи не перенесены. Проверь ID канонического пользователя.
+          Связи не перенесены. Выбери канонического пользователя и повтори.
         </p>
       ) : null}
     </section>
@@ -514,10 +616,12 @@ function RecentActivity({ events }: { events: UserSecurityAuditActivity[] }) {
 }
 
 export function AdminUserDetailPage({
+  canonicalCandidates = [],
   recentActivity = [],
   serviceLinks = [],
   user,
 }: {
+  canonicalCandidates?: AdminUserListItem[];
   recentActivity?: UserSecurityAuditActivity[];
   serviceLinks?: ForgeServiceLink[];
   user: AdminUserListItem;
@@ -576,9 +680,11 @@ export function AdminUserDetailPage({
 
       <RecoveryActions user={user} />
 
+      <PasswordRotationActions user={user} />
+
       <IdentityLinkActions user={user} />
 
-      <CanonicalMergeActions user={user} />
+      <CanonicalMergeActions candidates={canonicalCandidates} user={user} />
 
       <DeleteActions user={user} />
     </PortalPageShell>

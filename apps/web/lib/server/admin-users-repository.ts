@@ -286,7 +286,7 @@ export class AdminUsersRepository {
            email = CASE
              WHEN (target.email IS NULL OR target.email = '')
               AND source.email IS NOT NULL
-              AND source.email !~ '(^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$|^user[0-9]+forgath\\.ru$)'
+              AND source.email !~ '(^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$|^user[0-9]+@?forgath\\.ru$)'
              THEN source.email
              ELSE target.email
            END,

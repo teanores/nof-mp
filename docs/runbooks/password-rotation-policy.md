@@ -10,6 +10,7 @@ Status: implementation contract for explicit password rotation enforcement in no
 - set `must_rotate_password=true`;
 - store a non-secret reason such as `legacy_weak_password`;
 - never print email addresses, password hashes, raw passwords or reset tokens in evidence.
+- administrators may mark a selected user for rotation from the platform user card; the action records an audit event and stores only an allowlisted non-secret reason.
 
 ## Runtime Behavior
 

@@ -60,6 +60,15 @@ const events = [
     path: "/api/admin/users/u-2/identity-link",
     statusCode: 200,
   },
+  {
+    activityLabel: "Администратор потребовал смену пароля",
+    actorLabel: "Пользователь: admin",
+    createdAt: "2026-06-20T08:36:00.000Z",
+    id: "event-7",
+    method: "POST",
+    path: "/api/admin/users/u-2/password-rotation",
+    statusCode: 200,
+  },
 ];
 
 describe("admin events page", () => {
@@ -118,6 +127,7 @@ describe("admin events page", () => {
     expect(screen.getByText("Удаление пользователя")).toBeInTheDocument();
     expect(screen.getByText("Слияние учётных записей")).toBeInTheDocument();
     expect(screen.getByText("Изменение email и Telegram")).toBeInTheDocument();
+    expect(screen.getByText("Администратор потребовал смену пароля")).toBeInTheDocument();
     expect(screen.queryByText("Выход из аккаунта")).not.toBeInTheDocument();
   });
 });
