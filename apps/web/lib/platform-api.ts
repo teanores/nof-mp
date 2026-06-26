@@ -25,6 +25,17 @@ export async function updatePortalPreferences(input: { language: PortalLanguage 
   return data.preferences;
 }
 
+export async function updatePortalProfile(input: { aboutMe?: string; username: string }): Promise<NonNullable<ForgePortalSession["user"]>> {
+  const data = await readJson<{ profile: NonNullable<ForgePortalSession["user"]> }>(
+    await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  );
+  return data.profile;
+}
+
 export async function fetchMcpTokens(): Promise<ForgeMcpToken[]> {
   const data = await readJson<{ tokens: ForgeMcpToken[] }>(await fetch("/api/mcp-tokens", { cache: "no-store" }));
   return data.tokens;

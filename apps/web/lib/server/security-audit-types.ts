@@ -32,6 +32,7 @@ export type SecurityAuditEventType =
   | "password_reset_failed"
   | "password_reset_rate_limited"
   | "password_reset_requested"
+  | "profile_updated"
   | "session_expired";
 
 export type EdgeEventClassification =

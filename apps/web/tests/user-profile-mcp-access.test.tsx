@@ -15,6 +15,7 @@ const platformApi = vi.hoisted(() => ({
   fetchPlatformProjects: vi.fn(),
   fetchPortalSession: vi.fn(),
   unlinkProfileService: vi.fn(),
+  updatePortalProfile: vi.fn(),
   revokeMcpToken: vi.fn(),
 }));
 
@@ -67,6 +68,7 @@ describe("user profile MCP access", () => {
     platformApi.fetchMcpTokens.mockResolvedValue([]);
     platformApi.fetchPlatformProjects.mockResolvedValue([]);
     platformApi.fetchProfileServiceLinks.mockResolvedValue([]);
+    platformApi.updatePortalProfile.mockResolvedValue({ aboutMe: "Описание обновлено", id: "user-1", username: "TeAnore" });
     platformApi.unlinkProfileService.mockResolvedValue({
       serviceKey: "nof-ht",
       serviceName: "Habit Tracker",
@@ -94,6 +96,9 @@ describe("user profile MCP access", () => {
 
     expect(platformApi.fetchPortalSession).not.toHaveBeenCalled();
     expect(screen.getByText("Основные параметры")).toBeInTheDocument();
+    expect(screen.getByLabelText("Имя")).toHaveValue("teanore");
+    expect(screen.getByLabelText("О себе")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Сохранить профиль" })).toBeDisabled();
     expect(screen.queryByText("Идентичность портала")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Персональные настройки" })).toBeInTheDocument();
     expect(screen.getByText("Безопасность аккаунта")).toBeInTheDocument();
@@ -123,6 +128,26 @@ describe("user profile MCP access", () => {
     expect(document.body).not.toHaveTextContent("LAST SEEN");
     expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
     expect(screen.queryByText("Вход в платформу")).not.toBeInTheDocument();
+  });
+
+  it("lets the signed-in user edit their own profile display data", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByRole("heading", { name: "teanore" });
+
+    await userEvent.clear(screen.getByLabelText("Имя"));
+    await userEvent.type(screen.getByLabelText("Имя"), "TeAnore");
+    await userEvent.type(screen.getByLabelText("О себе"), "Описание обновлено");
+    await userEvent.click(screen.getByRole("button", { name: "Сохранить профиль" }));
+
+    await waitFor(() =>
+      expect(platformApi.updatePortalProfile).toHaveBeenCalledWith({
+        aboutMe: "Описание обновлено",
+        username: "TeAnore",
+      }),
+    );
+    expect(await screen.findByText("Профиль сохранён.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "TeAnore" })).toBeInTheDocument();
   });
 
   it("keeps account recovery diagnostics out of the regular user profile", async () => {

@@ -18,6 +18,7 @@ import {
   fetchProfileServiceLinks,
   revokeMcpToken,
   unlinkProfileService,
+  updatePortalProfile,
 } from "@/lib/platform-api";
 import type { ForgeMcpToken, ForgePortalSession, ForgePortalUser, ForgeProject, ForgeServiceLink } from "@/lib/types";
 
@@ -59,6 +60,8 @@ function StatPill({ label, value }: { label: string; value: React.ReactNode }) {
 const profileCopy = {
   en: {
     aboutFallback: "Profile description is not filled yet.",
+    aboutMe: "About me",
+    displayName: "Display name",
     identity: "Core profile",
     language: "Portal language",
     languageNote: "The interface language is saved in your profile and applied to portal shell labels.",
@@ -71,6 +74,10 @@ const profileCopy = {
     repeatNewPassword: "Repeat new password",
     changePassword: "Change password",
     passwordChanged: "Password changed. Use the new password on your next sign-in.",
+    profileSave: "Save profile",
+    profileSaved: "Profile saved.",
+    profileSaveFailed: "Profile was not saved. Check the fields and retry.",
+    profileUsernameInvalid: "Display name must be 2-64 characters.",
     passwordHideCurrent: "Hide current password",
     passwordHideNew: "Hide new password",
     passwordHideRepeat: "Hide repeated password",
@@ -137,6 +144,8 @@ const profileCopy = {
   },
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
+    aboutMe: "О себе",
+    displayName: "Имя",
     identity: "Основные параметры",
     language: "Язык портала",
     languageNote: "Язык интерфейса сохраняется в профиле и применяется к системным названиям портала.",
@@ -149,6 +158,10 @@ const profileCopy = {
     repeatNewPassword: "Повтори новый пароль",
     changePassword: "Сменить пароль",
     passwordChanged: "Пароль изменён. При следующем входе используй новый пароль.",
+    profileSave: "Сохранить профиль",
+    profileSaved: "Профиль сохранён.",
+    profileSaveFailed: "Профиль не был сохранён. Проверь поля и повтори попытку.",
+    profileUsernameInvalid: "Имя должно быть от 2 до 64 символов.",
     passwordHideCurrent: "Скрыть текущий пароль",
     passwordHideNew: "Скрыть новый пароль",
     passwordHideRepeat: "Скрыть повтор пароля",
@@ -277,6 +290,7 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const copy = profileCopy[usePortalLanguage()];
   const [error, setError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(!initialSession);
+  const [isProfileBusy, setIsProfileBusy] = useState(false);
   const [isTokenBusy, setIsTokenBusy] = useState(false);
   const [isPasswordBusy, setIsPasswordBusy] = useState(false);
   const [mcpTokens, setMcpTokens] = useState<ForgeMcpToken[]>([]);
@@ -285,6 +299,10 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [unlinkingServiceKey, setUnlinkingServiceKey] = useState<ForgeServiceLink["serviceKey"] | undefined>();
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenProjectKey, setNewTokenProjectKey] = useState("");
+  const [profileAboutDraft, setProfileAboutDraft] = useState(initialSession?.user?.aboutMe ?? "");
+  const [profileError, setProfileError] = useState<string | undefined>();
+  const [profileNotice, setProfileNotice] = useState<string | undefined>();
+  const [profileUsernameDraft, setProfileUsernameDraft] = useState(initialSession?.user?.username ?? "");
   const [currentPasswordDraft, setCurrentPasswordDraft] = useState("");
   const [newPasswordDraft, setNewPasswordDraft] = useState("");
   const [repeatedPasswordDraft, setRepeatedPasswordDraft] = useState("");
@@ -297,6 +315,13 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const [createdToken, setCreatedToken] = useState<{ fullToken: string; token: ForgeMcpToken } | undefined>();
   const [isCreatedTokenVisible, setIsCreatedTokenVisible] = useState(false);
   const [session, setSession] = useState<ForgePortalSession | undefined>(initialSession);
+
+  useEffect(() => {
+    if (session?.user) {
+      setProfileUsernameDraft(session.user.username);
+      setProfileAboutDraft(session.user.aboutMe ?? "");
+    }
+  }, [session?.user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -336,6 +361,12 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
   const telegramLabel = user?.telegram?.username ? `@${user.telegram.username}` : user?.telegram?.id ? `id:${user.telegram.id}` : "-";
   const accessibleMcpProjects = projects.filter((project) => project.access.allowed);
   const hasMcpAccess = accessibleMcpProjects.length > 0 || mcpTokens.length > 0;
+  const canSaveProfile =
+    Boolean(user) &&
+    !isProfileBusy &&
+    profileUsernameDraft.trim().length >= 2 &&
+    profileUsernameDraft.trim().length <= 64 &&
+    (profileUsernameDraft.trim() !== user?.username || profileAboutDraft.trim() !== (user?.aboutMe ?? ""));
 
   function defaultTokenName(projectKey: string): string {
     return `${projectKey.toUpperCase().replaceAll("-", "_")}_MCP_TOKEN`;
@@ -464,6 +495,42 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     }
   }
 
+  async function handleProfileSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!user) {
+      return;
+    }
+
+    setError(undefined);
+    setProfileError(undefined);
+    setProfileNotice(undefined);
+    setIsProfileBusy(true);
+    try {
+      const nextProfile = await updatePortalProfile({
+        aboutMe: profileAboutDraft,
+        username: profileUsernameDraft,
+      });
+      setSession((current) =>
+        current?.user
+          ? {
+              ...current,
+              user: {
+                ...current.user,
+                aboutMe: nextProfile.aboutMe,
+                username: nextProfile.username,
+              },
+            }
+          : current,
+      );
+      setProfileNotice(copy.profileSaved);
+    } catch (profileUpdateError) {
+      const reason = profileUpdateError instanceof Error ? profileUpdateError.message : "";
+      setProfileError(reason === "invalid_username" ? copy.profileUsernameInvalid : copy.profileSaveFailed);
+    } finally {
+      setIsProfileBusy(false);
+    }
+  }
+
   async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -582,7 +649,51 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                     </span>
                   </div>
                   <p className="tech-label mt-1 truncate text-[10px] text-forge-muted">{user.username}</p>
-                  <p className="mt-1 text-xs leading-5 text-forge-muted">{user.aboutMe || copy.aboutFallback}</p>
+
+                  <form className="mt-3 grid gap-3" onSubmit={(event) => void handleProfileSubmit(event)}>
+                    <label className="grid gap-2">
+                      <span className="tech-label text-[10px] text-forge-muted">{copy.displayName}</span>
+                      <input
+                        className="w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        maxLength={64}
+                        minLength={2}
+                        name="username"
+                        required
+                        value={profileUsernameDraft}
+                        onChange={(event) => {
+                          setProfileNotice(undefined);
+                          setProfileError(undefined);
+                          setProfileUsernameDraft(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <label className="grid gap-2">
+                      <span className="tech-label text-[10px] text-forge-muted">{copy.aboutMe}</span>
+                      <textarea
+                        className="min-h-20 w-full resize-y rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
+                        maxLength={280}
+                        name="aboutMe"
+                        placeholder={copy.aboutFallback}
+                        value={profileAboutDraft}
+                        onChange={(event) => {
+                          setProfileNotice(undefined);
+                          setProfileError(undefined);
+                          setProfileAboutDraft(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button className={compactPrimaryActionClassName(!canSaveProfile, "min-w-[150px]")} disabled={!canSaveProfile} type="submit">
+                        {copy.profileSave}
+                      </button>
+                      {profileError ? (
+                        <p className="text-xs font-semibold leading-5 text-forge-amber" role="alert">
+                          {profileError}
+                        </p>
+                      ) : null}
+                      {profileNotice ? <p className="text-xs leading-5 text-forge-muted">{profileNotice}</p> : null}
+                    </div>
+                  </form>
 
                   <div className="mt-3 space-y-2">
                     <DataRow label={copy.labelEmail} value={user.email ?? "-"} />
