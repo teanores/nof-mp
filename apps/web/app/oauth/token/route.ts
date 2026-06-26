@@ -61,7 +61,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       : {};
   const emailClaims =
     redeemed.record.scopes.includes("email") && platformUser?.email
-      ? { email: platformUser.email, email_verified: true }
+      ? { email: platformUser.email, email_verified: Boolean(platformUser.emailVerified) }
       : redeemed.record.scopes.includes("email")
         ? { email_verified: false }
         : {};
