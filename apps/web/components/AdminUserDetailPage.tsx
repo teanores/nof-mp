@@ -359,50 +359,22 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
   const availableCandidates = candidates.filter((candidate) => candidate.id !== user.id);
   const [targetUserId, setTargetUserId] = useState("");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed" | "missing-target">("idle");
   const selectedCandidate = availableCandidates.find((candidate) => candidate.id === targetUserId);
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCandidates = availableCandidates
     .filter((candidate) => !normalizedQuery || candidateLabel(candidate).toLowerCase().includes(normalizedQuery))
     .slice(0, 6);
-  const canSubmit = targetUserId.trim().length > 0 && targetUserId.trim() !== user.id && status !== "saving" && status !== "saved";
-
-  async function handleMerge() {
-    if (!targetUserId.trim()) {
-      setStatus("missing-target");
-      return;
-    }
-    if (!canSubmit) {
-      return;
-    }
-
-    setStatus("saving");
-    try {
-      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/merge`, {
-        body: JSON.stringify({ targetUserId: targetUserId.trim() }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
-      if (!response.ok) {
-        throw new Error("request_failed");
-      }
-      setStatus("saved");
-    } catch {
-      setStatus("failed");
-    }
-  }
 
   return (
     <section className="panel p-4">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div>
-          <h2 className="heading-tech text-lg font-bold text-forge-ink">Каноническая учётная запись</h2>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Связывание учётных записей</h2>
           <label className="mt-4 block" htmlFor="canonical-user-search">
             <span className="tech-label text-xs text-forge-muted">Найти канонического пользователя</span>
             <input
               id="canonical-user-search"
               className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition placeholder:text-forge-muted focus:border-forge-accent"
-              disabled={status === "saving" || status === "saved"}
               placeholder="Имя, email или Telegram"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -417,7 +389,6 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
                   className={`rounded-sm border px-3 py-2 text-left text-sm transition ${
                     selected ? "border-forge-accent bg-forge-accent/10 text-forge-ink" : "border-forge-line bg-forge-surface text-forge-muted hover:border-forge-accent hover:text-forge-ink"
                   }`}
-                  disabled={status === "saving" || status === "saved"}
                   type="button"
                   onClick={() => setTargetUserId(candidate.id)}
                 >
@@ -432,37 +403,26 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
           </div>
           {selectedCandidate ? (
             <p className="mt-3 text-sm leading-6 text-forge-muted">
-              Выбрана каноническая запись: <span className="font-semibold text-forge-ink">{candidateLabel(selectedCandidate)}</span>
+              Выбрана мастер-запись: <span className="font-semibold text-forge-ink">{candidateLabel(selectedCandidate)}</span>
             </p>
           ) : null}
         </div>
         <div className="flex items-end justify-end">
           <button
-            className={compactPrimaryActionClassName(!canSubmit, "inline-flex items-center justify-center text-xs")}
-            disabled={!canSubmit}
+            className={compactPrimaryActionClassName(true, "inline-flex items-center justify-center text-xs")}
+            disabled
             type="button"
-            onClick={() => void handleMerge()}
           >
-            {status === "saving" ? "Переносим" : status === "saved" ? "Связи перенесены" : "Перенести связи"}
+            Связывание ждёт модель связей
           </button>
         </div>
       </div>
       {availableCandidates.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-forge-muted">Нет доступных кандидатов для выбора канонической записи.</p>
       ) : null}
-      {status === "saved" ? (
-        <p className="mt-3 text-sm leading-6 text-forge-muted">Учётная запись помечена как дубль, связи перенесены на каноническую запись.</p>
-      ) : null}
-      {status === "failed" ? (
-        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
-          Связи не перенесены. Сервер не выполнил перенос, проверь данные аккаунтов и повтори.
-        </p>
-      ) : null}
-      {status === "missing-target" ? (
-        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
-          Связи не перенесены. Выбери канонического пользователя и повтори.
-        </p>
-      ) : null}
+      <p className="mt-3 text-sm leading-6 text-forge-muted">
+        Связь аккаунтов не выполняется старым переносом исходная -&gt; целевая. Нужна утверждённая модель нескольких связей.
+      </p>
     </section>
   );
 }

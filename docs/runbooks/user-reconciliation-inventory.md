@@ -28,6 +28,20 @@ NOF-MP-35 does not mutate nof-ht users and does not write to any nof-ht database
 
 Actual nof-ht account changes require a separate nof-ht-owned task or a future identity reconciliation gateway.
 
+## Merge Boundary
+
+The old admin action that treated one user as a source and another user as a target is disabled. That action is not the target
+architecture because a real person may legitimately own several aliases: more than one email address, Telegram identity, and
+service-local accounts.
+
+Before any production merge or claim operation is enabled, the implementation must provide:
+
+- a canonical person record;
+- an alias table for email, Telegram id, Telegram username and service account ids;
+- reversible audit records for every claim/link/unlink action;
+- local Docker-Postgres migration evidence;
+- owner-approved UAT scenarios for administrator-initiated and user-initiated linking.
+
 ## Telegram Placeholder Email Rule
 
 Telegram-origin users may have a synthetic placeholder in the platform email column. These values are not user mailboxes and must not be treated as recoverable email:

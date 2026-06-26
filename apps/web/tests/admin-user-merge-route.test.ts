@@ -59,26 +59,14 @@ describe("admin user canonical merge route", () => {
     });
   });
 
-  it("moves a selected source account into a canonical target and records audit", async () => {
+  it("rejects the legacy source-to-target merge while the multi-alias model is pending", async () => {
     const response = await POST(request({ targetUserId: "target-1" }), { params: Promise.resolve({ userId: "source-1" }) });
     const payload = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(payload).toEqual({ ok: true, sourceUserId: "source-1", targetUserId: "target-1" });
-    expect(adminUsersRepository.mergeUserIntoCanonical).toHaveBeenCalledWith({
-      actorUserId: "admin-1",
-      sourceUserId: "source-1",
-      targetUserId: "target-1",
-    });
-    expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actorUserId: "admin-1",
-        actorUsername: "admin",
-        eventType: "admin_user_merged",
-        path: "/api/admin/users/source-1/merge",
-        statusCode: 200,
-      }),
-    );
+    expect(response.status).toBe(409);
+    expect(payload).toEqual({ error: "multi_alias_model_required" });
+    expect(adminUsersRepository.mergeUserIntoCanonical).not.toHaveBeenCalled();
+    expect(audit.recordSecurityAuditEvent).not.toHaveBeenCalled();
   });
 
   it("rejects merging an account into itself", async () => {

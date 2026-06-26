@@ -182,45 +182,29 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("secret");
   });
 
-  it("lets an admin mark an account as duplicate and move it into a canonical user", async () => {
+  it("shows selected account-link candidate without calling the unsafe legacy merge", async () => {
     render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
 
-    expect(screen.getByRole("heading", { name: "Каноническая учётная запись" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Связывание учётных записей" })).toBeInTheDocument();
     expect(screen.queryByText("u-1")).not.toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Найти канонического пользователя"), "owner");
     await userEvent.click(screen.getByRole("button", { name: /owner email: owner@example.com/i }));
-    expect(screen.getByText(/Выбрана каноническая запись:/)).toHaveTextContent("email: owner@example.com");
-    await userEvent.click(screen.getByRole("button", { name: "Перенести связи" }));
-
-    await waitFor(() =>
-      expect(fetch).toHaveBeenCalledWith(
-        "/api/admin/users/u-1/merge",
-        expect.objectContaining({
-          body: JSON.stringify({ targetUserId: "u-2" }),
-          method: "POST",
-        }),
-      ),
-    );
-    expect(await screen.findByText("Учётная запись помечена как дубль, связи перенесены на каноническую запись.")).toBeInTheDocument();
+    expect(screen.getByText(/Выбрана мастер-запись:/)).toHaveTextContent("email: owner@example.com");
+    expect(screen.getByRole("button", { name: "Связывание ждёт модель связей" })).toBeDisabled();
+    expect(fetch).not.toHaveBeenCalledWith("/api/admin/users/u-1/merge", expect.anything());
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("token");
     expect(document.body).not.toHaveTextContent("secret");
   });
 
-  it("shows a precise error when canonical merge fails after a candidate was selected", async () => {
-    vi.mocked(fetch).mockResolvedValueOnce({
-      json: async () => ({ error: "merge_failed" }),
-      ok: false,
-    } as Response);
-
+  it("keeps account linking disabled until the multi-alias backend is available", async () => {
     render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
 
     await userEvent.type(screen.getByLabelText("Найти канонического пользователя"), "owner");
     await userEvent.click(screen.getByRole("button", { name: /owner email: owner@example.com/i }));
-    await userEvent.click(screen.getByRole("button", { name: "Перенести связи" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Связи не перенесены. Сервер не выполнил перенос, проверь данные аккаунтов и повтори.");
-    expect(screen.queryByText("Связи не перенесены. Выбери канонического пользователя и повтори.")).not.toBeInTheDocument();
+    expect(screen.getByText("Связь аккаунтов не выполняется старым переносом исходная -> целевая. Нужна утверждённая модель нескольких связей.")).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalledWith("/api/admin/users/u-1/merge", expect.anything());
   });
 
   it("lets an admin manually repair email and Telegram identity link", async () => {
