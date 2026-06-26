@@ -97,7 +97,7 @@ const emptySummary = {
 };
 
 export function securityAuditSchemaName(): string {
-  return process.env.NOF_PLATFORM_SECURITY_AUDIT_DB_SCHEMA ?? process.env.NOF_PLATFORM_DB_SCHEMA ?? "forge_tasks";
+  return process.env.NOF_PLATFORM_SECURITY_AUDIT_DB_SCHEMA ?? process.env.NOF_PLATFORM_DB_SCHEMA ?? "nof_platform";
 }
 
 function safeSqlIdentifier(identifier: string): string {

@@ -11,8 +11,8 @@ describe("security audit dashboard repository", () => {
     }
   });
 
-  it("uses the legacy tracker schema by default during migration", () => {
-    expect(securityAuditSchemaName()).toBe("forge_tasks");
+  it("uses the platform-owned audit schema by default", () => {
+    expect(securityAuditSchemaName()).toBe("nof_platform");
   });
 
   it("allows an explicit platform security audit schema", () => {
@@ -42,6 +42,17 @@ describe("security audit dashboard repository", () => {
       expect.arrayContaining(["/.env?token=%5Bredacted%5D"]),
     );
     expect(JSON.stringify(query.mock.calls)).not.toContain("value");
+  });
+
+  it("does not read or write the legacy tracker audit schema by default", async () => {
+    const query = vi.fn().mockResolvedValue({ rows: [] });
+    const repository = new SecurityAuditDashboardRepository({ query } as never);
+
+    await repository.dashboard();
+
+    const sql = JSON.stringify(query.mock.calls);
+    expect(sql).toContain("nof_platform.security_audit_event");
+    expect(sql).not.toContain("forge_tasks.security_audit_event");
   });
 
   it("loads recent sanitized activity for one actor", async () => {
