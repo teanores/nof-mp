@@ -30,7 +30,7 @@ describe("product access repository", () => {
 
     await expect(repository.listForSubject({ role: "guest" })).resolves.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ key: "nof-cb", access: { allowed: true, reason: "public-product" } }),
+        expect.objectContaining({ key: "nof-cb", access: { allowed: false, reason: "authentication-required" } }),
         expect.objectContaining({ key: "nof-tt", access: { allowed: false, reason: "authentication-required" } }),
       ]),
     );
@@ -46,6 +46,7 @@ describe("product access repository", () => {
   it("lists products from database rows with access decisions", async () => {
     const pool = new FakePool([
       {
+        allowed_roles: ["partner"],
         created_at: "2026-05-28T00:00:00.000Z",
         description: "Private course portal",
         invited_user_ids: ["u-2"],
@@ -64,6 +65,9 @@ describe("product access repository", () => {
     await expect(repository.listForSubject({ role: "user", userId: "u-2" })).resolves.toEqual([
       expect.objectContaining({ key: "nof-onw", access: { allowed: true, reason: "invited-user" } }),
     ]);
+    await expect(repository.listForSubject({ role: "partner", userId: "u-3" })).resolves.toEqual([
+      expect.objectContaining({ key: "nof-onw", access: { allowed: true, reason: "role-granted" } }),
+    ]);
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.products"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("CREATE TABLE IF NOT EXISTS nof_platform.product_access"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("ORDER BY p.key ASC"))).toBe(true);
@@ -78,8 +82,9 @@ describe("product access repository", () => {
     const productSeeds = pool.valuesFor("INSERT INTO nof_platform.products");
     const accessSeeds = pool.valuesFor("INSERT INTO nof_platform.product_access");
     expect(productSeeds.map((values) => values[0])).toEqual(["nof-tt", "nof-ht", "nof-cb", "nof-onw"]);
-    expect(productSeeds.map((values) => values[4])).toEqual(["registered", "registered", "public", "invited"]);
+    expect(productSeeds.map((values) => values[4])).toEqual(["registered", "registered", "invited", "invited"]);
     expect(accessSeeds.map((values) => values[0])).toEqual(["nof-tt", "nof-ht", "nof-cb", "nof-onw"]);
+    expect(accessSeeds.find((values) => values[0] === "nof-cb")?.[3]).toEqual(["partner"]);
   });
 
   it("checks database-backed project existence", async () => {

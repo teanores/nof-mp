@@ -48,19 +48,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const nowSeconds = Math.floor(Date.now() / 1000);
   const scope = redeemed.record.scopes.join(" ");
-  const platformUser = redeemed.record.scopes.includes("profile")
+  const shouldLoadPlatformUser = redeemed.record.scopes.includes("profile") || redeemed.record.scopes.includes("email");
+  const platformUser = shouldLoadPlatformUser
     ? await getNofPortalAuthRepository().userById(redeemed.record.platformUserId).catch(() => undefined)
     : undefined;
+  const profileClaims =
+    redeemed.record.scopes.includes("profile") && platformUser
+      ? {
+          ...(platformUser.username ? { name: platformUser.username, preferred_username: platformUser.username } : {}),
+          ...(platformUser.role?.name ? { role: platformUser.role.name } : {}),
+        }
+      : {};
+  const emailClaims =
+    redeemed.record.scopes.includes("email") && platformUser?.email
+      ? { email: platformUser.email, email_verified: true }
+      : redeemed.record.scopes.includes("email")
+        ? { email_verified: false }
+        : {};
   const claims = {
     aud: client.clientId,
     exp: nowSeconds + 300,
     iat: nowSeconds,
     iss: oauthIssuer(),
     nonce: redeemed.record.nonce,
-    ...(platformUser?.role?.name ? { role: platformUser.role.name } : {}),
+    ...emailClaims,
+    ...profileClaims,
     scope,
     sub: redeemed.record.platformUserId,
-    ...(redeemed.record.scopes.includes("email") ? { email_verified: false } : {}),
   };
   const token = signOAuthJwt(claims);
 

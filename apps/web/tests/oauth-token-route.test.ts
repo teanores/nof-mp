@@ -30,6 +30,7 @@ const redeemState = vi.hoisted(() => ({
 const portalUsers = vi.hoisted(() => ({
   calls: [] as string[],
   result: {
+    email: "teanore@gmail.com",
     experience: 0,
     id: "platform-user-1",
     role: { id: 1, name: "owner" },
@@ -78,6 +79,7 @@ describe("oauth token route", () => {
     redeemState.calls = [];
     portalUsers.calls = [];
     portalUsers.result = {
+      email: "teanore@gmail.com",
       experience: 0,
       id: "platform-user-1",
       role: { id: 1, name: "owner" },
@@ -122,7 +124,12 @@ describe("oauth token route", () => {
     expect(body.access_token).toMatch(/^[^.]+\.[^.]+\.[^.]+$/);
     expect(body.id_token).toMatch(/^[^.]+\.[^.]+\.[^.]+$/);
     expect(body.claims).toBeUndefined();
-    expect(decodeJwtPayload(String(body.id_token))).toMatchObject({ role: "owner" });
+    expect(decodeJwtPayload(String(body.id_token))).toMatchObject({
+      email: "teanore@gmail.com",
+      email_verified: true,
+      preferred_username: "teanore",
+      role: "owner",
+    });
     expect(portalUsers.calls).toEqual(["platform-user-1"]);
     expect(redeemState.calls).toEqual([
       {
@@ -254,6 +261,48 @@ describe("oauth token route", () => {
     expect(payload).not.toHaveProperty("email");
     expect(payload).not.toHaveProperty("email_verified");
     expect(payload).toHaveProperty("role", "owner");
+  });
+
+  it("loads the platform user and emits email claims when only the email scope was granted", async () => {
+    redeemState.result = {
+      ok: true,
+      record: {
+        clientId: "nof-tt",
+        code: "oauth_code_valid",
+        expiresAt: "2026-06-04T15:02:00.000Z",
+        nonce: "nonce-1",
+        platformUserId: "platform-user-1",
+        redirectUri: "https://task-tracker.forgath.ru/auth/platform/callback",
+        scopes: ["openid", "email"],
+        state: "state-1",
+        usedAt: "2026-06-04T15:00:00.000Z",
+      },
+    };
+
+    const response = await token(
+      tokenRequest(
+        new URLSearchParams({
+          client_id: "nof-tt",
+          client_secret: "nof-tt-secret",
+          code: "oauth_code_valid",
+          grant_type: "authorization_code",
+          redirect_uri: "https://task-tracker.forgath.ru/auth/platform/callback",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const payload = decodeJwtPayload(String(body.id_token));
+
+    expect(payload).toMatchObject({
+      email: "teanore@gmail.com",
+      email_verified: true,
+      scope: "openid email",
+    });
+    expect(payload).not.toHaveProperty("preferred_username");
+    expect(payload).not.toHaveProperty("role");
+    expect(portalUsers.calls).toEqual(["platform-user-1"]);
   });
 
   it("does not emit role claims when the profile scope was not granted", async () => {

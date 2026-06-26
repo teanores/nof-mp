@@ -26,10 +26,12 @@ describe("platform project registry", () => {
     expect(taskTracker).toMatchObject({ access: { allowed: true, reason: "registered-user" } });
   });
 
-  it("keeps public products available to guests", () => {
+  it("keeps partner products closed to guests and available to partners", () => {
     const coffeeBot = listPlatformProjects({ role: "guest" }).find((project) => project.key === "nof-cb");
+    const partnerCoffeeBot = listPlatformProjects({ role: "partner", userId: "u-partner" }).find((project) => project.key === "nof-cb");
 
-    expect(coffeeBot).toMatchObject({ visibility: "public", access: { allowed: true, reason: "public-product" } });
+    expect(coffeeBot).toMatchObject({ visibility: "invited", access: { allowed: false, reason: "authentication-required" } });
+    expect(partnerCoffeeBot).toMatchObject({ visibility: "invited", access: { allowed: true, reason: "role-granted" } });
   });
 
   it("stores the Russian learning portal name as UTF-8", () => {

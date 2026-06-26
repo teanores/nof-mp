@@ -11,7 +11,7 @@ import { listPlatformProjects, platformProjectRecords, projectExists } from "@/l
 import { platformDatabaseUrl } from "@/lib/server/platform-database-config";
 import type { ForgePortalSession, ForgeProject } from "@/lib/types";
 
-const platformRoles: PlatformRole[] = ["owner", "admin", "moderator", "user", "guest"];
+const platformRoles: PlatformRole[] = ["owner", "admin", "moderator", "partner", "user", "guest"];
 
 interface ProductAccessPool {
   query<T extends QueryResultRow = QueryResultRow>(sql: string, values?: unknown[]): Promise<{ rows: T[] }>;
@@ -20,6 +20,7 @@ interface ProductAccessPool {
 interface ProductAccessRow extends QueryResultRow {
   created_at: Date | string;
   description: string;
+  allowed_roles: PlatformRole[] | null;
   invited_user_ids: string[] | null;
   key: string;
   name: string;
@@ -48,6 +49,7 @@ function toProduct(row: ProductAccessRow, subject: PlatformAccessSubject): Forge
   const policy: PlatformProductAccessPolicy = {
     productKey: row.key,
     visibility: row.visibility,
+    allowedRoles: row.allowed_roles ?? [],
     invitedUserIds: row.invited_user_ids ?? [],
     ownerUserIds: row.owner_user_ids ?? [],
   };
@@ -108,6 +110,7 @@ export class ProductAccessRepository {
          p.status,
          p.visibility,
          p.created_at,
+         COALESCE(pa.allowed_roles, ARRAY[]::TEXT[]) AS allowed_roles,
          COALESCE(pa.invited_user_ids, ARRAY[]::TEXT[]) AS invited_user_ids,
          COALESCE(pa.owner_user_ids, ARRAY[]::TEXT[]) AS owner_user_ids
        FROM ${this.schema}.products p
@@ -156,11 +159,13 @@ export class ProductAccessRepository {
     await this.pool!.query(`
       CREATE TABLE IF NOT EXISTS ${this.schema}.product_access (
         product_key TEXT PRIMARY KEY REFERENCES ${this.schema}.products(key) ON DELETE CASCADE,
+        allowed_roles TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
         invited_user_ids TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
         owner_user_ids TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    await this.pool!.query(`ALTER TABLE ${this.schema}.product_access ADD COLUMN IF NOT EXISTS allowed_roles TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`);
     await this.seedDefaultProducts();
     this.initialized = true;
   }
@@ -179,14 +184,15 @@ export class ProductAccessRepository {
         [product.key, product.name, product.description, product.status, product.visibility, product.createdAt],
       );
       await this.pool!.query(
-        `INSERT INTO ${this.schema}.product_access (product_key, invited_user_ids, owner_user_ids, updated_at)
-         VALUES ($1, $2, $3, NOW())
+        `INSERT INTO ${this.schema}.product_access (product_key, invited_user_ids, owner_user_ids, allowed_roles, updated_at)
+         VALUES ($1, $2, $3, $4, NOW())
          ON CONFLICT (product_key)
          DO UPDATE SET
            invited_user_ids = EXCLUDED.invited_user_ids,
            owner_user_ids = EXCLUDED.owner_user_ids,
+           allowed_roles = EXCLUDED.allowed_roles,
            updated_at = NOW()`,
-        [product.key, product.invitedUserIds ?? [], product.ownerUserIds ?? []],
+        [product.key, product.invitedUserIds ?? [], product.ownerUserIds ?? [], product.allowedRoles ?? []],
       );
     }
   }
