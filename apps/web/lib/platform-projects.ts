@@ -2,6 +2,7 @@ import {
   canAccessProduct,
   type PlatformAccessSubject,
   type PlatformProductAccessPolicy,
+  type PlatformRole,
   type ProductVisibility,
 } from "@/lib/platform-access-contract";
 import type { ForgeProject } from "@/lib/types";
@@ -12,6 +13,7 @@ interface PlatformProjectRecord {
   description: string;
   status: "active" | "archived";
   visibility: ProductVisibility;
+  allowedRoles?: PlatformRole[];
   invitedUserIds?: string[];
   ownerUserIds?: string[];
   createdAt: string;
@@ -41,7 +43,8 @@ export const platformProjectRecords: PlatformProjectRecord[] = [
     name: "NOF Coffee Bot",
     description: "Самостоятельный сервис заказа кофе с опциональной интеграцией в платформу.",
     status: "active",
-    visibility: "public",
+    visibility: "invited",
+    allowedRoles: ["partner"],
     createdAt: "2026-05-28T00:00:00.000Z",
   },
   {
@@ -58,6 +61,7 @@ function toAccessPolicy(project: PlatformProjectRecord): PlatformProductAccessPo
   return {
     productKey: project.key,
     visibility: project.visibility,
+    allowedRoles: project.allowedRoles,
     invitedUserIds: project.invitedUserIds,
     ownerUserIds: project.ownerUserIds,
   };

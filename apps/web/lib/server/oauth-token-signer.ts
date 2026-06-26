@@ -1,12 +1,15 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 interface OAuthTokenClaims {
   aud: string;
+  email?: string;
   email_verified?: boolean;
   exp: number;
   iat: number;
   iss: string;
+  name?: string;
   nonce: string;
+  preferred_username?: string;
   role?: string;
   scope: string;
   sub: string;
@@ -29,6 +32,33 @@ export function signOAuthJwt(claims: OAuthTokenClaims): string {
   const payload = base64UrlJson(claims);
   const signature = createHmac("sha256", signingSecret()).update(`${header}.${payload}`).digest("base64url");
   return `${header}.${payload}.${signature}`;
+}
+
+export function verifyOAuthJwt(token: string): OAuthTokenClaims | undefined {
+  const [header, payload, signature] = token.split(".");
+  if (!header || !payload || !signature) {
+    return undefined;
+  }
+
+  const expectedSignature = createHmac("sha256", signingSecret()).update(`${header}.${payload}`).digest("base64url");
+  const actual = Buffer.from(signature);
+  const expected = Buffer.from(expectedSignature);
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+    return undefined;
+  }
+
+  try {
+    const claims = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as OAuthTokenClaims;
+    if (claims.exp <= Math.floor(Date.now() / 1000)) {
+      return undefined;
+    }
+    if (claims.iss !== oauthIssuer()) {
+      return undefined;
+    }
+    return claims;
+  } catch {
+    return undefined;
+  }
 }
 
 export function oauthIssuer(): string {

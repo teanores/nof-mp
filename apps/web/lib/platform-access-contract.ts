@@ -1,10 +1,11 @@
-export type PlatformRole = "owner" | "admin" | "moderator" | "user" | "guest";
+export type PlatformRole = "owner" | "admin" | "moderator" | "partner" | "user" | "guest";
 
 export type ProductVisibility = "public" | "registered" | "invited" | "owners";
 
 export type ProductKey = "nof-tt" | "nof-ht" | "nof-cb" | "nof-onw" | (string & {});
 
 export interface PlatformProductAccessPolicy {
+  allowedRoles?: PlatformRole[];
   productKey: ProductKey;
   visibility: ProductVisibility;
   invitedUserIds?: string[];
@@ -21,6 +22,7 @@ export interface PlatformAccessDecision {
   reason:
     | "public-product"
     | "registered-user"
+    | "role-granted"
     | "invited-user"
     | "owner-user"
     | "platform-staff"
@@ -46,6 +48,10 @@ export function canAccessProduct(subject: PlatformAccessSubject, policy: Platfor
 
   if (policy.visibility === "registered") {
     return { allowed: true, reason: "registered-user" };
+  }
+
+  if (policy.allowedRoles?.includes(subject.role)) {
+    return { allowed: true, reason: "role-granted" };
   }
 
   if (policy.visibility === "invited") {

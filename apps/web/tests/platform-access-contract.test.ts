@@ -33,6 +33,13 @@ describe("platform access contract", () => {
     expect(canAccessProduct({ role: "user", userId: "u-2" }, policy)).toEqual({ allowed: true, reason: "invited-user" });
   });
 
+  it("allows product access by explicit platform role without granting every registered user", () => {
+    const policy: PlatformProductAccessPolicy = { allowedRoles: ["partner"], productKey: "nof-cb", visibility: "invited" };
+
+    expect(canAccessProduct({ role: "user", userId: "u-1" }, policy)).toEqual({ allowed: false, reason: "invitation-required" });
+    expect(canAccessProduct({ role: "partner", userId: "u-partner" }, policy)).toEqual({ allowed: true, reason: "role-granted" });
+  });
+
   it("enforces owner-only products but allows platform staff", () => {
     expect(canAccessProduct({ role: "user", userId: "u-1" }, ownersOnly)).toEqual({ allowed: false, reason: "owner-required" });
     expect(canAccessProduct({ role: "user", userId: "u-owner" }, ownersOnly)).toEqual({ allowed: true, reason: "owner-user" });
