@@ -347,19 +347,19 @@ function DeleteActions({ user }: { user: AdminUserListItem }) {
 
 function candidateLabel(candidate: AdminUserListItem): string {
   const parts = [
-    candidate.username,
-    candidate.email,
+    `пользователь: ${candidate.username}`,
+    candidate.email ? `email: ${candidate.email}` : undefined,
     candidate.telegram?.username ? `@${candidate.telegram.username}` : undefined,
     candidate.telegram?.id ? `id ${candidate.telegram.id}` : undefined,
   ].filter(Boolean);
-  return parts.join(" ");
+  return parts.join(" // ");
 }
 
 function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUserListItem[]; user: AdminUserListItem }) {
   const availableCandidates = candidates.filter((candidate) => candidate.id !== user.id);
   const [targetUserId, setTargetUserId] = useState("");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed" | "missing-target">("idle");
   const selectedCandidate = availableCandidates.find((candidate) => candidate.id === targetUserId);
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCandidates = availableCandidates
@@ -368,6 +368,10 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
   const canSubmit = targetUserId.trim().length > 0 && targetUserId.trim() !== user.id && status !== "saving" && status !== "saved";
 
   async function handleMerge() {
+    if (!targetUserId.trim()) {
+      setStatus("missing-target");
+      return;
+    }
     if (!canSubmit) {
       return;
     }
@@ -418,7 +422,7 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
                   onClick={() => setTargetUserId(candidate.id)}
                 >
                   <span className="font-semibold text-forge-ink">{candidate.username}</span>
-                  <span className="ml-2">{candidate.email ?? "почта не указана"}</span>
+                  <span className="ml-2">{candidate.email ? `email: ${candidate.email}` : "почта не указана"}</span>
                   {candidate.telegram?.username ? <span className="ml-2">@{candidate.telegram.username}</span> : null}
                   {candidate.telegram?.id ? <span className="ml-2">ID {candidate.telegram.id}</span> : null}
                 </button>
@@ -450,6 +454,11 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
         <p className="mt-3 text-sm leading-6 text-forge-muted">Учётная запись помечена как дубль, связи перенесены на каноническую запись.</p>
       ) : null}
       {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Связи не перенесены. Сервер не выполнил перенос, проверь данные аккаунтов и повтори.
+        </p>
+      ) : null}
+      {status === "missing-target" ? (
         <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
           Связи не перенесены. Выбери канонического пользователя и повтори.
         </p>
