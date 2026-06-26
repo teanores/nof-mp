@@ -49,50 +49,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const actorUserId = session.user?.id ?? "00000000-0000-0000-0000-000000000000";
-  const canonicalIdentity = getCanonicalIdentityRepository();
-  const platformAlias = await canonicalIdentity.claimAlias({
-    actorUserId,
-    aliasKind: "platform_user_id",
-    aliasValue: userId,
-    platformUserId: userId,
-    verificationState: "verified",
-  });
-  if (!platformAlias.ok) return aliasErrorResponse(platformAlias.reason);
-
-  const emailAlias = await canonicalIdentity.claimAlias({
-    actorUserId,
-    aliasKind: "email",
-    aliasValue: email,
-    personId: platformAlias.personId,
-    platformUserId: userId,
-    verificationState: "unverified",
-  });
-  if (!emailAlias.ok) return aliasErrorResponse(emailAlias.reason);
-
-  const telegramIdAlias = await canonicalIdentity.claimAlias({
-    actorUserId,
-    aliasKind: "telegram_id",
-    aliasProvider: "telegram",
-    aliasValue: telegramId,
-    personId: platformAlias.personId,
-    platformUserId: userId,
-    verificationState: "unverified",
-  });
-  if (!telegramIdAlias.ok) return aliasErrorResponse(telegramIdAlias.reason);
-
   const telegramUsername = typeof body.telegramUsername === "string" ? body.telegramUsername.trim().replace(/^@/, "") : "";
-  if (telegramUsername) {
-    const telegramUsernameAlias = await canonicalIdentity.claimAlias({
-      actorUserId,
-      aliasKind: "telegram_username",
-      aliasProvider: "telegram",
-      aliasValue: telegramUsername,
-      personId: platformAlias.personId,
-      platformUserId: userId,
-      verificationState: "unverified",
-    });
-    if (!telegramUsernameAlias.ok) return aliasErrorResponse(telegramUsernameAlias.reason);
-  }
+  const identityLink = await getCanonicalIdentityRepository().claimAliasesForPlatformUser({
+    actorUserId,
+    aliases: [
+      {
+        aliasKind: "email",
+        aliasValue: email,
+        verificationState: "unverified",
+      },
+      {
+        aliasKind: "telegram_id",
+        aliasProvider: "telegram",
+        aliasValue: telegramId,
+        verificationState: "unverified",
+      },
+      ...(telegramUsername
+        ? [
+            {
+              aliasKind: "telegram_username" as const,
+              aliasProvider: "telegram",
+              aliasValue: telegramUsername,
+              verificationState: "unverified" as const,
+            },
+          ]
+        : []),
+    ],
+    platformUserId: userId,
+  });
+  if (!identityLink.ok) return aliasErrorResponse(identityLink.reason);
 
   await recordSecurityAuditEvent({
     actorUserId: session.user?.id,

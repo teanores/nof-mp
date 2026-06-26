@@ -26,17 +26,38 @@ export interface ClaimCanonicalAliasInput {
   verificationState?: CanonicalIdentityVerificationState;
 }
 
+export interface ClaimCanonicalAliasBatchInput {
+  actorUserId?: string;
+  aliases: Array<Omit<ClaimCanonicalAliasInput, "actorUserId" | "personId" | "platformUserId">>;
+  platformUserId: string;
+}
+
 export type ClaimCanonicalAliasResult =
   | { aliasId: string; ok: true; personId: string }
   | { ok: false; reason: "alias_conflict" | "invalid_alias" | "invalid_person" };
 
+export type ClaimCanonicalAliasBatchResult =
+  | { aliasIds: string[]; ok: true; personId: string }
+  | { ok: false; reason: "alias_conflict" | "invalid_alias" };
+
 interface ExistingAliasRow extends QueryResultRow {
+  alias_kind: CanonicalIdentityAliasKind;
+  alias_provider: string;
+  alias_value_hash: string;
   id: string;
   person_id: string;
 }
 
 interface PersonRow extends QueryResultRow {
   id: string;
+}
+
+interface NormalizedAliasClaim {
+  aliasHash: string;
+  displayValue: string | null;
+  kind: CanonicalIdentityAliasKind;
+  provider: string;
+  verificationState: CanonicalIdentityVerificationState;
 }
 
 function normalizeAliasProvider(value?: string): string {
@@ -174,6 +195,110 @@ export class CanonicalIdentityRepository {
     }
 
     return { aliasId, ok: true, personId };
+  }
+
+  async claimAliasesForPlatformUser(input: ClaimCanonicalAliasBatchInput): Promise<ClaimCanonicalAliasBatchResult> {
+    await this.ensureSchema();
+
+    const normalizedAliases = [
+      {
+        aliasKind: "platform_user_id" as const,
+        aliasProvider: "nof",
+        aliasValue: input.platformUserId,
+        verificationState: "verified" as const,
+      },
+      ...input.aliases,
+    ].map((alias): NormalizedAliasClaim | undefined => {
+      const provider = normalizeAliasProvider(alias.aliasProvider);
+      const normalizedValue = normalizeCanonicalAliasValue(alias.aliasKind, alias.aliasValue);
+      if (!normalizedValue) {
+        return undefined;
+      }
+      return {
+        aliasHash: canonicalAliasHash(alias.aliasKind, provider, normalizedValue),
+        displayValue: canonicalAliasDisplayValue(alias.aliasKind, normalizedValue),
+        kind: alias.aliasKind,
+        provider,
+        verificationState: alias.verificationState ?? "unverified",
+      };
+    });
+
+    if (normalizedAliases.some((alias) => !alias)) {
+      return { ok: false, reason: "invalid_alias" };
+    }
+
+    const aliases = normalizedAliases as NormalizedAliasClaim[];
+    const conditions = aliases
+      .map((_, index) => {
+        const offset = index * 3;
+        return `(alias_kind = $${offset + 1} AND alias_provider = $${offset + 2} AND alias_value_hash = $${offset + 3})`;
+      })
+      .join(" OR ");
+    const values = aliases.flatMap((alias) => [alias.kind, alias.provider, alias.aliasHash]);
+    const existingResult = await this.pool.query<ExistingAliasRow>(
+      `SELECT id::text AS id, person_id::text AS person_id, alias_kind, alias_provider, alias_value_hash
+       FROM nof_platform.identity_alias
+       WHERE revoked_at IS NULL
+         AND (${conditions})`,
+      values,
+    );
+    const personIds = new Set(existingResult.rows.map((row) => row.person_id));
+    if (personIds.size > 1) {
+      return { ok: false, reason: "alias_conflict" };
+    }
+
+    const personId = existingResult.rows[0]?.person_id ?? crypto.randomUUID();
+    const existingByKey = new Map(existingResult.rows.map((row) => [`${row.alias_kind}:${row.alias_provider}:${row.alias_value_hash}`, row]));
+    const aliasIds: string[] = [];
+
+    await this.pool.query("BEGIN");
+    try {
+      if (existingResult.rows.length === 0) {
+        await this.pool.query(
+          `INSERT INTO nof_platform.canonical_person (id, created_by, updated_by)
+           VALUES ($1::uuid, $2::uuid, $2::uuid)`,
+          [personId, input.actorUserId ?? null],
+        );
+      }
+
+      for (const alias of aliases) {
+        const existing = existingByKey.get(`${alias.kind}:${alias.provider}:${alias.aliasHash}`);
+        if (existing) {
+          aliasIds.push(existing.id);
+          continue;
+        }
+
+        const aliasId = crypto.randomUUID();
+        aliasIds.push(aliasId);
+        await this.pool.query(
+          `INSERT INTO nof_platform.identity_alias
+            (id, person_id, alias_kind, alias_provider, alias_value_hash, display_value, verification_state, verified_at, created_by)
+           VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7, CASE WHEN $7 = 'verified' THEN NOW() ELSE NULL END, $8::uuid)`,
+          [aliasId, personId, alias.kind, alias.provider, alias.aliasHash, alias.displayValue, alias.verificationState, input.actorUserId ?? null],
+        );
+        await this.pool.query(
+          `INSERT INTO nof_platform.identity_alias_event (alias_id, person_id, event_type, actor_user_id, reason)
+           VALUES ($1::uuid, $2::uuid, 'claim', $3::uuid, $4)`,
+          [aliasId, personId, input.actorUserId ?? null, `claim:${alias.kind}:${alias.provider}`],
+        );
+      }
+
+      await this.pool.query(
+        `INSERT INTO nof_platform.person_account_link (person_id, platform_user_id, linked_by)
+         VALUES ($1::uuid, $2::uuid, $3::uuid)
+         ON CONFLICT (person_id, platform_user_id) DO UPDATE SET
+           link_state = 'active',
+           linked_at = NOW(),
+           linked_by = EXCLUDED.linked_by`,
+        [personId, input.platformUserId, input.actorUserId ?? null],
+      );
+      await this.pool.query("COMMIT");
+    } catch (error) {
+      await this.pool.query("ROLLBACK");
+      throw error;
+    }
+
+    return { aliasIds, ok: true, personId };
   }
 
   async close(): Promise<void> {

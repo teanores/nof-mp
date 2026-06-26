@@ -109,4 +109,59 @@ describe("canonical identity repository", () => {
     const aliasInsert = pool.queries.find((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias"));
     expect(aliasInsert?.values?.[5]).toBeNull();
   });
+
+  it("claims a platform user alias batch in one transaction", async () => {
+    const pool = new FakePool([[]]);
+    const repository = new CanonicalIdentityRepository(pool as never);
+
+    const result = await repository.claimAliasesForPlatformUser({
+      actorUserId: "actor-1",
+      aliases: [
+        { aliasKind: "email", aliasValue: "Owner@Example.com", verificationState: "unverified" },
+        { aliasKind: "telegram_id", aliasProvider: "telegram", aliasValue: "251740038", verificationState: "unverified" },
+      ],
+      platformUserId: "user-1",
+    });
+
+    expect(result).toMatchObject({ ok: true, personId: expect.any(String) });
+    expect(pool.queries.some((query) => query.sql === "BEGIN")).toBe(true);
+    expect(pool.queries.some((query) => query.sql === "COMMIT")).toBe(true);
+    expect(pool.queries.filter((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias\n"))).toHaveLength(3);
+    expect(pool.queries.some((query) => query.sql.includes('UPDATE dragon_forge."user"'))).toBe(false);
+  });
+
+  it("rejects conflicting aliases before opening a write transaction", async () => {
+    const pool = new FakePool([
+      [
+        {
+          alias_kind: "email",
+          alias_provider: "nof",
+          alias_value_hash: "hash-1",
+          id: "alias-1",
+          person_id: "person-1",
+        },
+        {
+          alias_kind: "telegram_id",
+          alias_provider: "telegram",
+          alias_value_hash: "hash-2",
+          id: "alias-2",
+          person_id: "person-2",
+        },
+      ],
+    ]);
+    const repository = new CanonicalIdentityRepository(pool as never);
+
+    await expect(
+      repository.claimAliasesForPlatformUser({
+        aliases: [
+          { aliasKind: "email", aliasValue: "owner@example.com" },
+          { aliasKind: "telegram_id", aliasProvider: "telegram", aliasValue: "251740038" },
+        ],
+        platformUserId: "user-1",
+      }),
+    ).resolves.toEqual({ ok: false, reason: "alias_conflict" });
+
+    expect(pool.queries.some((query) => query.sql === "BEGIN")).toBe(false);
+    expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias\n"))).toBe(false);
+  });
 });
