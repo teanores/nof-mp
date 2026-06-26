@@ -1,4 +1,4 @@
-import type { ForgeMcpToken, ForgePortalSession, ForgeProject, ForgeServiceLink } from "@/lib/types";
+import type { ForgePortalSession, ForgeProject, ForgeServiceLink } from "@/lib/types";
 import type { PortalLanguage } from "@/lib/portal-language";
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -34,29 +34,6 @@ export async function updatePortalProfile(input: { aboutMe?: string; username: s
     }),
   );
   return data.profile;
-}
-
-export async function fetchMcpTokens(): Promise<ForgeMcpToken[]> {
-  const data = await readJson<{ tokens: ForgeMcpToken[] }>(await fetch("/api/mcp-tokens", { cache: "no-store" }));
-  return data.tokens;
-}
-
-export async function createMcpToken(input: { name: string; projectKey?: string; scopes?: string[] }): Promise<{ token: ForgeMcpToken; fullToken: string }> {
-  return readJson<{ token: ForgeMcpToken; fullToken: string }>(
-    await fetch("/api/mcp-tokens", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    }),
-  );
-}
-
-export async function revokeMcpToken(tokenId: string): Promise<void> {
-  const response = await fetch(`/api/mcp-tokens/${encodeURIComponent(tokenId)}`, { method: "DELETE" });
-  if (!response.ok) {
-    const body = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
-    throw new Error(body?.error ?? `Request failed with ${response.status}`);
-  }
 }
 
 export async function fetchPlatformProjects(): Promise<ForgeProject[]> {

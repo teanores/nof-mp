@@ -5,18 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserProfilePage } from "@/components/UserProfilePage";
 import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
-import type { ForgeMcpToken, ForgeProject, ForgeServiceLink } from "@/lib/types";
+import type { ForgeProject, ForgeServiceLink } from "@/lib/types";
 
 const platformApi = vi.hoisted(() => ({
   changeProfilePassword: vi.fn(),
-  createMcpToken: vi.fn(),
   fetchProfileServiceLinks: vi.fn(),
-  fetchMcpTokens: vi.fn(),
   fetchPlatformProjects: vi.fn(),
   fetchPortalSession: vi.fn(),
   unlinkProfileService: vi.fn(),
   updatePortalProfile: vi.fn(),
-  revokeMcpToken: vi.fn(),
 }));
 
 vi.mock("@/lib/platform-api", () => platformApi);
@@ -65,7 +62,6 @@ describe("user profile MCP access", () => {
     });
     platformApi.fetchPortalSession.mockResolvedValue(session);
     platformApi.changeProfilePassword.mockResolvedValue(undefined);
-    platformApi.fetchMcpTokens.mockResolvedValue([]);
     platformApi.fetchPlatformProjects.mockResolvedValue([]);
     platformApi.fetchProfileServiceLinks.mockResolvedValue([]);
     platformApi.updatePortalProfile.mockResolvedValue({ aboutMe: "Описание обновлено", id: "user-1", username: "TeAnore" });
@@ -200,7 +196,7 @@ describe("user profile MCP access", () => {
     expect(document.body).not.toHaveTextContent("30500");
   });
 
-  it("shows MCP setup only for projects granted to the current user", async () => {
+  it("shows MCP setup as a Task Tracker-owned handoff for granted tracker access", async () => {
     platformApi.fetchPlatformProjects.mockResolvedValue([
       project({ access: { allowed: true, reason: "member" }, key: "nof-tt", name: "Task Tracker" }),
       project({ access: { allowed: false, reason: "not_granted" }, key: "nof-mp", name: "NOF Main Platform" }),
@@ -210,35 +206,33 @@ describe("user profile MCP access", () => {
 
     await screen.findByText("MCP-ключи доступа");
 
-    expect(screen.getByText("Доступ агентов к проектам")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "nof-tt - Task Tracker" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "nof-mp - NOF Main Platform" })).not.toBeInTheDocument();
+    expect(screen.getByText("MCP-доступ агентов")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Открыть управление MCP в Task Tracker" })).toHaveAttribute(
+      "href",
+      "https://task-tracker.forgath.ru/profile",
+    );
+    expect(screen.getByText("nof-tt")).toBeInTheDocument();
+    expect(screen.queryByText("nof-mp")).not.toBeInTheDocument();
     expect(screen.getAllByText(/https:\/\/task-tracker\.forgath\.ru\/api\/mcp/)).toHaveLength(2);
     expect(screen.getByText(/nof-tt-mcp/)).toBeInTheDocument();
+    expect(screen.getByText(/nof-mp не хранит и не показывает значения MCP-ключей/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "ВЫПУСТИТЬ MCP-КЛЮЧ" })).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("192.168.1.51");
     expect(document.body).not.toHaveTextContent("30510");
   });
 
-  it("keeps MCP setup visible when the user already has a real token", async () => {
-    const token: ForgeMcpToken = {
-      createdAt: "2026-06-01T00:00:00.000Z",
-      id: "token-1",
-      name: "NOF_TT_MCP_TOKEN",
-      projectKey: "nof-tt",
-      scopes: ["mcp"],
-      tokenPrefix: "nof_tt_1234",
-    };
-    platformApi.fetchMcpTokens.mockResolvedValue([token]);
+  it("does not render legacy platform-stored MCP token inventory", async () => {
+    platformApi.fetchPlatformProjects.mockResolvedValue([project({ access: { allowed: true, reason: "member" }, key: "nof-tt", name: "Task Tracker" })]);
 
     render(<UserProfilePage />);
 
-    await screen.findByText("NOF_TT_MCP_TOKEN");
+    await screen.findByText("MCP-ключи доступа");
 
-    expect(screen.getByText("MCP-ключи доступа")).toBeInTheDocument();
-    expect(screen.getByText("nof-tt / nof_tt_1234...")).toBeInTheDocument();
     expect(document.body).toHaveTextContent("хранилище секретов агента");
     expect(document.body).toHaveTextContent("HTTP MCP-сервер");
     expect(document.body).toHaveTextContent("Одна точка доступа Task Tracker принимает проектные ключи разных проектов.");
+    expect(document.body).not.toHaveTextContent("NOF_TT_MCP_TOKEN");
+    expect(document.body).not.toHaveTextContent("nof_tt_1234");
     expect(document.body).not.toHaveTextContent("secret storage");
     expect(document.body).not.toHaveTextContent("HTTP MCP server");
     expect(document.body).not.toHaveTextContent("project-scoped");

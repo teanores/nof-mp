@@ -53,11 +53,8 @@ describe("platform access contract", () => {
       "nof_platform.user_preferences",
       "nof_platform.products",
       "nof_platform.product_access",
-      "nof_platform.mcp_tokens",
     ]);
-    expect(platformTableSpecs.filter((table) => table.storesSecrets).map((table) => table.name)).toEqual([
-      "nof_platform.sessions",
-      "nof_platform.mcp_tokens",
-    ]);
+    expect(platformTableSpecs.filter((table) => table.storesSecrets).map((table) => table.name)).toEqual(["nof_platform.sessions"]);
+    expect(platformTableSpecs.map((table) => table.name)).not.toContain("nof_platform.mcp_tokens");
   });
 });

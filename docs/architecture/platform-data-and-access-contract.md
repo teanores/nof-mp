@@ -2,13 +2,14 @@
 
 ## Goal
 
-Define the first honest platform-owned data model and access contract so product services do not copy login, profile, preference or MCP-token logic.
+Define the first honest platform-owned data model and access contract so product services do not copy login, profile or preference logic.
 
 ## Ownership
 
-`nof-mp` owns identity, profile, global preferences, product registry, product access decisions and MCP-token issuance.
+`nof-mp` owns identity, profile, global preferences, product registry and product access decisions.
 
 Product repositories such as `nof-tt` own their domain data and receive a platform-provided session/access context.
+Task Tracker (`nof-tt`) owns MCP-token storage, issuance and validation because it owns the MCP service.
 
 ## First Tables
 
@@ -19,7 +20,6 @@ Product repositories such as `nof-tt` own their domain data and receive a platfo
 | `nof_platform.user_preferences` | Per-user language, theme and future personal portal settings | No |
 | `nof_platform.products` | Product registry: task tracker, habit tracker, coffee portal, learning portal and future tools | No |
 | `nof_platform.product_access` | Product visibility and per-user access rules | No |
-| `nof_platform.mcp_tokens` | Hashed MCP tokens issued from platform profile and scoped to products/projects | Yes |
 
 ## Product Visibility Model
 
@@ -46,7 +46,6 @@ Current typed source: `apps/web/lib/platform-access-contract.ts`.
 ## Migration Notes
 
 - Existing Dragon Forge user data remains the migration source until the platform schema is fully backed by its own tables.
-- MCP token secret values are never stored; only hashes and non-secret prefixes are stored.
 - Product services must not read platform user/session tables directly. They should use a gateway/header/token introspection contract.
 
 ## Next Step

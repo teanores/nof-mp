@@ -256,7 +256,6 @@ export class AdminUsersRepository {
       await this.pool.query(`DELETE FROM nof_platform.user_access_state WHERE user_id = $1::uuid`, [input.userId]);
       await this.deleteFromOptionalTable("nof_platform.email_link_tokens", "user_id", input.userId);
       await this.deleteFromOptionalTable("nof_platform.password_reset_tokens", "user_id", input.userId);
-      await this.deleteFromOptionalTable("nof_platform.mcp_tokens", "user_id", input.userId);
       await this.deleteFromOptionalTable("nof_platform.platform_service_links", "platform_user_id", input.userId);
       await this.pool.query(`DELETE FROM dragon_forge."user" WHERE id = $1::uuid`, [input.userId]);
       await this.pool.query("COMMIT");

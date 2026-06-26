@@ -192,7 +192,7 @@ describe("admin users repository", () => {
     expect(pool.queries.some((query) => query.sql === "COMMIT")).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.user_access_state"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.email_link_tokens"))).toBe(true);
-    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.mcp_tokens"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.mcp_tokens"))).toBe(false);
     expect(pool.queries.some((query) => query.sql.includes("DELETE FROM nof_platform.platform_service_links"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes("DELETE FROM dragon_forge.\"user\""))).toBe(true);
     expect(pool.queries.map((query) => query.sql).join("\n")).not.toContain("password_hash AS");
