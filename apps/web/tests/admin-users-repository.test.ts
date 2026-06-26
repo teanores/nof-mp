@@ -198,62 +198,6 @@ describe("admin users repository", () => {
     expect(pool.queries.map((query) => query.sql).join("\n")).not.toContain("password_hash AS");
   });
 
-  it("marks a source user as duplicate and moves identity fields to a canonical user", async () => {
-    const sourceRow = {
-      access_denied: false,
-      created_at: "2026-06-01T10:00:00.000Z",
-      email: "251740038@telegram.forgath.ru",
-      has_password: false,
-      id: "source-1",
-      last_seen: null,
-      registration_source: "telegram",
-      role_display_name: "Администратор",
-      role_name: "admin",
-      telegram_id: "251740038",
-      telegram_username: "wrong_admin",
-      username: "wrong-admin",
-    };
-    const targetRow = {
-      access_denied: false,
-      created_at: "2026-06-02T10:00:00.000Z",
-      email: "owner@example.com",
-      has_password: true,
-      id: "target-1",
-      last_seen: null,
-      registration_source: "email",
-      role_display_name: "Администратор",
-      role_name: "admin",
-      telegram_id: null,
-      telegram_username: null,
-      username: "owner",
-    };
-    const pool = new QueuePool([
-      [], [], [],
-      [], [], [],
-      [], [], [], [sourceRow],
-      [], [], [], [targetRow],
-      [], [], [], [], [], [], [],
-    ]);
-    const repository = new AdminUsersRepository(pool as never);
-
-    await expect(
-      repository.mergeUserIntoCanonical({
-        actorUserId: "admin-1",
-        sourceUserId: "source-1",
-        targetUserId: "target-1",
-      }),
-    ).resolves.toEqual({ sourceUserId: "source-1", targetUserId: "target-1" });
-
-    const sql = pool.queries.map((query) => query.sql).join("\n");
-    expect(sql).toContain("CREATE TABLE IF NOT EXISTS nof_platform.user_identity_merge");
-    expect(sql).toContain("UPDATE dragon_forge.\"user\" target");
-    expect(sql).toContain("^user[0-9]+@?forgath");
-    expect(sql).toContain("INSERT INTO nof_platform.user_access_state");
-    expect(sql).toContain("duplicate_merged");
-    expect(sql).not.toContain("password_hash AS");
-    expect(sql).not.toContain("token");
-  });
-
   it("marks non-forgath domains as external emails", () => {
     expect(userRisks({ email: "elf@external.invalid", has_password: true })).toEqual(["external-email"]);
     expect(userRisks({ email: "elf@forgath.ru", has_password: true })).toEqual([]);

@@ -3,10 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ForgePortalSession } from "@/lib/types";
 
-const adminUsersRepository = vi.hoisted(() => ({
-  mergeUserIntoCanonical: vi.fn(),
-}));
-
 const audit = vi.hoisted(() => ({
   recordSecurityAuditEvent: vi.fn(),
 }));
@@ -22,10 +18,6 @@ const authSession = vi.hoisted(() => ({
       username: "admin",
     },
   } as ForgePortalSession,
-}));
-
-vi.mock("@/lib/server/admin-users-repository", () => ({
-  getAdminUsersRepository: () => adminUsersRepository,
 }));
 
 vi.mock("@/lib/server/security-audit-dashboard", () => ({
@@ -53,10 +45,6 @@ function request(body: Record<string, unknown>): NextRequest {
 describe("admin user canonical merge route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    adminUsersRepository.mergeUserIntoCanonical.mockResolvedValue({
-      sourceUserId: "source-1",
-      targetUserId: "target-1",
-    });
   });
 
   it("rejects the legacy source-to-target merge while the multi-alias model is pending", async () => {
@@ -65,7 +53,6 @@ describe("admin user canonical merge route", () => {
 
     expect(response.status).toBe(409);
     expect(payload).toEqual({ error: "multi_alias_model_required" });
-    expect(adminUsersRepository.mergeUserIntoCanonical).not.toHaveBeenCalled();
     expect(audit.recordSecurityAuditEvent).not.toHaveBeenCalled();
   });
 
@@ -75,7 +62,6 @@ describe("admin user canonical merge route", () => {
 
     expect(response.status).toBe(400);
     expect(payload).toEqual({ error: "cannot_merge_self" });
-    expect(adminUsersRepository.mergeUserIntoCanonical).not.toHaveBeenCalled();
   });
 
   it("requires a target canonical user id", async () => {

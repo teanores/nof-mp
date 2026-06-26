@@ -40,17 +40,6 @@ export interface AdminUserDeleteInput {
   userId: string;
 }
 
-export interface AdminUserCanonicalMergeInput {
-  actorUserId: string;
-  sourceUserId: string;
-  targetUserId: string;
-}
-
-export interface AdminUserCanonicalMergeResult {
-  sourceUserId: string;
-  targetUserId: string;
-}
-
 interface AdminUserRow extends QueryResultRow {
   access_denied: boolean | null;
   created_at: Date | string | null;
@@ -259,61 +248,6 @@ export class AdminUsersRepository {
     return { id: existing.id, username: existing.username };
   }
 
-  async mergeUserIntoCanonical(input: AdminUserCanonicalMergeInput): Promise<AdminUserCanonicalMergeResult | null> {
-    await this.ensureAccessStateSchema();
-    await this.ensureIdentityMergeSchema();
-
-    const source = await this.getUserById(input.sourceUserId);
-    const target = await this.getUserById(input.targetUserId);
-    if (!source || !target) {
-      return null;
-    }
-
-    await this.pool.query("BEGIN");
-    try {
-      await this.pool.query(
-        `UPDATE dragon_forge."user" target
-         SET
-           email = CASE
-             WHEN (target.email IS NULL OR target.email = '')
-              AND source.email IS NOT NULL
-              AND source.email !~ '(^[0-9]+@?telegram\\.(example\\.com|forgath\\.ru)$|^user[0-9]+@?forgath\\.ru$)'
-             THEN source.email
-             ELSE target.email
-           END,
-           telegram_id = COALESCE(target.telegram_id, source.telegram_id),
-           telegram_username = COALESCE(target.telegram_username, source.telegram_username)
-         FROM dragon_forge."user" source
-         WHERE target.id = $1::uuid
-           AND source.id = $2::uuid`,
-        [input.targetUserId, input.sourceUserId],
-      );
-      await this.pool.query(
-        `INSERT INTO nof_platform.user_identity_merge (source_user_id, target_user_id, merged_by, reason, created_at)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, 'duplicate_merged', NOW())`,
-        [input.sourceUserId, input.targetUserId, input.actorUserId],
-      );
-      await this.pool.query(
-        `INSERT INTO nof_platform.user_access_state (user_id, access_denied, reason, denied_at, restored_at, updated_by, updated_at)
-         VALUES ($1::uuid, true, 'duplicate_merged', NOW(), NULL, $2::uuid, NOW())
-         ON CONFLICT (user_id) DO UPDATE SET
-           access_denied = true,
-           reason = 'duplicate_merged',
-           denied_at = COALESCE(nof_platform.user_access_state.denied_at, NOW()),
-           restored_at = NULL,
-           updated_by = EXCLUDED.updated_by,
-           updated_at = NOW()`,
-        [input.sourceUserId, input.actorUserId],
-      );
-      await this.pool.query("COMMIT");
-    } catch (error) {
-      await this.pool.query("ROLLBACK");
-      throw error;
-    }
-
-    return { sourceUserId: source.id, targetUserId: target.id };
-  }
-
   private async deleteFromOptionalTable(tableName: string, userColumn: string, userId: string): Promise<void> {
     const exists = await this.pool.query<{ table_exists: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS table_exists`, [tableName]);
     if (!exists.rows[0]?.table_exists) {
@@ -350,24 +284,6 @@ export class AdminUsersRepository {
     await this.pool.query(
       `CREATE INDEX IF NOT EXISTS user_access_state_denied_idx
        ON nof_platform.user_access_state (access_denied, updated_at DESC)`,
-    );
-  }
-
-  private async ensureIdentityMergeSchema(): Promise<void> {
-    await this.pool.query(`CREATE SCHEMA IF NOT EXISTS nof_platform`);
-    await this.pool.query(
-      `CREATE TABLE IF NOT EXISTS nof_platform.user_identity_merge (
-        id bigserial PRIMARY KEY,
-        source_user_id uuid NOT NULL,
-        target_user_id uuid NOT NULL,
-        merged_by uuid,
-        reason text NOT NULL,
-        created_at timestamptz NOT NULL DEFAULT now()
-      )`,
-    );
-    await this.pool.query(
-      `CREATE INDEX IF NOT EXISTS user_identity_merge_source_idx
-       ON nof_platform.user_identity_merge (source_user_id, created_at DESC)`,
     );
   }
 
