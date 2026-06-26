@@ -254,50 +254,6 @@ describe("admin users repository", () => {
     expect(sql).not.toContain("token");
   });
 
-  it("updates real email and Telegram identity fields for a selected user", async () => {
-    const userRow = {
-      access_denied: false,
-      created_at: "2026-06-01T10:00:00.000Z",
-      email: "owner@example.com",
-      has_password: true,
-      id: "u-2",
-      last_seen: null,
-      registration_source: "email",
-      role_display_name: "Пользователь",
-      role_name: "user",
-      telegram_id: "251740038",
-      telegram_username: "teanore",
-      username: "owner",
-    };
-    const pool = new QueuePool([
-      [], [], [],
-      [], [], [], [userRow],
-      [],
-      [], [], [], [userRow],
-    ]);
-    const repository = new AdminUsersRepository(pool as never);
-
-    await expect(
-      repository.updateUserIdentityLink({
-        actorUserId: "admin-1",
-        email: "owner@example.com",
-        telegramId: 251740038,
-        telegramUsername: "teanore",
-        userId: "u-2",
-      }),
-    ).resolves.toMatchObject({
-      email: "owner@example.com",
-      telegram: { id: 251740038, username: "teanore" },
-    });
-
-    const sql = pool.queries.map((query) => query.sql).join("\n");
-    expect(sql).toContain("UPDATE dragon_forge.\"user\"");
-    expect(sql).toContain("telegram_id");
-    expect(sql).toContain("telegram_username");
-    expect(sql).not.toContain("password_hash AS");
-    expect(sql).not.toContain("token");
-  });
-
   it("marks non-forgath domains as external emails", () => {
     expect(userRisks({ email: "elf@external.invalid", has_password: true })).toEqual(["external-email"]);
     expect(userRisks({ email: "elf@forgath.ru", has_password: true })).toEqual([]);

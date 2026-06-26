@@ -51,14 +51,6 @@ export interface AdminUserCanonicalMergeResult {
   targetUserId: string;
 }
 
-export interface AdminUserIdentityLinkInput {
-  actorUserId: string;
-  email: string;
-  telegramId: number;
-  telegramUsername?: string;
-  userId: string;
-}
-
 interface AdminUserRow extends QueryResultRow {
   access_denied: boolean | null;
   created_at: Date | string | null;
@@ -320,26 +312,6 @@ export class AdminUsersRepository {
     }
 
     return { sourceUserId: source.id, targetUserId: target.id };
-  }
-
-  async updateUserIdentityLink(input: AdminUserIdentityLinkInput): Promise<AdminUserListItem | null> {
-    await this.ensureAccessStateSchema();
-    const existing = await this.getUserById(input.userId);
-    if (!existing) {
-      return null;
-    }
-
-    await this.pool.query(
-      `UPDATE dragon_forge."user"
-       SET email = $2,
-           telegram_id = $3,
-           telegram_username = NULLIF($4, ''),
-           registration_source = COALESCE(registration_source, 'admin-identity-link')
-       WHERE id = $1::uuid`,
-      [input.userId, input.email, input.telegramId, input.telegramUsername?.trim() ?? ""],
-    );
-
-    return this.getUserById(input.userId);
   }
 
   private async deleteFromOptionalTable(tableName: string, userColumn: string, userId: string): Promise<void> {
