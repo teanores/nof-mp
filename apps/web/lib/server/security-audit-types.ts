@@ -7,6 +7,7 @@ export type SecurityAuditEventType =
   | "app_authenticated_request"
   | "admin_email_link_requested"
   | "admin_password_reset_requested"
+  | "admin_password_rotation_required"
   | "admin_settings_updated"
   | "admin_user_access_updated"
   | "admin_user_deleted"

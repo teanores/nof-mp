@@ -178,6 +178,58 @@ function RecoveryActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function PasswordRotationActions({ user }: { user: AdminUserListItem }) {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+
+  async function handleRequireRotation() {
+    setStatus("saving");
+    try {
+      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/password-rotation`, {
+        body: JSON.stringify({ reason: "admin_required_rotation" }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setStatus("saved");
+    } catch {
+      setStatus("failed");
+    }
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="heading-tech text-lg font-bold text-forge-ink">Смена пароля</h2>
+          <p className="mt-2 text-sm leading-6 text-forge-muted">
+            {user.hasPassword ? "Можно потребовать смену пароля при следующем входе." : "У пользователя нет пароля для входа."}
+          </p>
+        </div>
+        {user.hasPassword ? (
+          <button
+            className={compactPrimaryActionClassName(status === "saving" || status === "saved", "inline-flex items-center justify-center text-xs")}
+            disabled={status === "saving" || status === "saved"}
+            type="button"
+            onClick={() => void handleRequireRotation()}
+          >
+            {status === "saving" ? "Сохраняем" : status === "saved" ? "Смена пароля требуется" : "Потребовать смену пароля"}
+          </button>
+        ) : null}
+      </div>
+      {status === "saved" ? (
+        <p className="mt-3 text-sm leading-6 text-forge-muted">При следующем входе пользователь будет направлен на смену пароля.</p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
+          Требование смены пароля не сохранено. Повтори позже.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 function AccessActions({ user }: { user: AdminUserListItem }) {
   const [accessState, setAccessState] = useState(user.accessState);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
@@ -627,6 +679,8 @@ export function AdminUserDetailPage({
       <EmailLinkActions user={user} />
 
       <RecoveryActions user={user} />
+
+      <PasswordRotationActions user={user} />
 
       <IdentityLinkActions user={user} />
 

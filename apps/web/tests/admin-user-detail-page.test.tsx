@@ -247,6 +247,24 @@ describe("admin user detail page", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it("lets an admin require password rotation for a selected account", async () => {
+    render(<AdminUserDetailPage user={recoverableUser} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Потребовать смену пароля" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/users/u-2/password-rotation",
+        expect.objectContaining({
+          body: JSON.stringify({ reason: "admin_required_rotation" }),
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("При следующем входе пользователь будет направлен на смену пароля.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("password_hash");
+  });
+
   it("shows a safe error when direct recovery email delivery request fails", async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       json: async () => ({ error: "request_failed" }),

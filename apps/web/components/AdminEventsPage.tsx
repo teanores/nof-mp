@@ -24,7 +24,13 @@ const eventFilters = [
   { label: "Авторизованные запросы", value: "Авторизованный" },
 ] as const;
 
-const userLifecycleLabels = new Set(["Удаление пользователя", "Слияние учётных записей", "Изменение email и Telegram", "Изменение доступа пользователя"]);
+const userLifecycleLabels = new Set([
+  "Администратор потребовал смену пароля",
+  "Удаление пользователя",
+  "Слияние учётных записей",
+  "Изменение email и Telegram",
+  "Изменение доступа пользователя",
+]);
 
 export function AdminEventsPage({ events }: { events: UserSecurityAuditActivity[] }) {
   const [eventFilter, setEventFilter] = useState<(typeof eventFilters)[number]["value"]>("all");
