@@ -15,7 +15,7 @@ describe("service preview pages", () => {
     expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Перейти в Task Tracker" })).toHaveAttribute(
       "href",
-      "https://task-tracker.forgath.ru/auth/platform/start?next=%2Fprojects",
+      "/products/nof-tt/launch",
     );
     expect(screen.getByText(/собирает идеи, требования, задачи, спринты и UAT/i)).toBeInTheDocument();
     expect(screen.getByText(/руководителя продукта/i)).toBeInTheDocument();
@@ -31,7 +31,7 @@ describe("service preview pages", () => {
     expect(container.querySelector(".max-w-\\[1200px\\]")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Перейти в Habit Tracker" })).toHaveAttribute(
       "href",
-      "https://habit-tracker.forgath.ru/api/auth/platform/authorize?callbackUrl=%2F",
+      "/products/nof-ht/launch",
     );
     expect(screen.getByText(/помогает удерживать регулярные практики/i)).toBeInTheDocument();
     expect(screen.getByText(/личных целей и командных ритуалов/i)).toBeInTheDocument();
