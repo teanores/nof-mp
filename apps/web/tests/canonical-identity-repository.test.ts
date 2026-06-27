@@ -127,6 +127,7 @@ describe("canonical identity repository", () => {
     expect(pool.queries.some((query) => query.sql === "BEGIN")).toBe(true);
     expect(pool.queries.some((query) => query.sql === "COMMIT")).toBe(true);
     expect(pool.queries.filter((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias\n"))).toHaveLength(3);
+    expect(pool.queries.some((query) => query.sql.includes("'link'"))).toBe(true);
     expect(pool.queries.some((query) => query.sql.includes('UPDATE dragon_forge."user"'))).toBe(false);
   });
 
@@ -163,5 +164,70 @@ describe("canonical identity repository", () => {
 
     expect(pool.queries.some((query) => query.sql === "BEGIN")).toBe(false);
     expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias\n"))).toBe(false);
+  });
+
+  it("reconciles a canonical platform user with extra alias accounts without mutating legacy users", async () => {
+    const pool = new FakePool([[], [], [{ id: "person-1" }], [], [{ id: "person-1" }]]);
+    const repository = new CanonicalIdentityRepository(pool as never);
+
+    const result = await repository.reconcilePlatformUsers({
+      actorUserId: "actor-1",
+      canonicalPlatformUserId: "email-user",
+      users: [
+        {
+          aliases: [{ aliasKind: "email", aliasValue: "Owner@Example.com", verificationState: "verified" }],
+          platformUserId: "email-user",
+        },
+        {
+          aliases: [{ aliasKind: "telegram_id", aliasProvider: "telegram", aliasValue: "251740038" }],
+          platformUserId: "telegram-user",
+        },
+        {
+          aliases: [{ aliasKind: "telegram_username", aliasProvider: "telegram", aliasValue: "@teanore" }],
+          platformUserId: "extra-user",
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({ linkedUserIds: ["email-user", "telegram-user", "extra-user"], ok: true, personId: expect.any(String) });
+    expect(pool.queries.filter((query) => query.sql.includes("INSERT INTO nof_platform.person_account_link"))).toHaveLength(3);
+    expect(pool.queries.filter((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias_event") && query.sql.includes("'link'"))).toHaveLength(3);
+    expect(pool.queries.some((query) => query.sql.includes('UPDATE dragon_forge."user"'))).toBe(false);
+  });
+
+  it("requires the canonical user to be part of the selected reconciliation set", async () => {
+    const repository = new CanonicalIdentityRepository(new FakePool() as never);
+
+    await expect(
+      repository.reconcilePlatformUsers({
+        canonicalPlatformUserId: "missing-user",
+        users: [
+          { aliases: [], platformUserId: "user-1" },
+          { aliases: [], platformUserId: "user-2" },
+        ],
+      }),
+    ).resolves.toEqual({ ok: false, reason: "canonical_user_required" });
+  });
+
+  it("lists and unlinks platform account links with an immutable unlink event", async () => {
+    const pool = new FakePool([
+      [{ person_id: "person-1" }],
+      [{ platform_user_id: "user-1" }, { platform_user_id: "user-2" }],
+      [{ person_id: "person-1" }],
+    ]);
+    const repository = new CanonicalIdentityRepository(pool as never);
+
+    await expect(repository.listLinkedPlatformUserIds("user-1")).resolves.toEqual({
+      personId: "person-1",
+      platformUserIds: ["user-1", "user-2"],
+    });
+    await expect(repository.unlinkPlatformUser({ actorUserId: "actor-1", personId: "person-1", platformUserId: "user-2" })).resolves.toEqual({
+      ok: true,
+      personId: "person-1",
+      platformUserId: "user-2",
+    });
+    expect(pool.queries.some((query) => query.sql.includes("UPDATE nof_platform.person_account_link"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes("INSERT INTO nof_platform.identity_alias_event") && query.sql.includes("'unlink'"))).toBe(true);
+    expect(pool.queries.some((query) => query.sql.includes('DELETE FROM dragon_forge."user"'))).toBe(false);
   });
 });
