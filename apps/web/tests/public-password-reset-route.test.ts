@@ -42,6 +42,7 @@ function request(url: string, body: unknown): NextRequest {
 describe("public password reset routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     resetAuthAbuseProtectionForTests();
     vi.spyOn(console, "info").mockImplementation(() => undefined);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -231,5 +232,31 @@ describe("public password reset routes", () => {
         statusCode: 429,
       }),
     );
+  });
+
+  it("rejects password reset requests without SmartCaptcha token when captcha is enabled", async () => {
+    vi.stubEnv("CAPTCHA_DISABLED", "false");
+    vi.stubEnv("YANDEX_CAPTCHA_SERVER_KEY", "test-server-key");
+
+    const response = await requestReset(request("http://localhost/api/public/password-reset/request", { email: "owner@example.com" }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "captcha_required" });
+    expect(passwordResetRepository.requestReset).not.toHaveBeenCalled();
+  });
+
+  it("accepts password reset requests with a valid mocked SmartCaptcha token", async () => {
+    vi.stubEnv("CAPTCHA_DISABLED", "false");
+    vi.stubEnv("YANDEX_CAPTCHA_SERVER_KEY", "test-server-key");
+
+    const response = await requestReset(
+      request("http://localhost/api/public/password-reset/request", {
+        email: "owner@example.com",
+        smartToken: "mock-smartcaptcha-token",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(passwordResetRepository.requestReset).toHaveBeenCalledWith({ email: "owner@example.com" });
   });
 });

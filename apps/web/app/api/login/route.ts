@@ -7,7 +7,7 @@ import {
   copyAuthCookies,
   nofServiceLoginUrl,
 } from "@/lib/server/nof-service-client";
-import { authRateLimit } from "@/lib/server/auth-abuse-protection";
+import { authFailureCount, authRateLimit, clearAuthFailures, recordAuthFailure } from "@/lib/server/auth-abuse-protection";
 import { getAdminUsersRepository } from "@/lib/server/admin-users-repository";
 import { decodeNofAuthToken } from "@/lib/server/nof-portal-auth";
 import { normalizePortalLanguage } from "@/lib/portal-language";
@@ -15,6 +15,7 @@ import { getPasswordPolicyStateRepository } from "@/lib/server/password-policy-s
 import { safePortalReturnTo } from "@/lib/server/portal-auth-gate";
 import { summarizeUserAgent } from "@/lib/server/security-audit-sanitize";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
+import { verifySmartCaptchaToken } from "@/lib/server/smartcaptcha";
 import { getUserPreferencesRepository } from "@/lib/server/user-preferences-repository";
 
 function clientIpFromRequest(request: NextRequest): string {
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const smartToken = String(formData.get("smart-token") ?? "");
   const next = safePortalReturnTo(String(formData.get("next") ?? "/"));
   const language = normalizePortalLanguage(formData.get("language"));
   const auditContext = {
@@ -59,6 +61,20 @@ export async function POST(request: NextRequest) {
     return buildPortalLoginFailedRedirect(next);
   }
 
+  const failureKey = `login-fail:${auditContext.ip}:${username.toLowerCase()}`;
+  if (authFailureCount(failureKey, { windowMs: 15 * 60 * 1000 }) >= 3) {
+    const captchaOk = await verifySmartCaptchaToken({ ip: auditContext.ip, token: smartToken });
+    if (!captchaOk) {
+      await recordSecurityAuditEvent({
+        ...auditContext,
+        eventType: "login_captcha_required",
+        loginIdentifier: username,
+        statusCode: 400,
+      });
+      return buildPortalLoginFailedRedirect(next);
+    }
+  }
+
   const upstreamForm = new URLSearchParams();
   upstreamForm.set("username", username);
   upstreamForm.set("password", password);
@@ -71,6 +87,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (upstream.status !== 302 && upstream.status !== 303 && upstream.status !== 307) {
+    recordAuthFailure(failureKey, { windowMs: 15 * 60 * 1000 });
     await recordSecurityAuditEvent({
       ...auditContext,
       eventType: upstream.status === 429 ? "login_rate_limited" : "login_failed",
@@ -95,6 +112,7 @@ export async function POST(request: NextRequest) {
   }
 
   const response = buildPortalLoginRedirect(next);
+  clearAuthFailures(failureKey);
   copyAuthCookies(upstream, response);
   if (userId) {
     const passwordPolicyState = await getPasswordPolicyStateRepository().stateForUser(userId);

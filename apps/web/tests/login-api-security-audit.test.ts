@@ -59,6 +59,7 @@ function loginRequest(fields: Record<string, string>, init?: RequestInit): NextR
 describe("login API security audit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     resetAuthAbuseProtectionForTests();
     passwordPolicyState.stateForUser.mockResolvedValue({ mustRotatePassword: false });
     adminUsersRepository.isAccessDenied.mockResolvedValue(false);
@@ -161,5 +162,53 @@ describe("login API security audit", () => {
       }),
     );
     expect(JSON.stringify(vi.mocked(recordSecurityAuditEvent).mock.calls)).not.toContain("wrong-password");
+  });
+
+  it("requires SmartCaptcha after three failed login attempts", async () => {
+    vi.stubEnv("CAPTCHA_DISABLED", "false");
+    vi.stubEnv("YANDEX_CAPTCHA_SERVER_KEY", "test-server-key");
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 401 }));
+
+    for (let index = 0; index < 3; index += 1) {
+      await POST(loginRequest({ next: "/overview", password: "wrong-password", username: "owner@example.com" }));
+    }
+
+    const response = await POST(loginRequest({ next: "/overview", password: "wrong-password", username: "owner@example.com" }));
+
+    expect(response.headers.get("location")).toBe("/login?error=1");
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(recordSecurityAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "login_captcha_required",
+        loginIdentifier: "owner@example.com",
+        statusCode: 400,
+      }),
+    );
+  });
+
+  it("allows login after the failed-attempt threshold with a valid mocked SmartCaptcha token", async () => {
+    vi.stubEnv("CAPTCHA_DISABLED", "false");
+    vi.stubEnv("YANDEX_CAPTCHA_SERVER_KEY", "test-server-key");
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { headers: { location: "/" }, status: 302 }));
+
+    for (let index = 0; index < 3; index += 1) {
+      await POST(loginRequest({ next: "/overview", password: "wrong-password", username: "owner@example.com" }));
+    }
+
+    const response = await POST(
+      loginRequest({
+        next: "/overview",
+        password: "correct-password",
+        "smart-token": "mock-smartcaptcha-token",
+        username: "owner@example.com",
+      }),
+    );
+
+    expect(response.headers.get("location")).toBe("/overview");
+    expect(fetch).toHaveBeenCalledTimes(4);
   });
 });

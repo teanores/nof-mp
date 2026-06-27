@@ -6,9 +6,10 @@ import React, { useState } from "react";
 import { primaryActionClassName } from "@/components/ActionButtonStyles";
 import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
+import { SmartCaptcha } from "@/components/SmartCaptcha";
 
 type RegisterStep = "request" | "confirm";
-type RegisterError = "conflict" | "email_delivery" | "invalid" | "invalid_email" | "password_policy" | "unavailable" | undefined;
+type RegisterError = "captcha" | "conflict" | "email_delivery" | "invalid" | "invalid_email" | "password_policy" | "unavailable" | undefined;
 
 interface RegisterPageProps {
   email?: string;
@@ -44,6 +45,8 @@ function ErrorPanel({ error }: { error: RegisterError }) {
   const message =
     error === "unavailable"
       ? "Регистрация временно недоступна. Мы уже восстанавливаем приём новых аккаунтов; сейчас можно войти в уже созданную учётную запись."
+      : error === "captcha"
+        ? "Подтвердите, что вы не робот, и попробуйте ещё раз."
       : error === "conflict"
         ? "Не удалось создать аккаунт с такими данными."
         : error === "invalid_email"
@@ -205,6 +208,7 @@ function RequestForm({ error }: { error: RegisterError }) {
           .
         </span>
       </label>
+      <SmartCaptcha />
       <button
         className={primaryActionClassName(!canSubmit)}
         disabled={!canSubmit}

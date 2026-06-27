@@ -59,6 +59,7 @@ describe("public registration routes", () => {
     registrationMocks.confirmRegistration.mockResolvedValue({ ok: true, userId: "user-1" });
     emailMocks.sendRegistrationCodeEmail.mockResolvedValue(undefined);
     resetRegistrationAbuseProtectionForTests();
+    vi.unstubAllEnvs();
   });
 
   it("requests an email registration code through native nof-mp registration", async () => {
@@ -261,5 +262,40 @@ describe("public registration routes", () => {
     }
 
     expect(emailMocks.sendRegistrationCodeEmail).toHaveBeenCalledTimes(3);
+  });
+
+  it("rejects registration requests without SmartCaptcha token when captcha is enabled", async () => {
+    vi.stubEnv("CAPTCHA_DISABLED", "false");
+    vi.stubEnv("YANDEX_CAPTCHA_SERVER_KEY", "test-server-key");
+
+    const response = await requestRegistration(
+      formRequest("http://localhost/api/public/registration/request", {
+        email: "owner@example.com",
+        password: "OwnerLocal123!",
+        username: "owner",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/register?error=captcha");
+    expect(registrationMocks.requestRegistration).not.toHaveBeenCalled();
+  });
+
+  it("accepts registration requests with a valid mocked SmartCaptcha token", async () => {
+    vi.stubEnv("CAPTCHA_DISABLED", "false");
+    vi.stubEnv("YANDEX_CAPTCHA_SERVER_KEY", "test-server-key");
+
+    const response = await requestRegistration(
+      formRequest("http://localhost/api/public/registration/request", {
+        email: "owner@example.com",
+        password: "OwnerLocal123!",
+        "smart-token": "mock-smartcaptcha-token",
+        username: "owner",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/register?step=confirm&email=owner%40example.com");
+    expect(registrationMocks.requestRegistration).toHaveBeenCalled();
   });
 });

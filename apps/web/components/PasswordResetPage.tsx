@@ -7,6 +7,7 @@ import React, { useMemo, useState } from "react";
 import { primaryActionClassName } from "@/components/ActionButtonStyles";
 import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
+import { SmartCaptcha } from "@/components/SmartCaptcha";
 import type { PortalLanguage } from "@/lib/portal-language";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
@@ -193,7 +194,8 @@ function RequestResetForm({ initialEmail = "", language }: { initialEmail?: stri
     setError(undefined);
     setStatus("submitting");
     try {
-      await postJson("/api/public/password-reset/request", { email });
+      const smartToken = new FormData(event.currentTarget).get("smart-token");
+      await postJson("/api/public/password-reset/request", { email, smartToken });
       setStatus("sent");
     } catch (caught) {
       setError(resetErrorMessage(caught, language));
@@ -222,6 +224,7 @@ function RequestResetForm({ initialEmail = "", language }: { initialEmail?: stri
       >
         {status === "submitting" ? text.submittingRequest : text.requestButton}
       </button>
+      <SmartCaptcha />
       {status === "sent" ? (
         <p className="rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-sm leading-6 text-forge-muted">
           {text.requestSent}

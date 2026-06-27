@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { PasswordVisibilityButton } from "@/components/PasswordVisibilityButton";
 import { PortalLanguageSelect } from "@/components/PortalLanguageSelect";
+import { SmartCaptcha } from "@/components/SmartCaptcha";
 import { usePortalLanguage } from "@/lib/use-portal-language";
 
 interface LoginPageProps {
@@ -59,6 +60,14 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
   const language = usePortalLanguage();
   const text = copy[language];
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+
+  useEffect(() => {
+    const stored = Number.parseInt(window.localStorage.getItem("nof-mp-login-failures") ?? "0", 10);
+    const nextCount = error ? stored + 1 : stored;
+    window.localStorage.setItem("nof-mp-login-failures", String(nextCount));
+    setFailedAttempts(nextCount);
+  }, [error]);
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-8">
@@ -115,6 +124,7 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
               {text.invalidCredentials}
             </p>
           ) : null}
+          {failedAttempts >= 3 ? <SmartCaptcha hidden /> : null}
           <button
             className="tech-label rounded-sm border border-forge-accent bg-forge-accent px-5 py-3 text-xs font-bold text-black transition hover:brightness-110"
             type="submit"

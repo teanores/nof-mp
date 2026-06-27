@@ -76,7 +76,12 @@ export async function recordRegistrationAudit(
   request: NextRequest,
   input: {
     email: string;
-    eventType: "registration_attempt" | "registration_invalid_email" | "registration_rate_limited" | "registration_success";
+    eventType:
+      | "registration_attempt"
+      | "registration_captcha_required"
+      | "registration_invalid_email"
+      | "registration_rate_limited"
+      | "registration_success";
     statusCode: number;
   },
 ): Promise<void> {

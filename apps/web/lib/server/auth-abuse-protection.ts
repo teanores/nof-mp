@@ -32,6 +32,26 @@ export function authRateLimit(
   return { allowed: true };
 }
 
+export function authFailureCount(key: string, options: { now?: number; windowMs: number }): number {
+  const now = options.now ?? Date.now();
+  const current = buckets.get(key);
+  if (!current || current.resetAt <= now) {
+    return 0;
+  }
+  return current.count;
+}
+
+export function recordAuthFailure(key: string, options: { now?: number; windowMs: number }): number {
+  const now = options.now ?? Date.now();
+  const bucket = bucketFor(key, options.windowMs, now);
+  bucket.count += 1;
+  return bucket.count;
+}
+
+export function clearAuthFailures(key: string): void {
+  buckets.delete(key);
+}
+
 export function resetAuthAbuseProtectionForTests(): void {
   buckets.clear();
 }

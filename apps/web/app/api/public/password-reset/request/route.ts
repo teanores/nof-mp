@@ -7,12 +7,14 @@ import { getPlatformPasswordResetRepository, normalizePasswordResetEmail } from 
 import { clientIpFromRequest, hashRegistrationEmail } from "@/lib/server/registration-abuse-protection";
 import { summarizeUserAgent } from "@/lib/server/security-audit-sanitize";
 import { recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
+import { verifySmartCaptchaToken } from "@/lib/server/smartcaptcha";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const body = (await request.json().catch(() => ({}))) as { email?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { email?: unknown; smartToken?: unknown };
   const email = typeof body.email === "string" ? normalizePasswordResetEmail(body.email) : "";
+  const smartToken = typeof body.smartToken === "string" ? body.smartToken : "";
   const auditContext = {
     ip: clientIpFromRequest(request),
     method: "POST",
@@ -21,6 +23,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   };
 
   if (email) {
+    if (!(await verifySmartCaptchaToken({ ip: auditContext.ip, token: smartToken }))) {
+      await recordSecurityAuditEvent({
+        ...auditContext,
+        eventType: "password_reset_captcha_required",
+        loginIdentifier: hashRegistrationEmail(email),
+        statusCode: 400,
+      });
+      return NextResponse.json({ error: "captcha_required" }, { status: 400 });
+    }
+
     const limit = authRateLimit(`password-reset-request:${auditContext.ip}:${hashRegistrationEmail(email)}`, {
       limit: 5,
       windowMs: 60 * 60 * 1000,

@@ -14,6 +14,7 @@ import {
   redirectToRegistrationConfirm,
   redirectToRegistrationRequestError,
 } from "@/lib/server/public-registration";
+import { verifySmartCaptchaToken } from "@/lib/server/smartcaptcha";
 
 function hasValidEmailShape(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
   const username = String(formData.get("username") ?? "").trim();
   const email = normalizeRegistrationEmail(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
+  const smartToken = String(formData.get("smart-token") ?? "");
 
   if (!username || !email || !password) {
     return redirectToRegistrationRequestError("invalid");
@@ -36,6 +38,11 @@ export async function POST(request: NextRequest) {
 
   if (await getPlatformSettingsRepository().isRegistrationPaused()) {
     return redirectToRegistrationRequestError("unavailable");
+  }
+
+  if (!(await verifySmartCaptchaToken({ ip: clientIpFromRequest(request), token: smartToken }))) {
+    await recordRegistrationAudit(request, { email, eventType: "registration_captcha_required", statusCode: 400 });
+    return redirectToRegistrationRequestError("captcha");
   }
 
   const limit = registrationRateLimit(email, clientIpFromRequest(request));

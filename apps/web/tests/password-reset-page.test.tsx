@@ -70,7 +70,7 @@ describe("password reset page", () => {
       expect(fetch).toHaveBeenCalledWith(
         "/api/public/password-reset/request",
         expect.objectContaining({
-          body: JSON.stringify({ email: "owner@example.com" }),
+          body: JSON.stringify({ email: "owner@example.com", smartToken: "mock-smartcaptcha-token" }),
         }),
       ),
     );

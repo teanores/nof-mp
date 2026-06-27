@@ -28,6 +28,7 @@ describe("register page", () => {
     expect(screen.getByRole("button", { name: "Получить код" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Получить код" })).not.toHaveClass("bg-forge-accent");
     expect(screen.getByRole("button", { name: "Назад" })).toHaveAttribute("type", "button");
+    expect(document.querySelector('input[name="smart-token"]')).toHaveValue("mock-smartcaptcha-token");
     expect(screen.queryByRole("link", { name: "Войти" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "На портал" })).not.toBeInTheDocument();
     expect(document.querySelector("form")).toHaveAttribute("action", "/api/portal/registration/request");

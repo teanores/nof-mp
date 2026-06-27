@@ -20,6 +20,7 @@ export type SecurityAuditEventType =
   | "registration_rate_limited"
   | "registration_success"
   | "login_access_denied"
+  | "login_captcha_required"
   | "login_failed"
   | "login_missing_credentials"
   | "login_rate_limited"
@@ -29,10 +30,12 @@ export type SecurityAuditEventType =
   | "password_change_failed"
   | "password_change_success"
   | "password_reset_completed"
+  | "password_reset_captcha_required"
   | "password_reset_failed"
   | "password_reset_rate_limited"
   | "password_reset_requested"
   | "profile_updated"
+  | "registration_captcha_required"
   | "session_expired";
 
 export type EdgeEventClassification =
