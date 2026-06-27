@@ -14,6 +14,7 @@ const platformApi = vi.hoisted(() => ({
   fetchPortalSession: vi.fn(),
   unlinkProfileService: vi.fn(),
   updatePortalProfile: vi.fn(),
+  uploadProfileAvatar: vi.fn(),
 }));
 
 vi.mock("@/lib/platform-api", () => platformApi);
@@ -65,6 +66,7 @@ describe("user profile MCP access", () => {
     platformApi.fetchPlatformProjects.mockResolvedValue([]);
     platformApi.fetchProfileServiceLinks.mockResolvedValue([]);
     platformApi.updatePortalProfile.mockResolvedValue({ aboutMe: "Описание обновлено", id: "user-1", username: "TeAnore" });
+    platformApi.uploadProfileAvatar.mockResolvedValue({ objectKey: "avatars/user-1/avatar.png" });
     platformApi.unlinkProfileService.mockResolvedValue({
       serviceKey: "nof-ht",
       serviceName: "Habit Tracker",
@@ -144,6 +146,22 @@ describe("user profile MCP access", () => {
     );
     expect(await screen.findByText("Профиль сохранён.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "TeAnore" })).toBeInTheDocument();
+  });
+
+  it("lets the signed-in user upload an avatar image through the media boundary", async () => {
+    render(<UserProfilePage initialSession={session} />);
+
+    await screen.findByRole("heading", { name: "teanore" });
+
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], "avatar.png", {
+      type: "image/png",
+    });
+    const uploadInput = document.querySelector('input[name="avatar"]') as HTMLInputElement;
+    await userEvent.upload(uploadInput, file);
+    await userEvent.click(screen.getByRole("button", { name: "Загрузить аватар" }));
+
+    await waitFor(() => expect(platformApi.uploadProfileAvatar).toHaveBeenCalledWith(file));
+    expect(await screen.findByText(/Аватар загружен/)).toBeInTheDocument();
   });
 
   it("keeps account recovery diagnostics out of the regular user profile", async () => {

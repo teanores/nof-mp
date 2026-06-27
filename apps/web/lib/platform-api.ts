@@ -62,3 +62,28 @@ export async function changeProfilePassword(input: { currentPassword: string; ne
     }),
   );
 }
+
+export async function uploadProfileAvatar(file: File): Promise<{ objectKey: string }> {
+  const magicBytes = btoa(String.fromCharCode(...new Uint8Array(await file.slice(0, 16).arrayBuffer())));
+  const data = await readJson<{ objectKey: string; uploadUrl: string }>(
+    await fetch("/api/profile/avatar/upload-url", {
+      body: JSON.stringify({
+        contentType: file.type,
+        fileName: file.name,
+        magicBytesBase64: magicBytes,
+        sizeBytes: file.size,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }),
+  );
+  const upload = await fetch(data.uploadUrl, {
+    body: file,
+    headers: { "Content-Type": file.type },
+    method: "PUT",
+  });
+  if (!upload.ok) {
+    throw new Error("avatar_upload_failed");
+  }
+  return { objectKey: data.objectKey };
+}

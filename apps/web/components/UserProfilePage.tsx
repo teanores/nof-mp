@@ -16,6 +16,7 @@ import {
   fetchProfileServiceLinks,
   unlinkProfileService,
   updatePortalProfile,
+  uploadProfileAvatar,
 } from "@/lib/platform-api";
 import type { ForgePortalSession, ForgePortalUser, ForgeProject, ForgeServiceLink } from "@/lib/types";
 
@@ -58,6 +59,9 @@ const profileCopy = {
   en: {
     aboutFallback: "Profile description is not filled yet.",
     aboutMe: "About me",
+    avatarUpload: "Upload avatar",
+    avatarUploadFailed: "Avatar was not uploaded.",
+    avatarUploaded: "Avatar uploaded. The image will appear after profile avatar persistence is enabled.",
     displayName: "Display name",
     identity: "Core profile",
     language: "Portal language",
@@ -131,6 +135,9 @@ const profileCopy = {
   ru: {
     aboutFallback: "Описание профиля пока не заполнено.",
     aboutMe: "О себе",
+    avatarUpload: "Загрузить аватар",
+    avatarUploadFailed: "Аватар не был загружен.",
+    avatarUploaded: "Аватар загружен. Изображение появится после включения хранения аватара в профиле.",
     displayName: "Имя",
     identity: "Основные параметры",
     language: "Язык портала",
@@ -248,6 +255,10 @@ function LoginRequired({ loginUrl }: { loginUrl?: string }) {
 export function UserProfilePage({ initialSession }: { initialSession?: ForgePortalSession }) {
   const copy = profileCopy[usePortalLanguage()];
   const [error, setError] = useState<string | undefined>();
+  const [avatarError, setAvatarError] = useState<string | undefined>();
+  const [avatarNotice, setAvatarNotice] = useState<string | undefined>();
+  const [avatarFile, setAvatarFile] = useState<File | undefined>();
+  const [isAvatarBusy, setIsAvatarBusy] = useState(false);
   const [isLoading, setIsLoading] = useState(!initialSession);
   const [isProfileBusy, setIsProfileBusy] = useState(false);
   const [isPasswordBusy, setIsPasswordBusy] = useState(false);
@@ -372,6 +383,27 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
     }
   }
 
+  async function handleAvatarSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!avatarFile || isAvatarBusy) {
+      return;
+    }
+
+    setAvatarError(undefined);
+    setAvatarNotice(undefined);
+    setIsAvatarBusy(true);
+    try {
+      await uploadProfileAvatar(avatarFile);
+      setAvatarFile(undefined);
+      setAvatarNotice(copy.avatarUploaded);
+      event.currentTarget.reset();
+    } catch {
+      setAvatarError(copy.avatarUploadFailed);
+    } finally {
+      setIsAvatarBusy(false);
+    }
+  }
+
   async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -490,6 +522,33 @@ export function UserProfilePage({ initialSession }: { initialSession?: ForgePort
                     </span>
                   </div>
                   <p className="tech-label mt-1 truncate text-[10px] text-forge-muted">{user.username}</p>
+
+                  <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(event) => void handleAvatarSubmit(event)}>
+                    <input
+                      accept="image/png,image/jpeg,image/webp"
+                      className="max-w-full rounded-sm border border-forge-line bg-forge-panel px-3 py-2 text-xs text-forge-muted file:mr-3 file:rounded-sm file:border-0 file:bg-forge-surface file:px-3 file:py-1 file:text-forge-muted"
+                      name="avatar"
+                      type="file"
+                      onChange={(event) => {
+                        setAvatarError(undefined);
+                        setAvatarNotice(undefined);
+                        setAvatarFile(event.target.files?.[0]);
+                      }}
+                    />
+                    <button
+                      className={compactPrimaryActionClassName(!avatarFile || isAvatarBusy, "min-w-[132px]")}
+                      disabled={!avatarFile || isAvatarBusy}
+                      type="submit"
+                    >
+                      {copy.avatarUpload}
+                    </button>
+                    {avatarError ? (
+                      <p className="text-xs font-semibold leading-5 text-forge-amber" role="alert">
+                        {avatarError}
+                      </p>
+                    ) : null}
+                    {avatarNotice ? <p className="text-xs leading-5 text-forge-muted">{avatarNotice}</p> : null}
+                  </form>
 
                   <form className="mt-3 grid gap-3" onSubmit={(event) => void handleProfileSubmit(event)}>
                     <label className="grid gap-2">
