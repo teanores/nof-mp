@@ -57,9 +57,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await portalSessionFromRequest(request);
   requirePortalAdminSession(session);
 
-  const body = (await request.json().catch(() => ({}))) as { canonicalUserId?: unknown; userIds?: unknown };
-  const canonicalUserId = typeof body.canonicalUserId === "string" ? body.canonicalUserId.trim() : "";
-  const userIds = uniqueStrings(body.userIds);
+  const body = (await request.json().catch(() => ({}))) as { additionalUserIds?: unknown; canonicalUserId?: unknown; primaryUserId?: unknown; userIds?: unknown };
+  const primaryUserId = typeof body.primaryUserId === "string" ? body.primaryUserId.trim() : "";
+  const additionalUserIds = uniqueStrings(body.additionalUserIds);
+  if (primaryUserId && additionalUserIds.includes(primaryUserId)) {
+    return NextResponse.json({ error: "primary_user_cannot_be_additional" }, { status: 400 });
+  }
+  const canonicalUserId = primaryUserId || (typeof body.canonicalUserId === "string" ? body.canonicalUserId.trim() : "");
+  const userIds = primaryUserId ? [primaryUserId, ...additionalUserIds] : uniqueStrings(body.userIds);
   if (!canonicalUserId || !userIds.includes(canonicalUserId)) {
     return NextResponse.json({ error: "canonical_user_required" }, { status: 400 });
   }

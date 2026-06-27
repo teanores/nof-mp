@@ -356,31 +356,29 @@ function candidateLabel(candidate: AdminUserListItem): string {
 }
 
 function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUserListItem[]; user: AdminUserListItem }) {
-  const availableCandidates = candidates.filter((candidate) => candidate.id !== user.id);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [canonicalUserId, setCanonicalUserId] = useState(user.id);
+  const allCandidates = [user, ...candidates.filter((candidate) => candidate.id !== user.id)];
+  const [additionalUserIds, setAdditionalUserIds] = useState<string[]>([]);
+  const [primaryUserId, setPrimaryUserId] = useState("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "conflict" | "failed">("idle");
   const normalizedQuery = query.trim().toLowerCase();
-  const visibleCandidates = availableCandidates
+  const visibleCandidates = allCandidates
     .filter((candidate) => !normalizedQuery || candidateLabel(candidate).toLowerCase().includes(normalizedQuery))
     .slice(0, 6);
-  const selectedCandidates = availableCandidates.filter((candidate) => selectedUserIds.includes(candidate.id));
-  const canonicalOptions = [user, ...selectedCandidates];
-  const canLink = selectedUserIds.length > 0 && canonicalOptions.some((candidate) => candidate.id === canonicalUserId) && status !== "saving" && status !== "saved";
+  const canLink = Boolean(primaryUserId) && additionalUserIds.length > 0 && status !== "saving" && status !== "saved";
 
-  function toggleCandidate(candidateId: string) {
+  function selectPrimaryUser(candidateId: string) {
     setStatus("idle");
-    setSelectedUserIds((current) => {
-      if (current.includes(candidateId)) {
-        const next = current.filter((id) => id !== candidateId);
-        if (canonicalUserId === candidateId) {
-          setCanonicalUserId(user.id);
-        }
-        return next;
-      }
-      return [...current, candidateId];
-    });
+    setPrimaryUserId(candidateId);
+    setAdditionalUserIds((current) => current.filter((id) => id !== candidateId));
+  }
+
+  function toggleAdditionalUser(candidateId: string) {
+    if (candidateId === primaryUserId) {
+      return;
+    }
+    setStatus("idle");
+    setAdditionalUserIds((current) => (current.includes(candidateId) ? current.filter((id) => id !== candidateId) : [...current, candidateId]));
   }
 
   async function handleLinkAccounts() {
@@ -390,7 +388,7 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
     setStatus("saving");
     try {
       const response = await fetch("/api/admin/identity/reconcile", {
-        body: JSON.stringify({ canonicalUserId, userIds: [user.id, ...selectedUserIds] }),
+        body: JSON.stringify({ additionalUserIds, primaryUserId }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
@@ -413,7 +411,7 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
         <div>
           <h2 className="heading-tech text-lg font-bold text-forge-ink">Связывание учётных записей</h2>
           <label className="mt-4 block" htmlFor="canonical-user-search">
-            <span className="tech-label text-xs text-forge-muted">Найти канонического пользователя</span>
+            <span className="tech-label text-xs text-forge-muted">Найти учётную запись</span>
             <input
               id="canonical-user-search"
               className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition placeholder:text-forge-muted focus:border-forge-accent"
@@ -424,48 +422,51 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
           </label>
           <div className="mt-3 grid gap-2">
             {visibleCandidates.map((candidate) => {
-              const selected = selectedUserIds.includes(candidate.id);
+              const isPrimary = primaryUserId === candidate.id;
+              const isAdditional = additionalUserIds.includes(candidate.id);
+              const label = candidateLabel(candidate);
               return (
-                <button
+                <div
                   key={candidate.id}
                   className={`rounded-sm border px-3 py-2 text-left text-sm transition ${
-                    selected ? "border-forge-accent bg-forge-accent/10 text-forge-ink" : "border-forge-line bg-forge-surface text-forge-muted hover:border-forge-accent hover:text-forge-ink"
+                    isPrimary || isAdditional
+                      ? "border-forge-accent bg-forge-accent/10 text-forge-ink"
+                      : "border-forge-line bg-forge-surface text-forge-muted"
                   }`}
-                  type="button"
-                  onClick={() => toggleCandidate(candidate.id)}
                 >
-                  <span className="font-semibold text-forge-ink">{selected ? "✓ " : ""}{candidate.username}</span>
-                  <span className="ml-2">{candidate.email ? `email: ${candidate.email}` : "почта не указана"}</span>
-                  {candidate.telegram?.username ? <span className="ml-2">@{candidate.telegram.username}</span> : null}
-                  {candidate.telegram?.id ? <span className="ml-2">ID {candidate.telegram.id}</span> : null}
-                </button>
+                  <div className="font-semibold text-forge-ink">{label}</div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="flex items-start gap-2 text-forge-muted">
+                      <input
+                        checked={isPrimary}
+                        className="mt-1 h-4 w-4 accent-forge-accent"
+                        name="primary-login-account"
+                        type="radio"
+                        value={candidate.id}
+                        onChange={() => selectPrimaryUser(candidate.id)}
+                      />
+                      <span>
+                        Основной аккаунт для входа: <span className="font-semibold text-forge-ink">{label}</span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2 text-forge-muted">
+                      <input
+                        checked={isAdditional}
+                        className="mt-1 h-4 w-4 accent-forge-accent"
+                        disabled={isPrimary}
+                        type="checkbox"
+                        onChange={() => toggleAdditionalUser(candidate.id)}
+                      />
+                      <span>
+                        Дополнительная учётная запись: <span className="font-semibold text-forge-ink">{label}</span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
               );
             })}
             {visibleCandidates.length === 0 ? <p className="text-sm text-forge-muted">Кандидаты по поиску не найдены.</p> : null}
           </div>
-          {selectedCandidates.length > 0 ? (
-            <fieldset className="mt-4 rounded-sm border border-forge-line p-3">
-              <legend className="tech-label px-1 text-xs text-forge-muted">Мастер-запись</legend>
-              <div className="mt-2 grid gap-2">
-                {canonicalOptions.map((candidate) => (
-                  <label key={candidate.id} className="flex items-start gap-2 text-sm text-forge-muted">
-                    <input
-                      checked={canonicalUserId === candidate.id}
-                      className="mt-1 h-4 w-4 accent-forge-accent"
-                      name="canonical-user"
-                      type="radio"
-                      value={candidate.id}
-                      onChange={() => setCanonicalUserId(candidate.id)}
-                    />
-                    <span>
-                      {candidate.id === user.id ? "текущая карточка: " : ""}
-                      <span className="font-semibold text-forge-ink">{candidateLabel(candidate)}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          ) : null}
         </div>
         <div className="flex items-end justify-end">
           <button
@@ -478,10 +479,10 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
           </button>
         </div>
       </div>
-      {availableCandidates.length === 0 ? (
+      {candidates.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-forge-muted">Нет доступных кандидатов для выбора канонической записи.</p>
       ) : null}
-      {status === "saved" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Учётные записи связаны через модель aliases без переноса или удаления аккаунтов.</p> : null}
+      {status === "saved" ? <p className="mt-3 text-sm leading-6 text-forge-muted">Учётные записи связаны: основной аккаунт для входа сохранён, дополнительные учётные записи добавлены как aliases.</p> : null}
       {status === "conflict" ? (
         <p className="mt-3 text-sm font-semibold leading-6 text-forge-amber" role="alert">
           Связь не сохранена: один из признаков уже принадлежит другой мастер-записи.

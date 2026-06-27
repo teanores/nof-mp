@@ -130,6 +130,38 @@ describe("admin identity reconciliation route", () => {
     expect(audit.recordSecurityAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ eventType: "admin_identity_reconciliation_updated" }));
   });
 
+  it("accepts the explicit primary login account plus additional account contract", async () => {
+    const response = await POST(
+      request({
+        additionalUserIds: ["telegram-user", "extra-user"],
+        primaryUserId: "email-user",
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({ linkedUserIds: ["email-user", "telegram-user", "extra-user"], ok: true, personId: "person-1" });
+    expect(canonicalIdentityRepository.reconcilePlatformUsers).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canonicalPlatformUserId: "email-user",
+        users: expect.arrayContaining([
+          expect.objectContaining({ platformUserId: "email-user" }),
+          expect.objectContaining({ platformUserId: "telegram-user" }),
+          expect.objectContaining({ platformUserId: "extra-user" }),
+        ]),
+      }),
+    );
+  });
+
+  it("rejects the primary login account when it is duplicated as an additional account", async () => {
+    const response = await POST(request({ additionalUserIds: ["email-user"], primaryUserId: "email-user" }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "primary_user_cannot_be_additional" });
+    expect(canonicalIdentityRepository.reconcilePlatformUsers).not.toHaveBeenCalled();
+  });
+
   it("requires the canonical user to be included in the selected accounts", async () => {
     const response = await POST(request({ canonicalUserId: "email-user", userIds: ["telegram-user"] }));
     const payload = await response.json();

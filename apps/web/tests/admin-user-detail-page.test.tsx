@@ -187,23 +187,68 @@ describe("admin user detail page", () => {
 
     expect(screen.getByRole("heading", { name: "Связывание учётных записей" })).toBeInTheDocument();
     expect(screen.queryByText("u-1")).not.toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText("Найти канонического пользователя"), "owner");
-    await userEvent.click(screen.getByRole("button", { name: /owner email: owner@example.com/i }));
-    await userEvent.click(screen.getByLabelText(/owner.*email: owner@example.com/i));
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "owner");
+    await userEvent.click(screen.getByRole("radio", { name: /основной аккаунт для входа.*owner.*email: owner@example.com/i }));
+    await userEvent.clear(screen.getByLabelText("Найти учётную запись"));
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "teanore");
+    await userEvent.click(screen.getByRole("checkbox", { name: /дополнительная учётная запись.*teanore/i }));
     await userEvent.click(screen.getByRole("button", { name: "Связать учётные записи" }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
         "/api/admin/identity/reconcile",
         expect.objectContaining({
-          body: JSON.stringify({ canonicalUserId: "u-2", userIds: ["u-1", "u-2"] }),
+          body: JSON.stringify({ additionalUserIds: ["u-1"], primaryUserId: "u-2" }),
           method: "POST",
         }),
       ),
     );
-    expect(await screen.findByText("Учётные записи связаны через модель aliases без переноса или удаления аккаунтов.")).toBeInTheDocument();
+    expect(await screen.findByText("Учётные записи связаны: основной аккаунт для входа сохранён, дополнительные учётные записи добавлены как aliases.")).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("token");
     expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("uses an explicit primary login account and additional aliases when reconciling identities", async () => {
+    render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
+
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "owner");
+    await userEvent.click(screen.getByRole("checkbox", { name: /owner.*email: owner@example.com/i }));
+
+    expect(screen.getByRole("button", { name: "Связать учётные записи" })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("radio", { name: /основной аккаунт для входа.*owner.*email: owner@example.com/i }));
+    await userEvent.clear(screen.getByLabelText("Найти учётную запись"));
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "teanore");
+    await userEvent.click(screen.getByRole("checkbox", { name: /дополнительная учётная запись.*teanore/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Связать учётные записи" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/identity/reconcile",
+        expect.objectContaining({
+          body: JSON.stringify({ additionalUserIds: ["u-1"], primaryUserId: "u-2" }),
+          method: "POST",
+        }),
+      ),
+    );
+    expect(await screen.findByText("Учётные записи связаны: основной аккаунт для входа сохранён, дополнительные учётные записи добавлены как aliases.")).toBeInTheDocument();
+  });
+
+  it("does not allow the primary login account to also be selected as an additional account", async () => {
+    render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
+
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "owner");
+    await userEvent.click(screen.getByRole("radio", { name: /основной аккаунт для входа.*owner.*email: owner@example.com/i }));
+
+    expect(screen.getByRole("checkbox", { name: /дополнительная учётная запись.*owner.*email: owner@example.com/i })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /дополнительная учётная запись.*owner.*email: owner@example.com/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Связать учётные записи" })).toBeDisabled();
+
+    await userEvent.clear(screen.getByLabelText("Найти учётную запись"));
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "teanore");
+    await userEvent.click(screen.getByRole("checkbox", { name: /дополнительная учётная запись.*teanore/i }));
+
+    expect(screen.getByRole("button", { name: "Связать учётные записи" })).toBeEnabled();
   });
 
   it("shows a safe conflict when selected accounts cannot be linked", async () => {
@@ -214,8 +259,11 @@ describe("admin user detail page", () => {
     } as Response);
     render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
 
-    await userEvent.type(screen.getByLabelText("Найти канонического пользователя"), "owner");
-    await userEvent.click(screen.getByRole("button", { name: /owner email: owner@example.com/i }));
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "owner");
+    await userEvent.click(screen.getByRole("radio", { name: /основной аккаунт для входа.*owner.*email: owner@example.com/i }));
+    await userEvent.clear(screen.getByLabelText("Найти учётную запись"));
+    await userEvent.type(screen.getByLabelText("Найти учётную запись"), "teanore");
+    await userEvent.click(screen.getByRole("checkbox", { name: /дополнительная учётная запись.*teanore/i }));
     await userEvent.click(screen.getByRole("button", { name: "Связать учётные записи" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Связь не сохранена: один из признаков уже принадлежит другой мастер-записи.");
