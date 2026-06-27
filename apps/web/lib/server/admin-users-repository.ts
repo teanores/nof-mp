@@ -202,6 +202,37 @@ export class AdminUsersRepository {
     return result.rows[0] ? toAdminUser(result.rows[0]) : null;
   }
 
+  async listUsersByIds(userIds: string[]): Promise<AdminUserListItem[]> {
+    await this.ensureAccessStateSchema();
+    const uniqueIds = [...new Set(userIds.filter(Boolean))];
+    if (uniqueIds.length === 0) {
+      return [];
+    }
+    const result = await this.pool.query<AdminUserRow>(
+      `SELECT
+         u.id::text AS id,
+         u.username,
+         u.email,
+         COALESCE(length(u.password_hash) > 0, false) AS has_password,
+         u.telegram_id,
+         u.telegram_username,
+         u.registration_source,
+         u.user_created_at AS created_at,
+         u.last_seen,
+         COALESCE(access.access_denied, false) AS access_denied,
+         role.name AS role_name,
+         role.display_name AS role_display_name
+       FROM dragon_forge."user" u
+       LEFT JOIN dragon_forge.role role ON role.id = u.role_id
+       LEFT JOIN nof_platform.user_access_state access ON access.user_id = u.id
+       WHERE u.id::text = ANY($1::text[])
+       ORDER BY array_position($1::text[], u.id::text)`,
+      [uniqueIds],
+    );
+
+    return result.rows.map(toAdminUser);
+  }
+
   async setAccessState(input: AdminUserAccessStateInput): Promise<AdminUserListItem | null> {
     await this.ensureAccessStateSchema();
     const existing = await this.getUserById(input.userId);

@@ -357,24 +357,40 @@ function candidateLabel(candidate: AdminUserListItem): string {
 
 function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUserListItem[]; user: AdminUserListItem }) {
   const availableCandidates = candidates.filter((candidate) => candidate.id !== user.id);
-  const [targetUserId, setTargetUserId] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [canonicalUserId, setCanonicalUserId] = useState(user.id);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "conflict" | "failed">("idle");
-  const selectedCandidate = availableCandidates.find((candidate) => candidate.id === targetUserId);
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCandidates = availableCandidates
     .filter((candidate) => !normalizedQuery || candidateLabel(candidate).toLowerCase().includes(normalizedQuery))
     .slice(0, 6);
-  const canLink = Boolean(selectedCandidate) && status !== "saving" && status !== "saved";
+  const selectedCandidates = availableCandidates.filter((candidate) => selectedUserIds.includes(candidate.id));
+  const canonicalOptions = [user, ...selectedCandidates];
+  const canLink = selectedUserIds.length > 0 && canonicalOptions.some((candidate) => candidate.id === canonicalUserId) && status !== "saving" && status !== "saved";
+
+  function toggleCandidate(candidateId: string) {
+    setStatus("idle");
+    setSelectedUserIds((current) => {
+      if (current.includes(candidateId)) {
+        const next = current.filter((id) => id !== candidateId);
+        if (canonicalUserId === candidateId) {
+          setCanonicalUserId(user.id);
+        }
+        return next;
+      }
+      return [...current, candidateId];
+    });
+  }
 
   async function handleLinkAccounts() {
-    if (!selectedCandidate) {
+    if (!canLink) {
       return;
     }
     setStatus("saving");
     try {
-      const response = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}/merge`, {
-        body: JSON.stringify({ targetUserId: selectedCandidate.id }),
+      const response = await fetch("/api/admin/identity/reconcile", {
+        body: JSON.stringify({ canonicalUserId, userIds: [user.id, ...selectedUserIds] }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
@@ -408,7 +424,7 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
           </label>
           <div className="mt-3 grid gap-2">
             {visibleCandidates.map((candidate) => {
-              const selected = candidate.id === targetUserId;
+              const selected = selectedUserIds.includes(candidate.id);
               return (
                 <button
                   key={candidate.id}
@@ -416,9 +432,9 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
                     selected ? "border-forge-accent bg-forge-accent/10 text-forge-ink" : "border-forge-line bg-forge-surface text-forge-muted hover:border-forge-accent hover:text-forge-ink"
                   }`}
                   type="button"
-                  onClick={() => setTargetUserId(candidate.id)}
+                  onClick={() => toggleCandidate(candidate.id)}
                 >
-                  <span className="font-semibold text-forge-ink">{candidate.username}</span>
+                  <span className="font-semibold text-forge-ink">{selected ? "✓ " : ""}{candidate.username}</span>
                   <span className="ml-2">{candidate.email ? `email: ${candidate.email}` : "почта не указана"}</span>
                   {candidate.telegram?.username ? <span className="ml-2">@{candidate.telegram.username}</span> : null}
                   {candidate.telegram?.id ? <span className="ml-2">ID {candidate.telegram.id}</span> : null}
@@ -427,10 +443,28 @@ function CanonicalMergeActions({ candidates = [], user }: { candidates?: AdminUs
             })}
             {visibleCandidates.length === 0 ? <p className="text-sm text-forge-muted">Кандидаты по поиску не найдены.</p> : null}
           </div>
-          {selectedCandidate ? (
-            <p className="mt-3 text-sm leading-6 text-forge-muted">
-              Выбрана мастер-запись: <span className="font-semibold text-forge-ink">{candidateLabel(selectedCandidate)}</span>
-            </p>
+          {selectedCandidates.length > 0 ? (
+            <fieldset className="mt-4 rounded-sm border border-forge-line p-3">
+              <legend className="tech-label px-1 text-xs text-forge-muted">Мастер-запись</legend>
+              <div className="mt-2 grid gap-2">
+                {canonicalOptions.map((candidate) => (
+                  <label key={candidate.id} className="flex items-start gap-2 text-sm text-forge-muted">
+                    <input
+                      checked={canonicalUserId === candidate.id}
+                      className="mt-1 h-4 w-4 accent-forge-accent"
+                      name="canonical-user"
+                      type="radio"
+                      value={candidate.id}
+                      onChange={() => setCanonicalUserId(candidate.id)}
+                    />
+                    <span>
+                      {candidate.id === user.id ? "текущая карточка: " : ""}
+                      <span className="font-semibold text-forge-ink">{candidateLabel(candidate)}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           ) : null}
         </div>
         <div className="flex items-end justify-end">
@@ -546,6 +580,85 @@ function IdentityLinkActions({ user }: { user: AdminUserListItem }) {
   );
 }
 
+function LinkedIdentityAccounts({
+  currentUserId,
+  personId,
+  users = [],
+}: {
+  currentUserId: string;
+  personId?: string;
+  users?: AdminUserListItem[];
+}) {
+  const [unlinkedIds, setUnlinkedIds] = useState<string[]>([]);
+  const [statusByUserId, setStatusByUserId] = useState<Record<string, "idle" | "saving" | "saved" | "failed">>({});
+  const visibleUsers = users.filter((linkedUser) => !unlinkedIds.includes(linkedUser.id));
+
+  async function handleUnlink(platformUserId: string) {
+    if (!personId || platformUserId === currentUserId) {
+      return;
+    }
+    setStatusByUserId((current) => ({ ...current, [platformUserId]: "saving" }));
+    try {
+      const response = await fetch("/api/admin/identity/reconcile/unlink", {
+        body: JSON.stringify({ personId, platformUserId }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("request_failed");
+      }
+      setUnlinkedIds((current) => [...current, platformUserId]);
+      setStatusByUserId((current) => ({ ...current, [platformUserId]: "saved" }));
+    } catch {
+      setStatusByUserId((current) => ({ ...current, [platformUserId]: "failed" }));
+    }
+  }
+
+  if (!personId || users.length <= 1) {
+    return null;
+  }
+
+  return (
+    <section className="panel p-4">
+      <div className="flex flex-col gap-1">
+        <p className="tech-label text-xs text-forge-muted">Мастер-запись</p>
+        <h2 className="heading-tech text-lg font-bold text-forge-ink">Связанные учётные записи</h2>
+      </div>
+      <div className="mt-4 grid gap-2">
+        {visibleUsers.map((linkedUser) => {
+          const isCurrent = linkedUser.id === currentUserId;
+          const status = statusByUserId[linkedUser.id] ?? "idle";
+          return (
+            <div key={linkedUser.id} className="flex flex-col gap-3 rounded-sm border border-forge-line bg-forge-surface p-3 md:flex-row md:items-center md:justify-between">
+              <div className="text-sm text-forge-muted">
+                <span className="font-semibold text-forge-ink">{linkedUser.username}</span>
+                <span className="ml-2">{linkedUser.email ? `email: ${linkedUser.email}` : "почта не указана"}</span>
+                {linkedUser.telegram?.username ? <span className="ml-2">@{linkedUser.telegram.username}</span> : null}
+                {isCurrent ? <StatusBadge ready>текущая карточка</StatusBadge> : null}
+              </div>
+              {!isCurrent ? (
+                <button
+                  className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-line bg-transparent px-4 py-2 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={status === "saving" || status === "saved"}
+                  type="button"
+                  onClick={() => void handleUnlink(linkedUser.id)}
+                >
+                  {status === "saving" ? "Отвязываем" : status === "saved" ? "Отвязано" : "Отвязать"}
+                </button>
+              ) : null}
+              {status === "failed" ? (
+                <p className="text-sm font-semibold text-forge-amber" role="alert">
+                  Связь не изменена.
+                </p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
   return (
     <section className="panel p-4">
@@ -621,11 +734,15 @@ function RecentActivity({ events }: { events: UserSecurityAuditActivity[] }) {
 
 export function AdminUserDetailPage({
   canonicalCandidates = [],
+  identityPersonId,
+  linkedIdentityUsers = [],
   recentActivity = [],
   serviceLinks = [],
   user,
 }: {
   canonicalCandidates?: AdminUserListItem[];
+  identityPersonId?: string;
+  linkedIdentityUsers?: AdminUserListItem[];
   recentActivity?: UserSecurityAuditActivity[];
   serviceLinks?: ForgeServiceLink[];
   user: AdminUserListItem;
@@ -675,6 +792,8 @@ export function AdminUserDetailPage({
       </section>
 
       <LinkedServices links={serviceLinks} />
+
+      <LinkedIdentityAccounts currentUserId={user.id} personId={identityPersonId} users={linkedIdentityUsers} />
 
       <RecentActivity events={recentActivity} />
 

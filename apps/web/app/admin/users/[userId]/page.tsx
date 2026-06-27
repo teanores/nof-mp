@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { AdminUserDetailPage } from "@/components/AdminUserDetailPage";
 import { getAdminUsersRepository } from "@/lib/server/admin-users-repository";
+import { getCanonicalIdentityRepository } from "@/lib/server/canonical-identity-repository";
 import { requirePortalAdminSession } from "@/lib/server/portal-admin";
 import { requirePortalPageSession } from "@/lib/server/portal-auth-gate";
 import { getSecurityAuditDashboardRepository, recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
@@ -30,9 +31,22 @@ export default async function AdminUserDetailRoute({ params }: { params: Promise
 
   const serviceLinks = [await fetchNofHtLink(user.id)];
   const canonicalCandidates = await getAdminUsersRepository().listUsers();
+  const canonicalIdentityLinks = await getCanonicalIdentityRepository()
+    .listLinkedPlatformUserIds(user.id)
+    .catch(() => null);
+  const linkedIdentityUsers = canonicalIdentityLinks ? await getAdminUsersRepository().listUsersByIds(canonicalIdentityLinks.platformUserIds) : [];
   const recentActivity = await getSecurityAuditDashboardRepository()
     .recentEventsForActor(user.id)
     .catch(() => []);
 
-  return <AdminUserDetailPage canonicalCandidates={canonicalCandidates} recentActivity={recentActivity} serviceLinks={serviceLinks} user={user} />;
+  return (
+    <AdminUserDetailPage
+      canonicalCandidates={canonicalCandidates}
+      identityPersonId={canonicalIdentityLinks?.personId}
+      linkedIdentityUsers={linkedIdentityUsers}
+      recentActivity={recentActivity}
+      serviceLinks={serviceLinks}
+      user={user}
+    />
+  );
 }

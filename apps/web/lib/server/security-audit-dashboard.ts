@@ -165,6 +165,12 @@ function activityLabelFor(eventType: string, path: string): string {
   if (eventType === "admin_user_identity_link_updated") {
     return "Изменение email и Telegram";
   }
+  if (eventType === "admin_identity_reconciliation_updated") {
+    return "Связывание учётных записей";
+  }
+  if (eventType === "admin_identity_reconciliation_unlinked") {
+    return "Отвязка учётной записи";
+  }
   if (eventType === "profile_service_unlinked") {
     return "Отключение связи сервиса";
   }
@@ -377,7 +383,7 @@ export class SecurityAuditDashboardRepository {
     const result = await this.pool.query<SecurityAuditRow>(
       `SELECT id::text, event_type, classification, ip, login_identifier, method, path, status_code, user_agent, actor_user_id, actor_username, created_at
        FROM ${this.schema}.security_audit_event
-       WHERE event_type IN ('admin_email_link_requested', 'admin_password_reset_requested', 'admin_password_rotation_required', 'admin_settings_updated', 'admin_user_access_updated', 'admin_user_deleted', 'admin_user_detail_view', 'admin_user_identity_link_updated', 'admin_user_merged', 'profile_service_unlinked', 'profile_updated', 'login_success', 'logout_success', 'session_expired', 'app_authenticated_request', 'password_change_failed', 'password_change_success', 'password_reset_completed', 'password_reset_failed', 'password_reset_rate_limited', 'password_reset_requested')
+       WHERE event_type IN ('admin_email_link_requested', 'admin_password_reset_requested', 'admin_password_rotation_required', 'admin_settings_updated', 'admin_user_access_updated', 'admin_user_deleted', 'admin_user_detail_view', 'admin_identity_reconciliation_updated', 'admin_identity_reconciliation_unlinked', 'admin_user_identity_link_updated', 'admin_user_merged', 'profile_service_unlinked', 'profile_updated', 'login_success', 'logout_success', 'session_expired', 'app_authenticated_request', 'password_change_failed', 'password_change_success', 'password_reset_completed', 'password_reset_failed', 'password_reset_rate_limited', 'password_reset_requested')
        ORDER BY created_at DESC
        LIMIT $1`,
       [safeLimit],

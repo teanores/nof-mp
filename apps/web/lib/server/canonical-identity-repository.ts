@@ -33,6 +33,18 @@ export interface ClaimCanonicalAliasBatchInput {
   platformUserId: string;
 }
 
+export interface ReconcilePlatformIdentityInput {
+  actorUserId?: string;
+  canonicalPlatformUserId: string;
+  users: ClaimCanonicalAliasBatchInput[];
+}
+
+export interface UnlinkPlatformIdentityInput {
+  actorUserId?: string;
+  personId: string;
+  platformUserId: string;
+}
+
 export type ClaimCanonicalAliasResult =
   | { aliasId: string; ok: true; personId: string }
   | { ok: false; reason: "alias_conflict" | "invalid_alias" | "invalid_person" };
@@ -40,6 +52,14 @@ export type ClaimCanonicalAliasResult =
 export type ClaimCanonicalAliasBatchResult =
   | { aliasIds: string[]; ok: true; personId: string }
   | { ok: false; reason: "alias_conflict" | "invalid_alias" };
+
+export type ReconcilePlatformIdentityResult =
+  | { linkedUserIds: string[]; ok: true; personId: string }
+  | { ok: false; reason: "alias_conflict" | "canonical_user_required" | "invalid_alias" | "too_few_users" };
+
+export type UnlinkPlatformIdentityResult =
+  | { ok: true; personId: string; platformUserId: string }
+  | { ok: false; reason: "link_not_found" };
 
 interface ExistingAliasRow extends QueryResultRow {
   alias_kind: CanonicalIdentityAliasKind;
@@ -312,6 +332,11 @@ export class CanonicalIdentityRepository {
            linked_by = EXCLUDED.linked_by`,
         [personId, input.platformUserId, input.actorUserId ?? null],
       );
+      await this.pool.query(
+        `INSERT INTO nof_platform.identity_alias_event (alias_id, person_id, event_type, actor_user_id, reason)
+         VALUES (NULL, $1::uuid, 'link', $2::uuid, $3)`,
+        [personId, input.actorUserId ?? null, `link:platform_user:${input.platformUserId}`],
+      );
       await this.pool.query("COMMIT");
     } catch (error) {
       await this.pool.query("ROLLBACK");
@@ -319,6 +344,94 @@ export class CanonicalIdentityRepository {
     }
 
     return { aliasIds, ok: true, personId };
+  }
+
+  async reconcilePlatformUsers(input: ReconcilePlatformIdentityInput): Promise<ReconcilePlatformIdentityResult> {
+    const uniqueUsers = new Map(input.users.map((user) => [user.platformUserId, { ...user, actorUserId: input.actorUserId }]));
+    if (!input.canonicalPlatformUserId || !uniqueUsers.has(input.canonicalPlatformUserId)) {
+      return { ok: false, reason: "canonical_user_required" };
+    }
+    if (uniqueUsers.size < 2) {
+      return { ok: false, reason: "too_few_users" };
+    }
+
+    const canonical = uniqueUsers.get(input.canonicalPlatformUserId);
+    if (!canonical) {
+      return { ok: false, reason: "canonical_user_required" };
+    }
+
+    const canonicalResult = await this.claimAliasesForPlatformUser(canonical);
+    if (!canonicalResult.ok) {
+      return canonicalResult;
+    }
+
+    const linkedUserIds = [input.canonicalPlatformUserId];
+    for (const user of uniqueUsers.values()) {
+      if (user.platformUserId === input.canonicalPlatformUserId) {
+        continue;
+      }
+      const result = await this.claimAliasesForPlatformUser({
+        ...user,
+        actorUserId: input.actorUserId,
+        personId: canonicalResult.personId,
+      });
+      if (!result.ok) {
+        return result;
+      }
+      linkedUserIds.push(user.platformUserId);
+    }
+
+    return { linkedUserIds, ok: true, personId: canonicalResult.personId };
+  }
+
+  async listLinkedPlatformUserIds(platformUserId: string): Promise<{ personId: string; platformUserIds: string[] } | null> {
+    await this.ensureSchema();
+    const person = await this.pool.query<{ person_id: string }>(
+      `SELECT person_id::text AS person_id
+       FROM nof_platform.person_account_link
+       WHERE platform_user_id = $1::uuid
+         AND link_state = 'active'
+       LIMIT 1`,
+      [platformUserId],
+    );
+    const personId = person.rows[0]?.person_id;
+    if (!personId) {
+      return null;
+    }
+
+    const links = await this.pool.query<{ platform_user_id: string }>(
+      `SELECT platform_user_id::text AS platform_user_id
+       FROM nof_platform.person_account_link
+       WHERE person_id = $1::uuid
+         AND link_state = 'active'
+       ORDER BY linked_at ASC`,
+      [personId],
+    );
+    return { personId, platformUserIds: links.rows.map((row) => row.platform_user_id) };
+  }
+
+  async unlinkPlatformUser(input: UnlinkPlatformIdentityInput): Promise<UnlinkPlatformIdentityResult> {
+    await this.ensureSchema();
+    const result = await this.pool.query<{ person_id: string }>(
+      `UPDATE nof_platform.person_account_link
+       SET link_state = 'archived',
+           linked_at = NOW(),
+           linked_by = $3::uuid
+       WHERE person_id = $1::uuid
+         AND platform_user_id = $2::uuid
+         AND link_state = 'active'
+       RETURNING person_id::text AS person_id`,
+      [input.personId, input.platformUserId, input.actorUserId ?? null],
+    );
+    if (!result.rows[0]) {
+      return { ok: false, reason: "link_not_found" };
+    }
+    await this.pool.query(
+      `INSERT INTO nof_platform.identity_alias_event (alias_id, person_id, event_type, actor_user_id, reason)
+       VALUES (NULL, $1::uuid, 'unlink', $2::uuid, $3)`,
+      [input.personId, input.actorUserId ?? null, `unlink:platform_user:${input.platformUserId}`],
+    );
+    return { ok: true, personId: input.personId, platformUserId: input.platformUserId };
   }
 
   async close(): Promise<void> {

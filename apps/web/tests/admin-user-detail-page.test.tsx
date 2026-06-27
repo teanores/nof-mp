@@ -182,20 +182,20 @@ describe("admin user detail page", () => {
     expect(document.body).not.toHaveTextContent("secret");
   });
 
-  it("links selected account candidate through the canonical alias route", async () => {
+  it("links selected account candidates through the identity reconciliation console", async () => {
     render(<AdminUserDetailPage canonicalCandidates={canonicalCandidates} user={user} />);
 
     expect(screen.getByRole("heading", { name: "Связывание учётных записей" })).toBeInTheDocument();
     expect(screen.queryByText("u-1")).not.toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Найти канонического пользователя"), "owner");
     await userEvent.click(screen.getByRole("button", { name: /owner email: owner@example.com/i }));
-    expect(screen.getByText(/Выбрана мастер-запись:/)).toHaveTextContent("email: owner@example.com");
+    await userEvent.click(screen.getByLabelText(/owner.*email: owner@example.com/i));
     await userEvent.click(screen.getByRole("button", { name: "Связать учётные записи" }));
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
-        "/api/admin/users/u-1/merge",
+        "/api/admin/identity/reconcile",
         expect.objectContaining({
-          body: JSON.stringify({ targetUserId: "u-2" }),
+          body: JSON.stringify({ canonicalUserId: "u-2", userIds: ["u-1", "u-2"] }),
           method: "POST",
         }),
       ),
@@ -247,6 +247,27 @@ describe("admin user detail page", () => {
       ),
     );
     expect(await screen.findByText("Email и Telegram сохранены для выбранной учётной записи.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("password_hash");
+    expect(document.body).not.toHaveTextContent("secret");
+  });
+
+  it("shows linked identity accounts and lets an admin unlink an extra account", async () => {
+    render(<AdminUserDetailPage identityPersonId="person-1" linkedIdentityUsers={[user, recoverableUser]} user={user} />);
+
+    expect(screen.getByRole("heading", { name: "Связанные учётные записи" })).toBeInTheDocument();
+    expect(screen.getByText("текущая карточка")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Отвязать" }));
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/admin/identity/reconcile/unlink",
+        expect.objectContaining({
+          body: JSON.stringify({ personId: "person-1", platformUserId: "u-2" }),
+          method: "POST",
+        }),
+      ),
+    );
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("secret");
   });
