@@ -56,4 +56,21 @@ describe("login language switch", () => {
 
     expect(password).toHaveAttribute("type", "password");
   });
+
+  it("hides registration entry and shows an inline note when registration is paused", () => {
+    render(<LoginPage next="/overview" registrationPaused />);
+
+    expect(screen.queryByRole("link", { name: "Создать аккаунт" })).not.toBeInTheDocument();
+    expect(screen.getByText("Регистрация временно закрыта")).toBeInTheDocument();
+  });
+
+  it("shows a generic access-denied message without account enumeration", () => {
+    render(<LoginPage error="access_denied" next="/overview" />);
+
+    expect(screen.getByText("Обратитесь к администратору платформы.")).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("пользователь не найден");
+    expect(document.body.textContent).not.toContain("аккаунт существует");
+    expect(document.body.textContent).not.toContain("нет роли");
+    expect(document.body.textContent).not.toContain("недостаточно прав");
+  });
 });

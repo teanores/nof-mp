@@ -1,4 +1,5 @@
 import { RegisterPage } from "@/components/RegisterPage";
+import { getPlatformSettingsRepository } from "@/lib/server/platform-settings-repository";
 
 interface RegisterRouteProps {
   searchParams: Promise<{
@@ -10,5 +11,6 @@ interface RegisterRouteProps {
 
 export default async function RegisterRoute({ searchParams }: RegisterRouteProps) {
   const params = await searchParams;
-  return <RegisterPage email={params.email} error={params.error} step={params.step} />;
+  const settings = await getPlatformSettingsRepository().getSettings();
+  return <RegisterPage email={params.email} error={params.error} registrationPaused={settings.registrationPaused} step={params.step} />;
 }

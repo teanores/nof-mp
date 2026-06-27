@@ -1,5 +1,6 @@
 import { LoginPage } from "@/components/LoginPage";
 import { portalPageSession, safePortalReturnTo } from "@/lib/server/portal-auth-gate";
+import { getPlatformSettingsRepository } from "@/lib/server/platform-settings-repository";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -13,6 +14,7 @@ export default async function LoginRoute({ searchParams }: LoginRouteProps) {
   if (session.authenticated) {
     redirect(safePortalReturnTo(params.next || "/overview"));
   }
+  const settings = await getPlatformSettingsRepository().getSettings();
 
-  return <LoginPage error={params.error} next={params.next} />;
+  return <LoginPage error={params.error} next={params.next} registrationPaused={settings.registrationPaused} />;
 }

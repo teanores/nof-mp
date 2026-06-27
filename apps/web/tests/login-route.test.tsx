@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ForgePortalSession } from "@/lib/types";
 
 const mocks = vi.hoisted(() => ({
   portalPageSession: vi.fn<() => Promise<ForgePortalSession>>(),
+  getSettings: vi.fn(),
   redirect: vi.fn((target: string) => {
     throw new Error(`NEXT_REDIRECT:${target}`);
   }),
@@ -24,9 +25,20 @@ vi.mock("@/lib/server/portal-auth-gate", () => ({
   },
 }));
 
+vi.mock("@/lib/server/platform-settings-repository", () => ({
+  getPlatformSettingsRepository: () => ({
+    getSettings: mocks.getSettings,
+  }),
+}));
+
 import LoginRoute from "@/app/login/page";
 
 describe("login route", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getSettings.mockResolvedValue({ registrationPaused: false });
+  });
+
   it("redirects authenticated users to the safe requested page", async () => {
     mocks.portalPageSession.mockResolvedValue({
       authenticated: true,
@@ -47,5 +59,15 @@ describe("login route", () => {
 
     expect(result.type.name).toBe("LoginPage");
     expect(result.props.next).toBe("/overview");
+    expect(result.props.registrationPaused).toBe(false);
+  });
+
+  it("passes registration paused state to the guest login form", async () => {
+    mocks.portalPageSession.mockResolvedValue({ authenticated: false, loginUrl: "/login" });
+    mocks.getSettings.mockResolvedValue({ registrationPaused: true });
+
+    const result = await LoginRoute({ searchParams: Promise.resolve({ next: "/overview" }) });
+
+    expect(result.props.registrationPaused).toBe(true);
   });
 });

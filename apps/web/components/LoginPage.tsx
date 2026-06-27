@@ -10,6 +10,7 @@ import { usePortalLanguage } from "@/lib/use-portal-language";
 interface LoginPageProps {
   error?: string;
   next?: string;
+  registrationPaused?: boolean;
 }
 
 const copy = {
@@ -21,9 +22,11 @@ const copy = {
     invalidCredentials: "Invalid email or password.",
     language: "LANGUAGE",
     loginButton: "Sign in",
+    accessDenied: "Contact the platform administrator.",
     passwordHide: "Hide password",
     password: "Password",
     passwordShow: "Show password",
+    registrationPaused: "Registration is temporarily closed",
     resetPassword: "Forgot password?",
     tagline: '"Show your guild badge!"',
     subtitle: "Sign in to continue working with platform services.",
@@ -37,9 +40,11 @@ const copy = {
     invalidCredentials: "Неверный email или пароль.",
     language: "ЯЗЫК",
     loginButton: "Войти",
+    accessDenied: "Обратитесь к администратору платформы.",
     passwordHide: "Скрыть пароль",
     password: "Пароль",
     passwordShow: "Показать пароль",
+    registrationPaused: "Регистрация временно закрыта",
     resetPassword: "Забыли пароль?",
     tagline: "«Покажите жетон гильдии!»",
     subtitle: "Войдите, чтобы продолжить работу с сервисами платформы.",
@@ -54,7 +59,7 @@ function safeLoginReturnTo(returnTo?: string): string {
   return returnTo;
 }
 
-export function LoginPage({ error, next = "/" }: LoginPageProps) {
+export function LoginPage({ error, next = "/", registrationPaused = false }: LoginPageProps) {
   const safeNext = safeLoginReturnTo(next);
   const language = usePortalLanguage();
   const text = copy[language];
@@ -110,9 +115,9 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
           <Link className="text-right text-xs font-semibold text-forge-muted transition hover:text-forge-accent" href="/password-reset">
             {text.resetPassword}
           </Link>
-          {error === "invalid_credentials" ? (
+          {error === "invalid_credentials" || error === "access_denied" ? (
             <p className="rounded-sm border border-forge-accent bg-forge-panel px-3 py-2 text-sm font-semibold text-forge-accent">
-              {text.invalidCredentials}
+              {error === "access_denied" ? text.accessDenied : text.invalidCredentials}
             </p>
           ) : null}
           <button
@@ -121,12 +126,18 @@ export function LoginPage({ error, next = "/" }: LoginPageProps) {
           >
             {text.loginButton}
           </button>
-          <Link
-            className="tech-label rounded-sm border border-forge-line bg-forge-panel px-5 py-3 text-center text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
-            href="/register"
-          >
-            {text.createAccount}
-          </Link>
+          {registrationPaused ? (
+            <p className="rounded-sm border border-forge-line bg-forge-panel px-5 py-3 text-center text-xs font-semibold text-forge-muted">
+              {text.registrationPaused}
+            </p>
+          ) : (
+            <Link
+              className="tech-label rounded-sm border border-forge-line bg-forge-panel px-5 py-3 text-center text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+              href="/register"
+            >
+              {text.createAccount}
+            </Link>
+          )}
         </form>
 
         <p className="mt-5 text-center text-xs leading-5 text-forge-muted">{text.accountHint}</p>

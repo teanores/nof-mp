@@ -13,6 +13,7 @@ type RegisterError = "conflict" | "email_delivery" | "invalid" | "invalid_email"
 interface RegisterPageProps {
   email?: string;
   error?: RegisterError;
+  registrationPaused?: boolean;
   step?: RegisterStep;
 }
 
@@ -261,8 +262,18 @@ function ConfirmForm({ email, error }: { email: string; error: RegisterError }) 
   );
 }
 
-export function RegisterPage({ email = "", error, step = "request" }: RegisterPageProps) {
+function RegistrationPausedPanel() {
+  return (
+    <div className="rounded-sm border border-forge-line bg-forge-surface p-4 text-sm leading-6 text-forge-muted">
+      <p className="font-semibold text-forge-ink">Регистрация временно закрыта</p>
+      <p className="mt-2">Если аккаунт уже создан, вернитесь на вход и используйте платформенную учётную запись.</p>
+    </div>
+  );
+}
+
+export function RegisterPage({ email = "", error, registrationPaused = false, step = "request" }: RegisterPageProps) {
   const isConfirmStep = step === "confirm" && email;
+  const isPausedRequestStep = registrationPaused && !isConfirmStep;
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-6">
@@ -277,7 +288,7 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
               </div>
             </div>
             <h1 className="heading-tech mt-3 text-3xl font-bold text-forge-ink sm:text-4xl">
-              {isConfirmStep ? "Введите код подтверждения" : "Стойка регистрации"}
+              {isConfirmStep ? "Введите код подтверждения" : "Стойка регистрации в Гильдии"}
             </h1>
             <p className="mt-3 text-sm leading-6 text-forge-muted">
               Создаём аккаунт только через проверенный email-код. После регистрации вы сможете войти в профиль и
@@ -286,7 +297,7 @@ export function RegisterPage({ email = "", error, step = "request" }: RegisterPa
             </p>
           </div>
 
-          {isConfirmStep ? <ConfirmForm email={email} error={error} /> : <RequestForm error={error} />}
+          {isConfirmStep ? <ConfirmForm email={email} error={error} /> : isPausedRequestStep ? <RegistrationPausedPanel /> : <RequestForm error={error} />}
 
           <div className="flex flex-wrap gap-3">
             <BackButton />

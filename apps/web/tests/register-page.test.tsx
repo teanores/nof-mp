@@ -9,7 +9,7 @@ describe("register page", () => {
   it("shows the email registration request form", () => {
     render(<RegisterPage />);
 
-    expect(screen.getByRole("heading", { name: "Стойка регистрации" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Стойка регистрации в Гильдии" })).toBeInTheDocument();
     expect(screen.getByText("Narag'Othal Forgath")).toBeInTheDocument();
     expect(screen.getByLabelText("Логин")).toHaveAttribute("name", "username");
     expect(screen.getByLabelText("Электронная почта")).toHaveAttribute("name", "email");
@@ -189,6 +189,15 @@ describe("register page", () => {
     expect(document.body.textContent).not.toContain("Python");
     expect(document.body.textContent).not.toContain("SMTP");
     expect(document.body.textContent).not.toContain("backend");
+  });
+
+  it("shows a closed registration state without the request form when registration is paused", () => {
+    render(<RegisterPage registrationPaused />);
+
+    expect(screen.getByRole("heading", { name: "Стойка регистрации в Гильдии" })).toBeInTheDocument();
+    expect(screen.getByText("Регистрация временно закрыта")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Получить код" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Электронная почта")).not.toBeInTheDocument();
   });
 
   it("shows a specific message for malformed email addresses", () => {
