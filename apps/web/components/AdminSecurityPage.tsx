@@ -2,6 +2,7 @@ import Link from "next/link";
 import React from "react";
 
 import { PortalHeader, PortalPageShell } from "@/components/PortalLayout";
+import type { CrowdSecAdminMetrics } from "@/lib/server/crowdsec-admin-metrics";
 import type { SecurityAuditDashboard } from "@/lib/server/security-audit-dashboard";
 import type { ForgePortalSession, ForgePortalUser } from "@/lib/types";
 
@@ -38,9 +39,11 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 export function AdminSecurityPage({
+  crowdSecMetrics,
   dashboard,
   session,
 }: {
+  crowdSecMetrics: CrowdSecAdminMetrics;
   dashboard: SecurityAuditDashboard;
   session: ForgePortalSession;
 }) {
@@ -82,19 +85,74 @@ export function AdminSecurityPage({
 
       <section className="panel p-5">
         <p className="tech-label text-xs text-forge-accent">Мониторинг периметра</p>
-        <h2 className="heading-tech mt-2 text-xl font-bold text-forge-ink">CrowdSec: режим наблюдения</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {[
-            ["Сигналы", "Caddy и SSH события читаются отдельным VPS-мониторингом."],
-            ["Блокировки", "Автоматическая блокировка выключена: bouncer не установлен."],
-            ["Дашборд", "Эта страница показывает очищенные события платформы, приложения и периметра, а не полную консоль CrowdSec."],
-          ].map(([title, text]) => (
-            <article key={title} className="rounded-sm border border-forge-line bg-forge-surface p-3">
-              <h3 className="heading-tech text-sm font-bold text-forge-ink">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-forge-muted">{text}</p>
-            </article>
-          ))}
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="heading-tech text-xl font-bold text-forge-ink">CrowdSec: сводка решений</h2>
+          {crowdSecMetrics.consoleUrl ? (
+            <a
+              className="tech-label rounded-sm border border-forge-line bg-forge-surface px-4 py-2 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent"
+              href={crowdSecMetrics.consoleUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Открыть CrowdSec Console
+            </a>
+          ) : null}
         </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[0.8fr_1fr_1.2fr]">
+          <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
+            <p className="tech-label text-xs text-forge-muted">Сигналы</p>
+            <p className="mt-1 text-2xl font-bold text-forge-ink">{crowdSecMetrics.totalSignals}</p>
+            {crowdSecMetrics.totalSignals === 0 ? <p className="mt-2 text-sm text-forge-muted">CrowdSec-сигналов пока нет.</p> : null}
+          </article>
+          <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
+            <h3 className="heading-tech text-sm font-bold text-forge-ink">Типы</h3>
+            <div className="mt-3 grid gap-2">
+              {crowdSecMetrics.byType.length === 0 ? <p className="text-sm text-forge-muted">Нет активных решений.</p> : null}
+              {crowdSecMetrics.byType.map((item) => (
+                <div key={item.type} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-forge-muted">{item.label}</span>
+                  <span className="tech-label text-xs text-forge-ink">{item.count}</span>
+                </div>
+              ))}
+            </div>
+          </article>
+          <article className="rounded-sm border border-forge-line bg-forge-surface p-3">
+            <h3 className="heading-tech text-sm font-bold text-forge-ink">Источники /24</h3>
+            <div className="mt-3 grid gap-2">
+              {crowdSecMetrics.topSourceBuckets.length === 0 ? <p className="text-sm text-forge-muted">Источников пока нет.</p> : null}
+              {crowdSecMetrics.topSourceBuckets.map((source) => (
+                <div key={source.bucket} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-mono text-forge-muted">{source.bucket}</span>
+                  <span className="tech-label text-xs text-forge-ink">{source.count}</span>
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
+        {crowdSecMetrics.recentTimeline.length > 0 ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="tech-label text-xs text-forge-muted">
+                <tr>
+                  <th className="border-b border-forge-line py-2 pr-3">Время</th>
+                  <th className="border-b border-forge-line py-2 pr-3">Событие</th>
+                  <th className="border-b border-forge-line py-2 pr-3">Источник</th>
+                  <th className="border-b border-forge-line py-2">Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                {crowdSecMetrics.recentTimeline.map((event) => (
+                  <tr key={`${event.createdAt}-${event.bucket}-${event.statusCode}`} className="text-forge-muted">
+                    <td className="border-b border-forge-line py-2 pr-3">{new Date(event.createdAt).toLocaleString("ru-RU")}</td>
+                    <td className="border-b border-forge-line py-2 pr-3">{event.label}</td>
+                    <td className="border-b border-forge-line py-2 pr-3 font-mono">{event.bucket}</td>
+                    <td className="border-b border-forge-line py-2">{event.statusCode}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">

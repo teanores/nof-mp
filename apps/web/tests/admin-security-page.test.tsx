@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { AdminSecurityPage } from "@/components/AdminSecurityPage";
 import { NOF_MP_FOOTER_MARKER } from "@/lib/platform-version";
+import type { CrowdSecAdminMetrics } from "@/lib/server/crowdsec-admin-metrics";
 import type { SecurityAuditDashboard } from "@/lib/server/security-audit-dashboard";
 
 const dashboard: SecurityAuditDashboard = {
@@ -67,10 +68,25 @@ const dashboard: SecurityAuditDashboard = {
   ],
 };
 
+const crowdSecMetrics: CrowdSecAdminMetrics = {
+  byType: [
+    { count: 2, label: "Ограничения", type: "rate_limited" },
+    { count: 1, label: "Запреты", type: "forbidden" },
+  ],
+  consoleUrl: "https://app.crowdsec.net/security-engines",
+  generatedAt: "2026-06-03T20:40:00.000Z",
+  recentTimeline: [
+    { bucket: "203.0.113.0/24", createdAt: "2026-06-03T20:39:00.000Z", label: "Ограничение частоты", statusCode: 429 },
+  ],
+  topSourceBuckets: [{ bucket: "203.0.113.0/24", count: 2 }],
+  totalSignals: 3,
+};
+
 describe("admin security page", () => {
   it("uses the platform shell and footer instead of a product shell", () => {
     render(
       <AdminSecurityPage
+        crowdSecMetrics={crowdSecMetrics}
         dashboard={dashboard}
         session={{
           authenticated: true,
@@ -98,11 +114,14 @@ describe("admin security page", () => {
     expect(screen.getByText("Поисковый робот")).toBeInTheDocument();
     expect(screen.getByText("Проверка служебного файла")).toBeInTheDocument();
     expect(screen.getByText("Мониторинг периметра")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "CrowdSec: режим наблюдения" })).toBeInTheDocument();
-    expect(screen.getByText(/Caddy и SSH события читаются/)).toBeInTheDocument();
-    expect(screen.getByText(/Автоматическая блокировка выключена/)).toBeInTheDocument();
-    expect(screen.getByText(/bouncer не установлен/)).toBeInTheDocument();
-    expect(screen.getByText(/не полную консоль CrowdSec/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "CrowdSec: сводка решений" })).toBeInTheDocument();
+    expect(screen.getByText("Сигналы")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getAllByText("203.0.113.0/24")).toHaveLength(2);
+    expect(screen.getByRole("link", { name: "Открыть CrowdSec Console" })).toHaveAttribute(
+      "href",
+      "https://app.crowdsec.net/security-engines",
+    );
     expect(document.body).not.toHaveTextContent("Rate limit");
     expect(document.body).not.toHaveTextContent("404 / unknown");
     expect(document.body).not.toHaveTextContent("edge-события");
@@ -119,11 +138,19 @@ describe("admin security page", () => {
     expect(document.body).not.toHaveTextContent("NOF_SECURITY_AUDIT_INGEST_TOKEN");
     expect(document.body).not.toHaveTextContent("cscli");
     expect(document.body).not.toHaveTextContent("sudo");
+    expect(document.body).not.toHaveTextContent("203.0.113.42");
   });
 
   it("explains empty security data instead of showing silent zero-only state", () => {
     render(
       <AdminSecurityPage
+        crowdSecMetrics={{
+          byType: [],
+          generatedAt: "2026-06-08T10:00:00.000Z",
+          recentTimeline: [],
+          topSourceBuckets: [],
+          totalSignals: 0,
+        }}
         dashboard={{
           generatedAt: "2026-06-08T10:00:00.000Z",
           recentEvents: [],
@@ -154,5 +181,6 @@ describe("admin security page", () => {
 
     expect(screen.getByText(/За последние 24 часа событий безопасности не найдено/)).toBeInTheDocument();
     expect(screen.getByText(/проверьте доставку событий периметра/)).toBeInTheDocument();
+    expect(screen.getByText("CrowdSec-сигналов пока нет.")).toBeInTheDocument();
   });
 });

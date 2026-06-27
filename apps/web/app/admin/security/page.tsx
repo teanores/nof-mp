@@ -1,4 +1,5 @@
 import { AdminSecurityPage } from "@/components/AdminSecurityPage";
+import { crowdSecMetricsFromDashboard } from "@/lib/server/crowdsec-admin-metrics";
 import { requirePortalAdminSession } from "@/lib/server/portal-admin";
 import { requirePortalPageSession } from "@/lib/server/portal-auth-gate";
 import { getSecurityAuditDashboardRepository, recordSecurityAuditEvent } from "@/lib/server/security-audit-dashboard";
@@ -18,6 +19,7 @@ export default async function AdminSecurityRoute() {
     userAgent: "server-component",
   });
   const dashboard = await getSecurityAuditDashboardRepository().dashboard();
+  const crowdSecMetrics = crowdSecMetricsFromDashboard(dashboard);
 
-  return <AdminSecurityPage dashboard={dashboard} session={session} />;
+  return <AdminSecurityPage crowdSecMetrics={crowdSecMetrics} dashboard={dashboard} session={session} />;
 }
