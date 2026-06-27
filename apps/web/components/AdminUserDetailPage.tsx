@@ -517,7 +517,7 @@ function IdentityLinkActions({ user }: { user: AdminUserListItem }) {
           />
         </label>
         <label className="block">
-          <span className="tech-label text-xs text-forge-muted">Telegram username</span>
+          <span className="tech-label text-xs text-forge-muted">Имя в Telegram</span>
           <input
             className="mt-2 w-full rounded-sm border border-forge-line bg-forge-surface px-3 py-2 text-sm text-forge-ink outline-none transition focus:border-forge-accent"
             disabled={status === "saving" || status === "saved"}
@@ -565,7 +565,7 @@ function LinkedServices({ links }: { links: ForgeServiceLink[] }) {
             </div>
             <dl className="mt-4 grid gap-2 text-sm text-forge-muted">
               <div className="flex flex-col gap-1">
-                <dt className="tech-label text-[10px]">Email сервиса</dt>
+                <dt className="tech-label text-[10px]">Электронная почта сервиса</dt>
                 <dd className="text-forge-ink">{link.accountEmail ?? "не указан"}</dd>
               </div>
               <div className="flex flex-col gap-1">

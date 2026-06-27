@@ -30,7 +30,7 @@ const overviewCopy = {
   },
   ru: {
     adminRequests: "Запросы",
-    adminRequestsNote: "Входы, rate-limit и публичные сканы.",
+    adminRequestsNote: "Входы, ограничения частоты и публичные сканы.",
     adminHome: "Администрирование",
     adminHomeNote: "Пользователи, безопасность и разделы управления платформой.",
     adminUsers: "Пользователи",

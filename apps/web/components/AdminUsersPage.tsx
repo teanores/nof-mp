@@ -386,7 +386,7 @@ export function AdminUsersPage({ users }: { users: AdminUserListItem[] }) {
                   <td className="px-4 py-4 text-forge-muted">
                     <div className="space-y-1">
                       <p>ID: {user.telegram?.id ?? "нет"}</p>
-                      <p>Username: {user.telegram?.username ? `@${user.telegram.username}` : "нет"}</p>
+                      <p>Имя: {user.telegram?.username ? `@${user.telegram.username}` : "нет"}</p>
                     </div>
                   </td>
                   <td className="px-4 py-4 text-forge-muted">{formatDate(user.lastSeen)}</td>

@@ -38,6 +38,7 @@ describe("platform overview page", () => {
     expect(screen.getByText("Задачи")).toBeInTheDocument();
     expect(screen.getByText("Привычки")).toBeInTheDocument();
     expect(screen.getByText("Стримы")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("rate-limit");
     expect(screen.queryByText("tracker")).not.toBeInTheDocument();
     expect(screen.queryByText("habits")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Администрирование/ })).toHaveAttribute("href", "/admin");

@@ -99,12 +99,14 @@ describe("admin users page", () => {
     const teanoreRow = screen.getByRole("link", { name: "teanore" }).closest("tr");
     expect(teanoreRow).not.toBeNull();
     expect(within(teanoreRow as HTMLElement).getByText("ID: 251740038")).toBeInTheDocument();
-    expect(within(teanoreRow as HTMLElement).getByText("Username: @teanore")).toBeInTheDocument();
+    expect(within(teanoreRow as HTMLElement).getByText("Имя: @teanore")).toBeInTheDocument();
+    expect(within(teanoreRow as HTMLElement).queryByText("Username: @teanore")).not.toBeInTheDocument();
 
     const moderatorRow = screen.getByRole("link", { name: "moderator" }).closest("tr");
     expect(moderatorRow).not.toBeNull();
     expect(within(moderatorRow as HTMLElement).getByText("ID: 614815689")).toBeInTheDocument();
-    expect(within(moderatorRow as HTMLElement).getByText("Username: @mod_nof")).toBeInTheDocument();
+    expect(within(moderatorRow as HTMLElement).getByText("Имя: @mod_nof")).toBeInTheDocument();
+    expect(within(moderatorRow as HTMLElement).queryByText("Username: @mod_nof")).not.toBeInTheDocument();
   });
 
   it("keeps all-filter options first in every dropdown", () => {

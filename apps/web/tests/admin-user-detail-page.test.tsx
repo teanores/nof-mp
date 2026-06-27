@@ -229,8 +229,8 @@ describe("admin user detail page", () => {
     await userEvent.type(screen.getByLabelText("Реальная электронная почта"), "owner@example.com");
     await userEvent.clear(screen.getByLabelText("Telegram ID"));
     await userEvent.type(screen.getByLabelText("Telegram ID"), "251740038");
-    await userEvent.clear(screen.getByLabelText("Telegram username"));
-    await userEvent.type(screen.getByLabelText("Telegram username"), "teanore");
+    await userEvent.clear(screen.getByLabelText("Имя в Telegram"));
+    await userEvent.type(screen.getByLabelText("Имя в Telegram"), "teanore");
     await userEvent.click(screen.getByRole("button", { name: "Сохранить связь" }));
 
     await waitFor(() =>
@@ -247,6 +247,7 @@ describe("admin user detail page", () => {
       ),
     );
     expect(await screen.findByText("Email и Telegram сохранены для выбранной учётной записи.")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Telegram username");
     expect(document.body).not.toHaveTextContent("password_hash");
     expect(document.body).not.toHaveTextContent("secret");
   });
@@ -340,6 +341,8 @@ describe("admin user detail page", () => {
     expect(screen.getByText("связано")).toBeInTheDocument();
     expect(screen.getByText("Habit User")).toBeInTheDocument();
     expect(screen.getByText("habit@example.com")).toBeInTheDocument();
+    expect(screen.getByText("Электронная почта сервиса")).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent("Email сервиса");
     expect(screen.queryByRole("button", { name: /отключ/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /отключ/i })).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("Bearer");
