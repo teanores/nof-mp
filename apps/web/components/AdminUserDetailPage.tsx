@@ -593,9 +593,15 @@ function LinkedIdentityAccounts({
   const [unlinkedIds, setUnlinkedIds] = useState<string[]>([]);
   const [statusByUserId, setStatusByUserId] = useState<Record<string, "idle" | "saving" | "saved" | "failed">>({});
   const visibleUsers = users.filter((linkedUser) => !unlinkedIds.includes(linkedUser.id));
+  const primaryUser =
+    visibleUsers.find((linkedUser) => linkedUser.hasPassword && linkedUser.email) ??
+    visibleUsers.find((linkedUser) => linkedUser.email) ??
+    visibleUsers.find((linkedUser) => linkedUser.id === currentUserId) ??
+    visibleUsers[0];
+  const additionalUsers = visibleUsers.filter((linkedUser) => linkedUser.id !== primaryUser?.id);
 
   async function handleUnlink(platformUserId: string) {
-    if (!personId || platformUserId === currentUserId) {
+    if (!personId) {
       return;
     }
     setStatusByUserId((current) => ({ ...current, [platformUserId]: "saving" }));
@@ -615,38 +621,45 @@ function LinkedIdentityAccounts({
     }
   }
 
-  if (!personId || users.length <= 1) {
+  if (!personId || users.length <= 1 || !primaryUser) {
     return null;
   }
 
   return (
     <section className="panel p-4">
       <div className="flex flex-col gap-1">
-        <p className="tech-label text-xs text-forge-muted">Мастер-запись</p>
-        <h2 className="heading-tech text-lg font-bold text-forge-ink">Связанные учётные записи</h2>
+        <p className="tech-label text-xs text-forge-muted">один человек</p>
+        <h2 className="heading-tech text-lg font-bold text-forge-ink">Единая запись человека</h2>
+      </div>
+      <div className="mt-4 rounded-sm border border-forge-line bg-forge-surface p-3">
+        <p className="tech-label text-[10px] text-forge-muted">Основной аккаунт для входа</p>
+        <div className="mt-2 text-sm text-forge-muted">
+          <span className="font-semibold text-forge-ink">{primaryUser.username}</span>
+          <span className="ml-2">{primaryUser.email ? primaryUser.email : "почта не указана"}</span>
+          {primaryUser.telegram?.username ? <span className="ml-2">@{primaryUser.telegram.username}</span> : null}
+          {primaryUser.id === currentUserId ? <StatusBadge ready>текущая карточка</StatusBadge> : null}
+        </div>
       </div>
       <div className="mt-4 grid gap-2">
-        {visibleUsers.map((linkedUser) => {
-          const isCurrent = linkedUser.id === currentUserId;
+        <p className="tech-label text-[10px] text-forge-muted">Дополнительные учётные записи</p>
+        {additionalUsers.map((linkedUser) => {
           const status = statusByUserId[linkedUser.id] ?? "idle";
           return (
             <div key={linkedUser.id} className="flex flex-col gap-3 rounded-sm border border-forge-line bg-forge-surface p-3 md:flex-row md:items-center md:justify-between">
               <div className="text-sm text-forge-muted">
                 <span className="font-semibold text-forge-ink">{linkedUser.username}</span>
-                <span className="ml-2">{linkedUser.email ? `email: ${linkedUser.email}` : "почта не указана"}</span>
+                <span className="ml-2">{linkedUser.email ? linkedUser.email : "почта не указана"}</span>
                 {linkedUser.telegram?.username ? <span className="ml-2">@{linkedUser.telegram.username}</span> : null}
-                {isCurrent ? <StatusBadge ready>текущая карточка</StatusBadge> : null}
+                {linkedUser.id === currentUserId ? <StatusBadge ready>текущая карточка</StatusBadge> : null}
               </div>
-              {!isCurrent ? (
-                <button
-                  className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-line bg-transparent px-4 py-2 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={status === "saving" || status === "saved"}
-                  type="button"
-                  onClick={() => void handleUnlink(linkedUser.id)}
-                >
-                  {status === "saving" ? "Отвязываем" : status === "saved" ? "Отвязано" : "Отвязать"}
-                </button>
-              ) : null}
+              <button
+                className="tech-label inline-flex min-h-10 items-center justify-center rounded-sm border border-forge-line bg-transparent px-4 py-2 text-xs text-forge-muted transition hover:border-forge-accent hover:text-forge-accent disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={status === "saving" || status === "saved"}
+                type="button"
+                onClick={() => void handleUnlink(linkedUser.id)}
+              >
+                {status === "saving" ? "Отвязываем" : status === "saved" ? "Отвязано" : `Отвязать ${linkedUser.username}`}
+              </button>
               {status === "failed" ? (
                 <p className="text-sm font-semibold text-forge-amber" role="alert">
                   Связь не изменена.
