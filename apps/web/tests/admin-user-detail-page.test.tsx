@@ -302,16 +302,21 @@ describe("admin user detail page", () => {
   it("shows linked identity accounts and lets an admin unlink an extra account", async () => {
     render(<AdminUserDetailPage identityPersonId="person-1" linkedIdentityUsers={[user, recoverableUser]} user={user} />);
 
-    expect(screen.getByRole("heading", { name: "Связанные учётные записи" })).toBeInTheDocument();
-    expect(screen.getByText("текущая карточка")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Единая запись человека" })).toBeInTheDocument();
+    expect(screen.getByText("один человек")).toBeInTheDocument();
+    expect(screen.getByText("Основной аккаунт для входа")).toBeInTheDocument();
+    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
+    expect(screen.getByText("Дополнительные учётные записи")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Отвязать teanore" })).toBeInTheDocument();
+    expect(screen.queryByText("Мастер-запись")).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Отвязать" }));
+    await userEvent.click(screen.getByRole("button", { name: "Отвязать teanore" }));
 
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith(
         "/api/admin/identity/reconcile/unlink",
         expect.objectContaining({
-          body: JSON.stringify({ personId: "person-1", platformUserId: "u-2" }),
+          body: JSON.stringify({ personId: "person-1", platformUserId: "u-1" }),
           method: "POST",
         }),
       ),
